@@ -187,6 +187,9 @@ def generate_install_script(node: Node) -> str:
             {
                 "protocol": "freedom",
                 "tag": "direct",
+                "settings": {
+                    "domainStrategy": "UseIPv4",
+                },
             },
             {
                 "protocol": "blackhole",
@@ -199,9 +202,15 @@ def generate_install_script(node: Node) -> str:
                     "inboundTag": ["api"],
                     "outboundTag": "api",
                     "type": "field",
-                }
+                },
+                {
+                    "ip": ["::/0"],
+                    "outboundTag": "blocked",
+                    "type": "field",
+                },
             ]
         },
+
     }
 
     config_json_str = json.dumps(xray_config, indent=2)
