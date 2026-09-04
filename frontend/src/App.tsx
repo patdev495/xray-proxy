@@ -10,12 +10,18 @@ import {
   AlertCircle, 
   Globe, 
   Layers, 
-  ExternalLink 
+  ExternalLink,
+  LogOut,
+  User as UserIcon,
+  Loader2
 } from 'lucide-react';
 import { fetchHealth } from './services/apiClient';
 import type { HealthResponse, ConnectionStatus } from './types/api';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoginPage } from './components/LoginPage';
 
-export const App: React.FC = () => {
+const DashboardContent: React.FC = () => {
+  const { user, logout } = useAuth();
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>('checking');
   const [lastChecked, setLastChecked] = useState<string>('');
@@ -101,11 +107,33 @@ export const App: React.FC = () => {
             <button
               onClick={checkConnection}
               disabled={isRefreshing}
-              className="p-2 rounded-lg bg-gray-900/80 hover:bg-gray-800 text-gray-400 hover:text-white border border-white/10 transition-all duration-200 disabled:opacity-50"
+              className="p-2 rounded-lg bg-gray-900/80 hover:bg-gray-800 text-gray-400 hover:text-white border border-white/10 transition-all duration-200 disabled:opacity-50 cursor-pointer"
               title="Refresh Health Status"
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-indigo-400' : ''}`} />
             </button>
+
+            {/* Authenticated User Profile Badge & Logout */}
+            {user && (
+              <div className="flex items-center space-x-3 pl-3 border-l border-white/10">
+                <div className="flex items-center space-x-2 text-xs">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-300">
+                    <UserIcon className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="font-medium text-white block">{user.username}</span>
+                    <span className="text-[10px] text-gray-400 uppercase font-mono">{user.role}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={logout}
+                  className="p-1.5 rounded-lg bg-gray-900 hover:bg-rose-500/20 text-gray-400 hover:text-rose-300 border border-white/10 transition-all duration-200 cursor-pointer"
+                  title="Sign Out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -117,12 +145,12 @@ export const App: React.FC = () => {
           <div>
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
               System Overview
-              <span className="text-xs font-normal text-gray-400 px-2.5 py-1 rounded-md bg-white/5 border border-white/5">
-                Foundation MVP (Slice 01)
+              <span className="text-xs font-normal text-emerald-400 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+                Session Authenticated (Issue 02)
               </span>
             </h2>
             <p className="text-sm text-gray-400 mt-1">
-              Real-time telemetry and service status across Control Plane and Data Plane.
+              Admin session active for user <strong className="text-gray-200">{user?.username}</strong>. Real-time telemetry across Control Plane and Data Plane.
             </p>
           </div>
 
@@ -220,7 +248,6 @@ export const App: React.FC = () => {
 
         {/* System Information & Architecture Panel */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column: Telemetry Specs */}
           <div className="lg:col-span-2 glass-panel p-6 rounded-2xl space-y-6">
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <div className="flex items-center space-x-3">
@@ -229,7 +256,7 @@ export const App: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-white">Full-Stack Foundation Status</h3>
-                  <p className="text-xs text-gray-400">End-to-end integration verified across all layers</p>
+                  <p className="text-xs text-gray-400">Authentication & Security session active</p>
                 </div>
               </div>
               <span className="text-xs text-gray-400 font-mono">
@@ -243,9 +270,6 @@ export const App: React.FC = () => {
                 <div>
                   <p className="font-semibold">Backend Connection Issue</p>
                   <p className="text-xs text-rose-300/80 mt-0.5">{errorMessage}</p>
-                  <p className="text-xs text-rose-300/60 mt-1">
-                    Start the backend service with: <code className="bg-black/30 px-1 py-0.5 rounded font-mono">uv run uvicorn app.main:app --reload</code>
-                  </p>
                 </div>
               </div>
             )}
@@ -253,82 +277,59 @@ export const App: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Backend Runtime</span>
-                  <span className="text-xs font-mono text-emerald-400 font-medium">Python 3.13 (UV Only)</span>
+                  <span className="text-xs text-gray-400">Session User</span>
+                  <span className="text-xs font-mono text-emerald-400 font-medium">{user?.username}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Web Framework</span>
-                  <span className="text-xs font-mono text-gray-200">FastAPI 0.115+</span>
+                  <span className="text-xs text-gray-400">Security Token</span>
+                  <span className="text-xs font-mono text-gray-200">JWT (HS256 Bearer)</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Type Checking</span>
-                  <span className="text-xs font-mono text-emerald-400">Mypy Strict (100% Type-hinted)</span>
+                  <span className="text-xs text-gray-400">Password Storage</span>
+                  <span className="text-xs font-mono text-emerald-400">bcrypt hash</span>
                 </div>
               </div>
 
               <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Frontend Stack</span>
-                  <span className="text-xs font-mono text-indigo-400 font-medium">React 19 + TypeScript (Strict)</span>
+                  <span className="text-xs text-gray-400">Next Sprint</span>
+                  <span className="text-xs font-mono text-indigo-400 font-medium">Issue 03 (Node & SNI)</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-400">Styling Engine</span>
-                  <span className="text-xs font-mono text-gray-200">Tailwind CSS v4 (Glassmorphism)</span>
+                  <span className="text-xs text-gray-400">Deploy Target</span>
+                  <span className="text-xs font-mono text-gray-200">Docker VPS (ADR-0008)</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">Client Compatibility</span>
-                  <span className="text-xs font-mono text-gray-200">Shadowrocket / v2rayNG / Clash</span>
+                  <span className="text-xs font-mono text-gray-200">Shadowrocket / v2rayNG</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Architecture Flow Overview */}
-            <div className="p-4 rounded-xl bg-indigo-950/20 border border-indigo-500/20 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="space-y-1 text-center md:text-left">
-                <p className="text-sm font-semibold text-white">Next Up: Issue 02 — Admin Authentication</p>
-                <p className="text-xs text-gray-400">
-                  JWT Bearer authentication, User/Admin entity with bcrypt, and session management.
-                </p>
-              </div>
-              <div className="shrink-0 flex items-center gap-2">
-                <span className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Issue 01 Ready
-                </span>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Quick Reference */}
           <div className="glass-panel p-6 rounded-2xl space-y-5">
             <div className="flex items-center space-x-3 border-b border-white/5 pb-4">
               <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400">
                 <Globe className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-white">Core Domains</h3>
-                <p className="text-xs text-gray-400">Active vocabulary from CONTEXT.md</p>
+                <h3 className="text-base font-semibold text-white">Active Roadmap</h3>
+                <p className="text-xs text-gray-400">Core MVP Tracker</p>
               </div>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5">
-                <span className="font-semibold text-indigo-400 block mb-0.5">Control Plane</span>
-                <span className="text-gray-400">FastAPI backend + React frontend orchestrating all proxy nodes.</span>
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                <span className="font-semibold text-emerald-300">01. Foundation</span>
+                <span className="text-[10px] uppercase font-bold text-emerald-400">DONE</span>
               </div>
-              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5">
-                <span className="font-semibold text-purple-400 block mb-0.5">Node & SNI Profiles</span>
-                <span className="text-gray-400">Remote VPS instances running raw Xray-core with dynamic DPI bypass domains.</span>
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                <span className="font-semibold text-emerald-300">02. Admin Auth & Session</span>
+                <span className="text-[10px] uppercase font-bold text-emerald-400">DONE</span>
               </div>
-              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5">
-                <span className="font-semibold text-emerald-400 block mb-0.5">Subscription Bundle</span>
-                <span className="text-gray-400">Base64 encoded configuration links delivered to Shadowrocket.</span>
-              </div>
-            </div>
-
-            <div className="pt-2">
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>System Architecture</span>
-                <span className="font-mono">ADR-0001 → ADR-0007</span>
+              <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-between">
+                <span className="font-semibold text-gray-300">03. Node & SNI Management</span>
+                <span className="text-[10px] uppercase font-bold text-indigo-400">NEXT</span>
               </div>
             </div>
           </div>
@@ -340,6 +341,35 @@ export const App: React.FC = () => {
         xray-proxy Control Plane &bull; Built with FastAPI (Python UV) &amp; React TypeScript Tailwind CSS
       </footer>
     </div>
+  );
+};
+
+const AuthGate: React.FC = () => {
+  const { token, user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-gray-400">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+          <span className="text-xs tracking-wider uppercase font-medium">Validating Session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!token || !user) {
+    return <LoginPage />;
+  }
+
+  return <DashboardContent />;
+};
+
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AuthGate />
+    </AuthProvider>
   );
 };
 

@@ -6,14 +6,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 from app.api.v1.health import router as health_router
 from app.core.config import settings
-from app.core.database import init_db
+from app.core.database import AsyncSessionLocal, init_db
+from app.services.user_service import seed_default_admin
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startup and shutdown lifecycle handler."""
-    # Startup: initialize database tables
+    # Startup: initialize database tables and default admin
     await init_db()
+    async with AsyncSessionLocal() as session:
+        await seed_default_admin(session)
     yield
     # Shutdown: cleanup if needed
 
