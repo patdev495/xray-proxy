@@ -240,7 +240,7 @@ docker run -d \\
   --restart always \\
   --network host \\
   -v /etc/xray/config.json:/etc/xray/config.json \\
-  teddysun/xray:latest run -config /etc/xray/config.json
+  teddysun/xray:latest
 
 echo "=============================================================================="
 echo "==> xray-core Node successfully installed and running on {node.host}!"
@@ -248,4 +248,5 @@ echo "==> VLESS Reality listening on port {node.inbound_port}"
 echo "==> gRPC Service listening on port {node.grpc_port}"
 echo "=============================================================================="
 """
-    return script
+    return script.replace("\r\n", "\n")
+
