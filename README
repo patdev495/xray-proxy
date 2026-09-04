@@ -1,3 +1,64 @@
-vps deploy web: ssh root@107.175.144.245
+************************************************************
+XRAY-PROXY - QUẢN LÝ DỰ ÁN & HƯỚNG DẪN TRIỂN KHAI
+************************************************************
 
-cd /opt/xray-proxy && git pull && docker compose up -d --build && docker image prune -f
+1. THÔNG TIN VPS WEB DASHBOARD (QUẢN TRỊ CHÍNH)
+------------------------------------------------------------
+- Domain Web UI: https://xray.peebot.shop
+- SSH VPS Web: ssh root@107.175.144.245
+- Lệnh update code & deploy lại web:
+    cd /opt/xray-proxy && git pull && docker compose up -d --build && docker image prune -f
+- Tài khoản quản trị mặc định:
+    Username: admin
+    Password: adminpassword
+
+************************************************************
+2. HƯỚNG DẪN THÊM 1 VPS MỚI LÀM NODE PROXY (XRAY NODE)
+************************************************************
+
+Một VPS Node mới sẽ chạy Xray-Core (VLESS Reality + gRPC API) và được server Web chính điều khiển tự động.
+
+BƯỚC 1: TẠO NODE TRÊN GIAO DIỆN WEB ADMIN
+-----------------------------------------
+1. Đăng nhập vào Web: https://xray.peebot.shop
+2. Vào tab "Nodes & Inbounds" -> Bấm nút "Add Node".
+3. Điền thông tin:
+   - Node Name: Ví dụ "VPS-SG-01" hoặc "VPS-Tokyo-02".
+   - Flag / Region: Chọn cờ quốc gia (🇸🇬, 🇯🇵, 🇺🇸,...).
+   - Server Host / IP: Điền IP Public của VPS mới (ví dụ: 128.199.x.x).
+   - Inbound Port: 8443 (hoặc 443 tùy nhu cầu).
+   - gRPC API Port: 10085 (dùng để server chính đồng bộ user & thống kê traffic).
+   - Reality Keys (Private Key, Public Key, Short ID): Để trống nếu muốn hệ thống tự sinh ngẫu nhiên, hoặc bấm "Generate Keys".
+   - Carrier SNI Profiles: Thêm các domain giả lập Reality (ví dụ: `images.apple.com` - Docomo, `www.yahoo.co.jp` - SoftBank, `speedtest.net` - Viettel 4G,...).
+4. Bấm "Save & Create Node".
+
+BƯỚC 2: LẤY SCRIPT DEPLOY TỰ ĐỘNG
+---------------------------------
+- Sau khi tạo Node xong, trên thẻ của Node đó bấm nút "Deploy Script" (hoặc icon Terminal).
+- Copy câu lệnh / nội dung bash script đã sinh sẵn cấu hình chuẩn Reality cho Node đó.
+
+BƯỚC 3: CHẠY SCRIPT TRÊN VPS MỚI
+---------------------------------
+1. SSH vào VPS mới cần làm Node:
+   ssh root@<IP_VPS_MOI>
+
+2. Dán và chạy script deploy (Script sẽ tự động cài Docker nếu chưa có, tạo cấu hình `/etc/xray/config.json` và khởi chạy container `xray-core` với chế độ `--network host` và tối ưu định tuyến IPv4).
+
+BƯỚC 4: MỞ PORT FIREWALL TRÊN VPS MỚI (NẾU CÓ BẬT UFW HOẶC SECURITY GROUP)
+-------------------------------------------------------------------------
+Cần cho phép 2 port trên VPS Node:
+- Port Inbound (Proxy): TCP 8443 (để client Shadowrocket / Streisand kết nối vào mạng).
+- Port gRPC (Quản trị): TCP 10085 (để VPS Web chính 107.175.144.245 gọi gRPC thêm/xóa user và đọc traffic).
+
+Ví dụ nếu VPS dùng UFW (Ubuntu/Debian):
+   ufw allow 8443/tcp
+   ufw allow proto tcp from 107.175.144.245 to any port 10085
+   # Hoặc mở 10085 public nếu không chặn IP:
+   # ufw allow 10085/tcp
+   ufw reload
+
+BƯỚC 5: KIỂM TRA VÀ GÁN VÀO SUBSCRIPTION
+----------------------------------------
+1. Trên tab "Nodes & Inbounds" ở Web Admin: Bấm "Ping" hoặc kiểm tra trạng thái Node hiển thị xanh (Active).
+2. Khi phát hành (Issue) hoặc chỉnh sửa (Edit) Subscription của khách hàng, tích chọn VPS Node mới vào danh sách "Assigned VPS Nodes".
+3. Khách hàng quét mã QR hoặc cập nhật link Subscription trên Streisand/Shadowrocket sẽ tự động thấy server mới xuất hiện và kết nối được ngay!
