@@ -219,8 +219,23 @@ export const SubscriptionsTab: React.FC = () => {
     }
   };
 
-  // Helper formatting bytes to GB
+  // Helper formatting bytes to human-readable size (B, KB, MB, GB)
+  const formatDataSize = (bytes: number): string => {
+    if (bytes >= 1024 * 1024 * 1024) {
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    }
+    if (bytes >= 1024 * 1024) {
+      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    }
+    if (bytes >= 1024) {
+      return `${(bytes / 1024).toFixed(0)} KB`;
+    }
+    return `${bytes} B`;
+  };
+
   const formatGb = (bytes: number): string => (bytes / (1024 * 1024 * 1024)).toFixed(1);
+
+
 
   return (
     <div className="space-y-6">
@@ -333,10 +348,10 @@ export const SubscriptionsTab: React.FC = () => {
                         <div className="space-y-1.5">
                           <div className="flex items-center justify-between font-mono text-[11px]">
                             <span className="font-medium text-slate-700">
-                              {formatGb(sub.traffic_used_bytes)} GB / {formatGb(sub.traffic_quota_bytes)} GB
+                              {formatDataSize(sub.traffic_used_bytes)} / {formatDataSize(sub.traffic_quota_bytes)}
                             </span>
                             <span className={`font-semibold ${isNearQuota ? 'text-rose-600' : 'text-slate-500'}`}>
-                              {percentUsed}%
+                              {sub.traffic_used_bytes > 0 && percentUsed < 1 ? '< 1%' : `${percentUsed}%`}
                             </span>
                           </div>
                           <ProgressBar
@@ -346,6 +361,7 @@ export const SubscriptionsTab: React.FC = () => {
                           />
                         </div>
                       </td>
+
 
                       {/* Expiration Date */}
                       <td className="py-4 px-5 font-mono text-slate-600">
