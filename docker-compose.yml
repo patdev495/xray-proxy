@@ -7,10 +7,10 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URL=sqlite+aiosqlite:////data/xray_proxy.db
-      - SECRET_KEY=change-this-super-secret-key-in-production-random-32chars
-      - CORS_ORIGINS=["http://localhost","http://localhost:80","https://yourdomain.com"]
+      - SECRET_KEY=xray-proxy-super-secret-key-prod-2026-vps
+      - CORS_ORIGINS=["*"]
     volumes:
-      - xray_data:/data
+      - /var/lib/xray-proxy:/data
     networks:
       - xray-network
 
@@ -21,7 +21,7 @@ services:
     container_name: xray-proxy-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "127.0.0.1:8040:80"
     depends_on:
       - backend
     networks:
@@ -30,7 +30,3 @@ services:
 networks:
   xray-network:
     driver: bridge
-
-volumes:
-  xray_data:
-    driver: local

@@ -13,5 +13,5 @@ Hệ thống quản lý dịch vụ proxy tập trung (Control Plane) cho phép 
 ## Target Architecture
 
 - **Backend**: FastAPI (Python 3.11+, UV, SQLAlchemy 2.0 Async, SQLite, Pydantic v2).
-- **Frontend**: React + TypeScript + Tailwind CSS (Vite, Dark Mode, Glassmorphism).
+- **Frontend**: React + TypeScript + Tailwind CSS (Vite, Pristine Light Mode, Linear/Stripe style, No AI Glow Slop).
 - **Node Core**: `xray-core` với Inbound VLESS-Reality và gRPC API.

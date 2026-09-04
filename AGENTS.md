@@ -51,12 +51,20 @@ Project instructions and guidelines for AI agents working in this repository.
   - Strict mode enabled (`"strict": true` in `tsconfig.json`).
   - No `any`. Explicit typing for all component props, hooks, state, and API responses.
   - Frontend type definitions must mirror backend Pydantic schemas.
-- **Tailwind CSS**:
+- **Tailwind CSS & Design Standards (ProMax Pristine Light)**:
+  - **No AI Slop / No Neon Dark Tropes**: Strictly forbid dark neon glow gimmicks (`glow-*`, heavy purple/cyan radial blurs, dark frosted glass `glass-panel` with low readability).
+  - **Color Palette & Contrast**: Pristine enterprise light theme inspired by Linear & Stripe:
+    - Base canvas: `bg-slate-50` / `bg-zinc-50`. Surfaces & cards: `bg-white`.
+    - Hairline crisp borders: `border-slate-200/80` or `border-zinc-200`.
+    - Text hierarchy: High-contrast headings in `text-slate-900`, secondary details in `text-slate-500`, muted labels in `text-slate-400`.
+    - Primary actions: High-contrast solid dark slate (`bg-slate-900 hover:bg-slate-800 text-white shadow-xs`) or crisp brand navy.
+    - Status badges: Soft pastel backgrounds with solid crisp text (e.g. `bg-emerald-50 text-emerald-700 border-emerald-200` for online, `bg-rose-50 text-rose-700 border-rose-200` for offline).
+  - **Elevation & Shadows**: Clean, natural, subtle elevation (`shadow-xs`, `shadow-sm`).
+  - **Typography**: Modern clean sans-serif (Inter/Geist font stack), tabular numbers (`font-mono` or `tabular-nums`) for IP addresses, ports, and bandwidth quotas.
   - Utility-first classes for styling, layout, responsive design (`sm:`, `md:`, `lg:`), and states (`hover:`, `focus:`).
   - Avoid inline CSS (`style={{...}}`) and redundant custom CSS classes.
-  - Maintain consistent design tokens and color schemes.
 - **Component Design**:
-  - Modular, reusable, and single-responsibility components.
+  - Modular, reusable, and single-responsibility components (`components/ui/` for buttons, inputs, tables, badges, modals).
   - Clear separation between UI presentation, custom hooks, and API integration.
 
 ### Separation of Concerns

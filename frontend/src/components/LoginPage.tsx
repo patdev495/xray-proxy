@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, User as UserIcon, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { ShieldCheck, Lock, User as UserIcon, ArrowRight, AlertCircle } from 'lucide-react';
 import { loginUser, fetchCurrentUser } from '../services/apiClient';
 import { useAuth } from '../context/AuthContext';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Badge } from './ui/Badge';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -27,101 +30,82 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-gray-100 flex items-center justify-center p-6 relative overflow-hidden font-sans">
-      {/* Ambient background glow */}
-      <div className="absolute w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl -top-20 -left-20 pointer-events-none" />
-      <div className="absolute w-96 h-96 bg-purple-600/15 rounded-full blur-3xl -bottom-20 -right-20 pointer-events-none" />
-
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo and Brand */}
-        <div className="text-center mb-8 space-y-3">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 p-0.5 shadow-2xl shadow-indigo-500/30">
-            <div className="w-full h-full bg-[#0b0f19] rounded-[14px] flex items-center justify-center">
-              <ShieldCheck className="w-8 h-8 text-indigo-400" />
-            </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center p-6 relative">
+      <div className="w-full max-w-md space-y-6">
+        {/* Brand Header */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-900 text-white shadow-xs">
+            <ShieldCheck className="w-6 h-6 text-white" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">xray-proxy</h1>
-            <p className="text-xs text-gray-400 mt-1">Control Plane Administrator Access</p>
+          <div className="flex items-center justify-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">xray-proxy</h1>
+            <Badge variant="slate" size="sm">Control Plane</Badge>
           </div>
+          <p className="text-xs text-slate-500">Sign in to orchestrate VLESS-Reality proxy nodes</p>
         </div>
 
         {/* Login Card */}
-        <div className="glass-panel p-8 rounded-3xl shadow-2xl border border-white/10 space-y-6 backdrop-blur-2xl">
-          <div className="border-b border-white/5 pb-4">
-            <h2 className="text-lg font-semibold text-white">Sign In</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Enter your administrative credentials</p>
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-7 space-y-5">
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="text-sm font-semibold text-slate-900">Administrator Sign In</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Enter your secure credentials to continue</p>
           </div>
 
           {error && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2.5 animate-shake">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200/80 text-rose-700 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-300">Username</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                  <UserIcon className="w-4 h-4" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-black/30 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                  placeholder="admin"
-                />
-              </div>
-            </div>
+            <Input
+              label="Username"
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="admin"
+              leftIcon={<UserIcon className="w-4 h-4" />}
+            />
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-300">Password</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                  <Lock className="w-4 h-4" />
-                </div>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-black/30 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
+            <Input
+              label="Password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              leftIcon={<Lock className="w-4 h-4" />}
+            />
 
-            <button
+            <Button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all duration-200 disabled:opacity-50 cursor-pointer"
+              variant="primary"
+              size="md"
+              className="w-full mt-2"
+              isLoading={isSubmitting}
+              rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Authenticating...</span>
-                </>
-              ) : (
-                <>
-                  <span>Authenticate Session</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
+              Sign In to Control Plane
+            </Button>
           </form>
 
-          {/* Quick Demo Hint */}
-          <div className="pt-2 border-t border-white/5 text-center">
-            <p className="text-[11px] text-gray-500">
-              Default credentials: <code className="text-gray-400 bg-white/5 px-1 py-0.5 rounded">admin</code> / <code className="text-gray-400 bg-white/5 px-1 py-0.5 rounded">adminpassword</code>
+          {/* Default credentials hint */}
+          <div className="pt-3 border-t border-slate-100 text-center">
+            <p className="text-[11px] text-slate-400">
+              Default dev credentials: <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono">admin</code> / <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono">adminpassword</code>
             </p>
           </div>
+        </div>
+
+        {/* Security Footer Note */}
+        <div className="text-center text-xs text-slate-400">
+          Protected by JWT token encryption &amp; bcrypt password hashing
         </div>
       </div>
     </div>
   );
 };
+
+export default LoginPage;

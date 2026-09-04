@@ -1,0 +1,1 @@
+vps deploy web: ssh root@107.175.144.245
