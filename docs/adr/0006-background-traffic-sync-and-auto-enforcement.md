@@ -1,0 +1,3 @@
+# 0006. Giám sát dung lượng định kỳ và tự động ngắt kết nối (Traffic Poller & Auto Enforcement)
+
+FastAPI chạy một tiến trình ngầm (Background Task / Periodic Poller) định kỳ gọi đến `StatsService` trên tất cả các Node để thu thập số liệu dung lượng upload/download của từng khách hàng. Khi một `Subscription` vượt quá `Traffic Quota` hoặc quá hạn thời gian sử dụng, hệ thống tự động cập nhật trạng thái và gọi lệnh `RemoveUser` qua gRPC sang các Node để ngắt kết nối ngay lập tức, ngăn chặn việc sử dụng quá tải băng thông VPS. Khi khách hàng được Admin gia hạn, hệ thống tự động cấp lại lệnh `AddUser` để khôi phục kết nối.

@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: xray-proxy-backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:////data/xray_proxy.db
+      - SECRET_KEY=change-this-super-secret-key-in-production-random-32chars
+      - CORS_ORIGINS=["http://localhost","http://localhost:80","https://yourdomain.com"]
+    volumes:
+      - xray_data:/data
+    networks:
+      - xray-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: xray-proxy-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - xray-network
+
+networks:
+  xray-network:
+    driver: bridge
+
+volumes:
+  xray_data:
+    driver: local

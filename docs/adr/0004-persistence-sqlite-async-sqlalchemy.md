@@ -1,0 +1,3 @@
+# 0004. Lưu trữ dữ liệu với SQLite qua SQLAlchemy 2.0 Async
+
+Hệ thống sử dụng **SQLite (aiosqlite)** kết hợp với **SQLAlchemy 2.0 Async** làm giải pháp lưu trữ dữ liệu cho Control Plane. Lựa chọn này giúp giảm thiểu tối đa chi phí vận hành (không cần cài đặt và bảo trì máy chủ PostgreSQL/MySQL riêng, dễ dàng sao lưu toàn bộ dữ liệu chỉ bằng một file duy nhất), trong khi vẫn đảm bảo hiệu năng I/O bất đồng bộ hoàn chỉnh. Thông qua việc tuân thủ nghiêm ngặt mô hình trừu tượng hóa của SQLAlchemy ORM và Migrations (Alembic), hệ thống có thể chuyển đổi sang PostgreSQL trong tương lai chỉ bằng việc thay đổi chuỗi kết nối `DATABASE_URL` mà không cần sửa đổi mã nguồn nghiệp vụ.

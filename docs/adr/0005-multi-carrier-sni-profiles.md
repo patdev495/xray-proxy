@@ -1,0 +1,3 @@
+# 0005. Quản lý đa cấu hình SNI theo nhà mạng (Multi-Carrier SNI Profiles)
+
+Mỗi Node cho phép cấu hình danh sách nhiều **SNI Profile** tương ứng với các nhà mạng di động mục tiêu tại Nhật (Docomo, SoftBank, Rakuten Mobile, UQ...). Khi Client App (Shadowrocket) yêu cầu lấy **Subscription Bundle**, hệ thống tự động sinh ra tập hợp các liên kết VLESS-Reality tương ứng với từng nhà mạng từ cùng một Node proxy vật lý. Quyết định này giúp khách hàng dễ dàng chuyển đổi lựa chọn kết nối phù hợp ngay trong app khi đổi mạng SIM hoặc khi một nhà mạng thay đổi thuật toán bóp băng thông, đồng thời cho phép Admin cập nhật danh sách SNI linh hoạt từ xa trên Web Control Plane mà người dùng không cần cài đặt lại cấu hình.

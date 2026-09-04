@@ -1,0 +1,3 @@
+# 0007. Khởi tạo và triển khai Node qua Docker / 1-Line Script
+
+Để giải quyết bài toán cài đặt ban đầu trên các VPS trắng mà không cần cài giao diện 3x-ui cồng kềnh, hệ thống cung cấp một mẫu cấu hình `docker-compose.yml` và script cài đặt 1 lệnh (`node-setup.sh`). Script này tự động tải `xray-core`, thiết lập cấu hình Inbound VLESS-Reality, sinh Reality Keypair ban đầu, và mở cổng `api` (gRPC) bảo mật sẵn sàng nhận kết nối từ Control Plane. Quyết định này giúp việc đưa một VPS mới vào hoạt động diễn ra trong chưa đầy 1 phút, đảm bảo tính nhất quán trên mọi bản phân phối Linux (Ubuntu/Debian) và giữ cho máy chủ proxy luôn ở trạng thái tối giản tài nguyên.

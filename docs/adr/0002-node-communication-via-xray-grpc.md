@@ -1,0 +1,3 @@
+# 0002. Giao tiếp giữa Control Plane và Node qua Direct Xray gRPC
+
+Control Plane (FastAPI) kết nối trực tiếp đến **Xray gRPC Service** chạy trên từng Node thông qua giao thức gRPC (sử dụng HandlerService để quản lý người dùng và StatsService để theo dõi dung lượng), thay vì triển khai agent phụ hoặc can thiệp bằng SSH. Quyết định này giúp giữ cho môi trường Node đạt mức tối giản tối đa (chỉ cần chạy `xray-core`), đạt độ trễ tiệm cận 0 khi thêm/xóa client, và không làm gián đoạn các kết nối đang hoạt động do không cần khởi động lại tiến trình proxy. Cổng gRPC trên Node sẽ được bảo vệ bằng cơ chế whitelist IP trỏ từ Control Plane.

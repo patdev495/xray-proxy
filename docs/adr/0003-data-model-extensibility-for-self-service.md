@@ -1,0 +1,3 @@
+# 0003. Thiết kế mô hình dữ liệu sẵn sàng cho mở rộng Self-Service
+
+Hệ thống triển khai giai đoạn 1 tập trung vào **Admin-Only** (Admin trực tiếp tạo và bàn giao Subscription link cho khách hàng), nhưng toàn bộ mô hình dữ liệu (Database Schema) và phân quyền (RBAC) được cấu trúc tách biệt giữa thực thể `User` (với các role `ADMIN` và `CUSTOMER`) và thực thể `Subscription`. Các API router được gom nhóm theo tiền tố rõ ràng (`/api/v1/admin/`, `/api/v1/customer/`, và `/api/v1/sub/`). Quyết định này giúp rút ngắn thời gian ra mắt sản phẩm cho Admin ở giai đoạn đầu, đồng thời khi nâng cấp lên hệ thống bán hàng tự động (Self-Service Customer Portal) ở giai đoạn 2 sẽ chỉ cần phát triển giao diện người dùng mà không phải đập bỏ hay refactor lại cơ sở dữ liệu.
