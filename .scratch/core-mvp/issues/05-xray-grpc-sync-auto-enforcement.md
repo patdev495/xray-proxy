@@ -1,6 +1,6 @@
 # 05-xray-grpc-sync-auto-enforcement
 
-Status: ready-for-agent
+Status: closed
 
 ## Parent
 
@@ -14,12 +14,13 @@ Hệ thống tự động chạy tác vụ nền (Periodic Poller) gọi `StatsS
 
 ## Acceptance criteria
 
-- [ ] Module `xray_grpc_service.py` tích hợp client gRPC của Xray (HandlerService và StatsService) kết nối an toàn tới cổng API của Node.
-- [ ] Hàm `sync_user_to_nodes(subscription)`: Tự động gửi lệnh `AddUser` thêm UUID khách hàng vào các Node đang hoạt động khi Subscription được tạo mới hoặc kích hoạt lại.
-- [ ] Hàm `remove_user_from_nodes(subscription)`: Tự động gửi lệnh `RemoveUser` thu hồi UUID khỏi các Node khi Subscription bị khóa, hết hạn hoặc hết dung lượng.
-- [ ] Background Task định kỳ (Poller service chạy mỗi 5 phút) quét toàn bộ subscription, lấy dung lượng thực tế qua `QueryStats`, cộng dồn vào database, và tự động xử lý khóa nếu vi phạm hạn mức.
-- [ ] Nút "Sync Live Stats" và "Force Check Limits" trên Frontend để Admin có thể kích hoạt đồng bộ và kiểm tra trạng thái tức thì mà không cần chờ chu kỳ nền.
-- [ ] Hiển thị thanh tiến trình dung lượng trực quan (đổi màu xanh -> vàng -> đỏ theo % sử dụng) trên bảng điều khiển.
+- [x] Module `xray_grpc_service.py` tích hợp client gRPC của Xray (HandlerService và StatsService) kết nối an toàn tới cổng API của Node.
+- [x] Hàm `sync_user_to_nodes(subscription)`: Tự động gửi lệnh `AddUser` thêm UUID khách hàng vào các Node đang hoạt động khi Subscription được tạo mới hoặc kích hoạt lại.
+- [x] Hàm `remove_user_from_nodes(subscription)`: Tự động gửi lệnh `RemoveUser` thu hồi UUID khỏi các Node khi Subscription bị khóa, hết hạn hoặc hết dung lượng.
+- [x] Background Task định kỳ (Poller service chạy mỗi 5 phút) quét toàn bộ subscription, lấy dung lượng thực tế qua `QueryStats`, cộng dồn vào database, và tự động xử lý khóa nếu vi phạm hạn mức.
+- [x] Nút "Sync Live Stats" và "Force Check Limits" trên Frontend để Admin có thể kích hoạt đồng bộ và kiểm tra trạng thái tức thì mà không cần chờ chu kỳ nền.
+- [x] Hiển thị thanh tiến trình dung lượng trực quan (đổi màu xanh -> vàng -> đỏ theo % sử dụng) trên bảng điều khiển.
+
 
 ## Blocked by
 

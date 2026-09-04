@@ -11,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.node import Node
 from app.models.subscription import Subscription, SubscriptionStatus
 from app.schemas.subscription import SubscriptionCreate, SubscriptionUpdate
+from app.services.xray_grpc_service import remove_user_from_all_nodes, sync_user_to_all_nodes
+
 
 
 def build_vless_link(
@@ -100,6 +102,11 @@ async def create_subscription(db: AsyncSession, sub_in: SubscriptionCreate) -> S
     db.add(db_sub)
     await db.commit()
     await db.refresh(db_sub)
+
+    # Sync new active subscription to all active nodes
+    if db_sub.status == SubscriptionStatus.ACTIVE:
+        await sync_user_to_all_nodes(db, db_sub)
+
     return db_sub
 
 
@@ -128,6 +135,7 @@ async def update_subscription(
 ) -> Subscription:
     """Update subscription: renew days, expand quota, or change status."""
     now = datetime.now(timezone.utc)
+    old_status = sub.status
 
     if sub_in.customer_name is not None:
         sub.customer_name = sub_in.customer_name
@@ -141,7 +149,7 @@ async def update_subscription(
             expires_at = expires_at.replace(tzinfo=timezone.utc)
         base_date = expires_at if expires_at > now else now
         sub.expires_at = base_date + timedelta(days=sub_in.add_days)
-        if sub.status == SubscriptionStatus.EXPIRED:
+        if sub.status in (SubscriptionStatus.EXPIRED, SubscriptionStatus.SUSPENDED):
             sub.status = SubscriptionStatus.ACTIVE
 
     if sub_in.status is not None:
@@ -150,10 +158,19 @@ async def update_subscription(
     db.add(sub)
     await db.commit()
     await db.refresh(sub)
+
+    # Sync or revoke across nodes upon status transition
+    if sub.status == SubscriptionStatus.ACTIVE and old_status != SubscriptionStatus.ACTIVE:
+        await sync_user_to_all_nodes(db, sub)
+    elif sub.status in (SubscriptionStatus.SUSPENDED, SubscriptionStatus.EXPIRED) and old_status == SubscriptionStatus.ACTIVE:
+        await remove_user_from_all_nodes(db, sub)
+
     return sub
 
 
 async def delete_subscription(db: AsyncSession, sub: Subscription) -> None:
-    """Delete a subscription."""
+    """Delete a subscription and remove user credentials from all nodes."""
+    await remove_user_from_all_nodes(db, sub)
     await db.delete(sub)
     await db.commit()
+

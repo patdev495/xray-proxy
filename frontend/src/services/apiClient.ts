@@ -326,3 +326,54 @@ export async function deleteSubscription(token: string, subId: number): Promise<
   }
 }
 
+export async function triggerLiveStatsSync(token: string): Promise<import('../types/sync').SyncResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/sync/live-stats`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to trigger live stats sync');
+  }
+
+  return response.json();
+}
+
+export async function triggerEnforceLimits(token: string): Promise<import('../types/sync').SyncResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/sync/enforce-limits`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to trigger limit enforcement');
+  }
+
+  return response.json();
+}
+
+export async function fetchSyncStatus(token: string): Promise<import('../types/sync').SyncStatusResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/sync/status`, {
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to fetch sync status');
+  }
+
+  return response.json();
+}
+
+
