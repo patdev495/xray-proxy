@@ -28,7 +28,7 @@ BƯỚC 1: TẠO NODE TRÊN GIAO DIỆN WEB ADMIN
    - Server Host / IP: Điền IP Public của VPS mới (ví dụ: 128.199.x.x).
    - Inbound Port: 8443 (hoặc 443 tùy nhu cầu).
    - gRPC API Port: 10085 (dùng để server chính đồng bộ user & thống kê traffic).
-   - Reality Keys (Private Key, Public Key, Short ID): Để trống nếu muốn hệ thống tự sinh ngẫu nhiên, hoặc bấm "Generate Keys".
+   - Reality Keys (Private Key, Public Key, Short ID): KHÔNG CẦN SINH THỦ CÔNG. Bạn có thể để trống hoàn toàn (hệ thống tự động sinh ngẫu nhiên chuẩn X25519) hoặc bấm nút "Auto-Generate" trên giao diện để xem trước. Hệ thống sẽ tự nhúng Private Key vào script chạy trên VPS và nhúng Public Key vào link cấp cho khách.
    - Carrier SNI Profiles: Thêm các domain giả lập Reality (ví dụ: `images.apple.com` - Docomo, `www.yahoo.co.jp` - SoftBank, `speedtest.net` - Viettel 4G,...).
 4. Bấm "Save & Create Node".
 
