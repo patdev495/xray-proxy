@@ -9,6 +9,11 @@ import type {
   SniProfileCreate,
   SniProfileUpdate,
 } from '../types/node';
+import type {
+  SubscriptionCreate,
+  SubscriptionItem,
+  SubscriptionUpdate,
+} from '../types/subscription';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -243,3 +248,81 @@ export async function fetchNodeInstallScript(token: string, nodeId: number): Pro
 
   return response.text();
 }
+
+// ---------------------------------------------------------------------------
+// Subscription Management API
+// ---------------------------------------------------------------------------
+
+export async function fetchSubscriptions(token: string): Promise<SubscriptionItem[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/subscriptions`, {
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch subscriptions: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function createSubscription(
+  token: string,
+  payload: SubscriptionCreate
+): Promise<SubscriptionItem> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/subscriptions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to create subscription');
+  }
+
+  return response.json();
+}
+
+export async function updateSubscription(
+  token: string,
+  subId: number,
+  payload: SubscriptionUpdate
+): Promise<SubscriptionItem> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/subscriptions/${subId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to update subscription');
+  }
+
+  return response.json();
+}
+
+export async function deleteSubscription(token: string, subId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/subscriptions/${subId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete subscription');
+  }
+}
+

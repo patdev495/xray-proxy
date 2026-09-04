@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.api import api_router
 from app.api.v1.health import router as health_router
+from app.api.v1.public_sub import router as public_sub_router
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, init_db
 from app.services.user_service import seed_default_admin
@@ -41,5 +42,9 @@ app.add_middleware(
 # Root-level health endpoint: /api/health
 app.include_router(health_router, prefix="/api")
 
+# Root-level public subscription endpoint: /sub/{token}
+app.include_router(public_sub_router)
+
 # API v1 endpoints: /api/v1/...
 app.include_router(api_router, prefix=settings.api_v1_prefix)
+
