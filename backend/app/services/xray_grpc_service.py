@@ -3,11 +3,11 @@ from datetime import datetime, timezone
 from typing import Any
 
 import grpc
-from sqlalchemy import select
+from sqlalchemy import inspect as sa_inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.node import Node
-from app.models.subscription import Subscription, SubscriptionStatus
+from app.models.subscription import Subscription, SubscriptionStatus, subscription_nodes
 import app.proto  # noqa: F401 - ensures sys.path has proto directory
 from xray.app.proxyman.command import command_pb2 as proxyman_cmd
 from xray.app.proxyman.command import command_pb2_grpc as proxyman_grpc
@@ -121,11 +121,34 @@ def query_node_stats(
         return {}
 
 
-async def sync_user_to_all_nodes(db: AsyncSession, subscription: Subscription) -> list[int]:
-    """Push user credentials to all active Xray nodes."""
-    result = await db.execute(select(Node).where(Node.is_active.is_(True)))
-    nodes = result.scalars().all()
+async def _get_target_nodes(db: AsyncSession, subscription: Subscription) -> list[Node]:
+    """Retrieve active nodes assigned to subscription, or all active nodes if none assigned."""
+    sub_id = getattr(subscription, "id", None)
+    if sub_id is not None:
+        assigned_query = (
+            select(Node)
+            .join(subscription_nodes, Node.id == subscription_nodes.c.node_id)
+            .where(subscription_nodes.c.subscription_id == sub_id, Node.is_active.is_(True))
+        )
+        res = await db.execute(assigned_query)
+        assigned = list(res.scalars().all())
+        if assigned:
+            return assigned
 
+    try:
+        insp = sa_inspect(subscription)
+        if insp is not None and "nodes" in insp.dict and subscription.nodes:
+            return [n for n in subscription.nodes if n.is_active]
+    except Exception:
+        pass
+
+    result = await db.execute(select(Node).where(Node.is_active.is_(True)))
+    return list(result.scalars().all())
+
+
+async def sync_user_to_all_nodes(db: AsyncSession, subscription: Subscription) -> list[int]:
+    """Push user credentials to assigned active Xray nodes."""
+    nodes = await _get_target_nodes(db, subscription)
     success_ids: list[int] = []
     for node in nodes:
         if add_user_to_node(node, subscription.uuid, subscription.token):
@@ -134,15 +157,14 @@ async def sync_user_to_all_nodes(db: AsyncSession, subscription: Subscription) -
 
 
 async def remove_user_from_all_nodes(db: AsyncSession, subscription: Subscription) -> list[int]:
-    """Revoke user credentials from all active Xray nodes."""
-    result = await db.execute(select(Node).where(Node.is_active.is_(True)))
-    nodes = result.scalars().all()
-
+    """Revoke user credentials from assigned active Xray nodes."""
+    nodes = await _get_target_nodes(db, subscription)
     success_ids: list[int] = []
     for node in nodes:
         if remove_user_from_node(node, subscription.token):
             success_ids.append(node.id)
     return success_ids
+
 
 
 async def sync_all_nodes_stats_and_enforce(db: AsyncSession) -> dict[str, Any]:

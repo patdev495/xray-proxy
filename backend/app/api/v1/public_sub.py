@@ -58,8 +58,14 @@ async def get_public_subscription(
             detail="Subscription quota exceeded",
         )
 
-    nodes = await get_nodes(db)
+    # Use subscription's assigned nodes if defined, otherwise fallback to all active nodes
+    if sub.nodes:
+        nodes = [n for n in sub.nodes if n.is_active]
+    else:
+        nodes = await get_nodes(db)
+
     bundle_b64 = build_subscription_bundle(uuid=sub.uuid, nodes=nodes)
+
 
     expire_ts = int(expires_at_aware.timestamp())
     userinfo_header = (

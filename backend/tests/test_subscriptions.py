@@ -1,6 +1,6 @@
 import base64
 import urllib.parse
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import pytest
 from httpx import AsyncClient
 from app.services.subscription_service import build_vless_link, build_subscription_bundle
@@ -194,3 +194,144 @@ async def test_subscription_lifecycle_crud_and_suspend(client: AsyncClient, admi
     # 7. Public access returns 404
     pub_not_found = await client.get(f"/sub/{token}")
     assert pub_not_found.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_create_subscription_with_assigned_nodes(client: AsyncClient, admin_token: str) -> None:
+    """Create subscription assigned to a specific subset of active nodes."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    # 1. Create Node 1 & Node 2
+    n1_res = await client.post(
+        "/api/v1/admin/nodes",
+        json={"name": "US East", "host": "1.1.1.1", "inbound_port": 8443},
+        headers=headers,
+    )
+    node1_id = n1_res.json()["id"]
+
+    n2_res = await client.post(
+        "/api/v1/admin/nodes",
+        json={"name": "SG 01", "host": "2.2.2.2", "inbound_port": 8443},
+        headers=headers,
+    )
+    node2_id = n2_res.json()["id"]
+
+    # 2. Create sub assigned ONLY to Node 1
+    sub_res = await client.post(
+        "/api/v1/admin/subscriptions",
+        json={
+            "customer_name": "Targeted Client",
+            "quota_gb": 20.0,
+            "days_valid": 10,
+            "node_ids": [node1_id],
+        },
+        headers=headers,
+    )
+    assert sub_res.status_code == 201
+    data = sub_res.json()
+    assert "node_ids" in data
+    assert data["node_ids"] == [node1_id]
+
+
+@pytest.mark.asyncio
+async def test_public_bundle_filtered_by_assigned_nodes(client: AsyncClient, admin_token: str) -> None:
+    """Public subscription bundle only includes assigned nodes."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    # 1. Create Node 1 & Node 2
+    n1 = await client.post(
+        "/api/v1/admin/nodes",
+        json={"name": "Alpha Node", "host": "111.111.111.111", "inbound_port": 8443},
+        headers=headers,
+    )
+    node1_id = n1.json()["id"]
+
+    n2 = await client.post(
+        "/api/v1/admin/nodes",
+        json={"name": "Beta Node", "host": "222.222.222.222", "inbound_port": 8443},
+        headers=headers,
+    )
+    node2_id = n2.json()["id"]
+
+    # 2. Create sub assigned ONLY to Node 1
+    sub_res = await client.post(
+        "/api/v1/admin/subscriptions",
+        json={"customer_name": "Single Node User", "quota_gb": 10.0, "node_ids": [node1_id]},
+        headers=headers,
+    )
+    token = sub_res.json()["token"]
+
+    # 3. Call /sub/{token}
+    res = await client.get(f"/sub/{token}")
+    assert res.status_code == 200
+    decoded = base64.b64decode(res.text.strip()).decode("utf-8")
+    assert "111.111.111.111" in decoded
+    assert "222.222.222.222" not in decoded
+
+
+@pytest.mark.asyncio
+async def test_update_subscription_profile_and_node_assignment(
+    client: AsyncClient, admin_token: str
+) -> None:
+    """Update subscription profile fields and verify differential node assignment & gRPC sync."""
+    from unittest.mock import patch
+
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    # 1. Create Node 1 & Node 2
+    n1 = await client.post(
+        "/api/v1/admin/nodes",
+        json={"name": "Node A", "host": "10.0.0.1", "inbound_port": 8443},
+        headers=headers,
+    )
+    node1_id = n1.json()["id"]
+
+    n2 = await client.post(
+        "/api/v1/admin/nodes",
+        json={"name": "Node B", "host": "10.0.0.2", "inbound_port": 8443},
+        headers=headers,
+    )
+    node2_id = n2.json()["id"]
+
+    # 2. Create sub assigned to Node 1
+    sub_res = await client.post(
+        "/api/v1/admin/subscriptions",
+        json={"customer_name": "Original Name", "quota_gb": 10.0, "node_ids": [node1_id]},
+        headers=headers,
+    )
+    sub = sub_res.json()
+    sub_id = sub["id"]
+
+    # 3. Patch subscription: rename, change quota to 50 GB, update expires_at, reassign from Node 1 to Node 2
+    new_expires = (datetime.now(timezone.utc) + timedelta(days=60)).isoformat()
+    with patch("app.services.subscription_service.add_user_to_node") as mock_add, \
+         patch("app.services.subscription_service.remove_user_from_node") as mock_rm:
+        mock_add.return_value = True
+        mock_rm.return_value = True
+
+        patch_res = await client.patch(
+            f"/api/v1/admin/subscriptions/{sub_id}",
+            json={
+                "customer_name": "Renamed Customer",
+                "traffic_quota_gb": 50.0,
+                "expires_at": new_expires,
+                "node_ids": [node2_id],
+            },
+            headers=headers,
+        )
+        assert patch_res.status_code == 200
+        updated = patch_res.json()
+        assert updated["customer_name"] == "Renamed Customer"
+        assert updated["traffic_quota_bytes"] == int(50.0 * 1024 * 1024 * 1024)
+        assert updated["node_ids"] == [node2_id]
+
+        # Verify differential gRPC calls: removed from Node 1, added to Node 2
+        assert mock_rm.called
+        rm_node_arg = mock_rm.call_args[0][0]
+        assert rm_node_arg.id == node1_id
+
+        assert mock_add.called
+        add_node_arg = mock_add.call_args[0][0]
+        assert add_node_arg.id == node2_id
+
+

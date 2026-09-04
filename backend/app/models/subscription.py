@@ -1,9 +1,21 @@
 import enum
 from datetime import datetime, timezone
-from sqlalchemy import BigInteger, DateTime, Enum as SQLEnum, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import TYPE_CHECKING
+from sqlalchemy import BigInteger, Column, DateTime, Enum as SQLEnum, ForeignKey, Integer, String, Table
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.node import Node
+
+
+subscription_nodes = Table(
+    "subscription_nodes",
+    Base.metadata,
+    Column("subscription_id", Integer, ForeignKey("subscriptions.id", ondelete="CASCADE"), primary_key=True),
+    Column("node_id", Integer, ForeignKey("nodes.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class SubscriptionStatus(str, enum.Enum):
@@ -38,3 +50,14 @@ class Subscription(Base):
         onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
     )
+
+    nodes: Mapped[list["Node"]] = relationship(
+        "Node",
+        secondary=subscription_nodes,
+        lazy="selectin",
+    )
+
+    @property
+    def node_ids(self) -> list[int]:
+        return [n.id for n in self.nodes] if self.nodes else []
+
