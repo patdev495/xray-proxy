@@ -249,6 +249,20 @@ export async function fetchNodeInstallScript(token: string, nodeId: number): Pro
   return response.text();
 }
 
+export async function fetchNodeSyncScript(token: string, nodeId: number): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/nodes/${nodeId}/sync-script`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch sync script');
+  }
+
+  return response.text();
+}
+
 // ---------------------------------------------------------------------------
 // Subscription Management API
 // ---------------------------------------------------------------------------

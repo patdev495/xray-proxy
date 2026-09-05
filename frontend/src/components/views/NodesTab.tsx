@@ -29,6 +29,7 @@ import {
   addSniProfile,
   deleteSniProfile,
   fetchNodeInstallScript,
+  fetchNodeSyncScript,
 } from '../../services/apiClient';
 import type { NodeItem, RealityKeys } from '../../types/node';
 
@@ -62,10 +63,13 @@ export const NodesTab: React.FC = () => {
   const [activeSniNode, setActiveSniNode] = useState<NodeItem | null>(null);
   const [newCarrier, setNewCarrier] = useState<string>('');
   const [newSniDomain, setNewSniDomain] = useState<string>('');
+  const [newPort, setNewPort] = useState<string>('');
   const [isAddingSni, setIsAddingSni] = useState<boolean>(false);
 
-  // Install Script Modal State
+  // Script Modal State (Install / Sync)
   const [activeScriptNode, setActiveScriptNode] = useState<NodeItem | null>(null);
+  const [scriptTitle, setScriptTitle] = useState<string>('VPS Script');
+  const [scriptDescription, setScriptDescription] = useState<string>('');
   const [scriptContent, setScriptContent] = useState<string>('');
   const [isLoadingScript, setIsLoadingScript] = useState<boolean>(false);
 
@@ -233,6 +237,9 @@ export const NodesTab: React.FC = () => {
     setActiveSniNode(node);
     setNewCarrier('');
     setNewSniDomain('');
+    const existingPorts = node.sni_profiles?.map((s) => s.port) || [];
+    const nextPort = existingPorts.length > 0 ? Math.max(...existingPorts) + 1 : node.inbound_port;
+    setNewPort(String(nextPort));
   };
 
   const handleAddSniProfile = async (e: React.FormEvent) => {
@@ -249,14 +256,16 @@ export const NodesTab: React.FC = () => {
 
     try {
       setIsAddingSni(true);
+      const parsedPort = newPort.trim() ? parseInt(newPort.trim(), 10) : undefined;
       await addSniProfile(token, activeSniNode.id, {
         carrier: newCarrier.trim(),
         domain: newSniDomain.trim(),
+        port: parsedPort,
       });
       showToast({
         type: 'success',
         title: 'SNI Profile Added',
-        message: `${newCarrier} (${newSniDomain}) attached to node.`,
+        message: `${newCarrier} (${newSniDomain} :${parsedPort || 'auto'}) attached to node.`,
       });
       setNewCarrier('');
       setNewSniDomain('');
@@ -265,7 +274,12 @@ export const NodesTab: React.FC = () => {
       const updatedNodes = await fetchNodes(token);
       setNodes(updatedNodes);
       const refreshedActive = updatedNodes.find((n) => n.id === activeSniNode.id);
-      if (refreshedActive) setActiveSniNode(refreshedActive);
+      if (refreshedActive) {
+        setActiveSniNode(refreshedActive);
+        const ports = refreshedActive.sni_profiles?.map((s) => s.port) || [];
+        const next = ports.length > 0 ? Math.max(...ports) + 1 : refreshedActive.inbound_port;
+        setNewPort(String(next));
+      }
     } catch (err) {
       showToast({
         type: 'error',
@@ -289,7 +303,12 @@ export const NodesTab: React.FC = () => {
       const updatedNodes = await fetchNodes(token);
       setNodes(updatedNodes);
       const refreshedActive = updatedNodes.find((n) => n.id === activeSniNode.id);
-      if (refreshedActive) setActiveSniNode(refreshedActive);
+      if (refreshedActive) {
+        setActiveSniNode(refreshedActive);
+        const ports = refreshedActive.sni_profiles?.map((s) => s.port) || [];
+        const next = ports.length > 0 ? Math.max(...ports) + 1 : refreshedActive.inbound_port;
+        setNewPort(String(next));
+      }
     } catch (err) {
       showToast({
         type: 'error',
@@ -302,6 +321,8 @@ export const NodesTab: React.FC = () => {
   const handleOpenInstallScript = async (node: NodeItem) => {
     if (!token) return;
     setActiveScriptNode(node);
+    setScriptTitle(`VPS Deployment Script - ${node.name}`);
+    setScriptDescription('Run this automated setup script on your fresh Linux VPS to start xray-core');
     setScriptContent('');
     try {
       setIsLoadingScript(true);
@@ -312,6 +333,27 @@ export const NodesTab: React.FC = () => {
         type: 'error',
         title: 'Script Load Error',
         message: err instanceof Error ? err.message : 'Could not fetch setup script',
+      });
+    } finally {
+      setIsLoadingScript(false);
+    }
+  };
+
+  const handleOpenSyncScript = async (node: NodeItem) => {
+    if (!token) return;
+    setActiveScriptNode(node);
+    setScriptTitle(`Quick VPS Sync Script - ${node.name}`);
+    setScriptDescription('Lightweight sync script: updates /etc/xray/config.json and restarts xray-core in 0.5s without touching other services');
+    setScriptContent('');
+    try {
+      setIsLoadingScript(true);
+      const script = await fetchNodeSyncScript(token, node.id);
+      setScriptContent(script);
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Sync Script Error',
+        message: err instanceof Error ? err.message : 'Could not fetch sync script',
       });
     } finally {
       setIsLoadingScript(false);
@@ -461,10 +503,11 @@ export const NodesTab: React.FC = () => {
                             <span
                               key={sni.id}
                               className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[11px] text-slate-700 font-mono"
-                              title={`Carrier: ${sni.carrier}`}
+                              title={`Carrier: ${sni.carrier} | Port: ${sni.port}`}
                             >
                               <span className="font-semibold text-slate-500">{sni.carrier}:</span>
                               <span>{sni.domain}</span>
+                              <span className="text-slate-400 font-normal">:{sni.port}</span>
                             </span>
                           ))
                         ) : (
@@ -484,6 +527,17 @@ export const NodesTab: React.FC = () => {
                     {/* Actions */}
                     <td className="py-4 px-5 text-right">
                       <div className="inline-flex items-center gap-1.5">
+                        {/* 1-Line Sync Script */}
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleOpenSyncScript(node)}
+                          title="Quick 1-second sync script for VPS"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Sync</span>
+                        </Button>
+
                         {/* 1-Line Install Script */}
                         <Button
                           variant="secondary"
@@ -492,7 +546,7 @@ export const NodesTab: React.FC = () => {
                           title="View 1-line installation script"
                         >
                           <Terminal className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">Script</span>
+                          <span className="hidden sm:inline">Setup</span>
                         </Button>
 
                         {/* Toggle Active/Inactive */}
@@ -691,8 +745,13 @@ export const NodesTab: React.FC = () => {
                     className="flex items-center justify-between p-3 hover:bg-slate-50/70 transition-colors"
                   >
                     <div>
-                      <div className="font-medium text-slate-800 text-xs">{sni.carrier}</div>
-                      <div className="text-[11px] font-mono text-slate-500">{sni.domain}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-slate-800 text-xs">{sni.carrier}</span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/80 font-medium">
+                          Port {sni.port}
+                        </span>
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-500 mt-0.5">{sni.domain}</div>
                     </div>
                     <button
                       onClick={() => handleDeleteSniProfile(sni.id)}
@@ -715,20 +774,28 @@ export const NodesTab: React.FC = () => {
             className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3"
           >
             <h4 className="text-xs font-semibold text-slate-800">Add New Carrier SNI</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Input
                 label="Carrier Name"
-                placeholder="e.g. SoftBank / Viettel"
+                placeholder="e.g. SoftBank / Linemo"
                 value={newCarrier}
                 onChange={(e) => setNewCarrier(e.target.value)}
                 required
               />
               <Input
                 label="SNI Domain"
-                placeholder="e.g. www.yahoo.co.jp"
+                placeholder="e.g. www.linemo.jp"
                 value={newSniDomain}
                 onChange={(e) => setNewSniDomain(e.target.value)}
                 required
+              />
+              <Input
+                label="Port"
+                placeholder="e.g. 8444"
+                type="number"
+                value={newPort}
+                onChange={(e) => setNewPort(e.target.value)}
+                hint="Auto-suggested port"
               />
             </div>
             <div className="flex justify-end">
@@ -743,15 +810,33 @@ export const NodesTab: React.FC = () => {
               </Button>
             </div>
           </form>
+
+          {/* Quick VPS Sync Helper */}
+          {activeSniNode && (
+            <div className="p-3.5 bg-indigo-50/70 border border-indigo-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="text-xs text-indigo-900">
+                <div className="font-semibold text-indigo-950">Apply Changes to VPS</div>
+                <div className="text-[11px] text-indigo-700/90">Reload multi-inbound ports on VPS in 0.5s without touching other services.</div>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={<RefreshCw className="w-3.5 h-3.5 text-indigo-600" />}
+                onClick={() => handleOpenSyncScript(activeSniNode)}
+              >
+                View Sync Script
+              </Button>
+            </div>
+          )}
         </div>
       </Modal>
 
-      {/* Modal: 1-Line Installation Script */}
+      {/* Modal: 1-Line Installation or Sync Script */}
       <Modal
         isOpen={activeScriptNode !== null}
         onClose={() => setActiveScriptNode(null)}
-        title={`VPS Deployment Script - ${activeScriptNode?.name || ''}`}
-        description="Run this automated setup script on your fresh Linux VPS to start xray-core"
+        title={scriptTitle}
+        description={scriptDescription}
         maxWidth="xl"
       >
         <div className="space-y-4">
@@ -761,7 +846,7 @@ export const NodesTab: React.FC = () => {
               variant="primary"
               size="sm"
               leftIcon={copiedId === 'script-full' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              onClick={() => copyToClipboard(scriptContent, 'Installation Script', 'script-full')}
+              onClick={() => copyToClipboard(scriptContent, 'Script', 'script-full')}
             >
               {copiedId === 'script-full' ? 'Copied!' : 'Copy Script'}
             </Button>
@@ -770,7 +855,7 @@ export const NodesTab: React.FC = () => {
           {isLoadingScript ? (
             <div className="py-12 text-center text-slate-400">
               <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
-              Generating deployment script...
+              Generating script...
             </div>
           ) : (
             <div className="relative">

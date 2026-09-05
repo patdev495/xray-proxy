@@ -18,6 +18,7 @@ from app.services.node_service import (
     delete_node,
     delete_sni_profile,
     generate_install_script,
+    generate_sync_script,
     get_node_by_id,
     get_nodes,
     get_sni_profile_by_id,
@@ -220,5 +221,29 @@ async def get_node_install_script_endpoint(
         content=script_content,
         media_type="text/plain; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="xray-install-node-{node.id}.sh"'},
+    )
+
+
+@router.get(
+    "/{node_id}/sync-script",
+    response_class=Response,
+    summary="Get 1-line bash sync script for node",
+)
+async def get_node_sync_script_endpoint(
+    node_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Generate lightweight bash script to update /etc/xray/config.json and reload xray on remote VPS."""
+    node = await get_node_by_id(db, node_id)
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Node {node_id} not found",
+        )
+    script_content = generate_sync_script(node)
+    return Response(
+        content=script_content,
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="xray-sync-node-{node.id}.sh"'},
     )
 

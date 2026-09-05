@@ -20,9 +20,28 @@ from xray.proxy.vless import account_pb2 as vless_account
 logger = logging.getLogger(__name__)
 
 
+def get_node_inbound_tags(node: Node) -> list[str]:
+    """Retrieve all active VLESS reality inbound tags for the node."""
+    active_snis = [
+        sni for sni in getattr(node, "sni_profiles", [])
+        if getattr(sni, "is_active", True) and getattr(sni, "domain", None)
+    ]
+    if not active_snis:
+        return ["vless-reality"]
+    tags: list[str] = []
+    for sni in active_snis:
+        raw_port = getattr(sni, "port", None)
+        port = raw_port if isinstance(raw_port, int) else getattr(node, "inbound_port", 443)
+        tag = f"vless-reality-{port}"
+        if tag not in tags:
+            tags.append(tag)
+    return tags or ["vless-reality"]
+
+
 def add_user_to_node(node: Node, sub_uuid: str, sub_token: str, timeout: float = 5.0) -> bool:
-    """Register a VLESS user dynamically into a remote Xray node via gRPC HandlerService."""
+    """Register a VLESS user dynamically into a remote Xray node via gRPC HandlerService across all inbounds."""
     target = f"{node.host}:{node.grpc_port}"
+    tags = get_node_inbound_tags(node)
     try:
         with grpc.insecure_channel(target) as channel:
             stub = proxyman_grpc.HandlerServiceStub(channel)
@@ -45,13 +64,14 @@ def add_user_to_node(node: Node, sub_uuid: str, sub_token: str, timeout: float =
                 value=add_op.SerializeToString(),
             )
 
-            request = proxyman_cmd.AlterInboundRequest(
-                tag="vless-reality",
-                operation=op_typed,
-            )
+            for tag in tags:
+                request = proxyman_cmd.AlterInboundRequest(
+                    tag=tag,
+                    operation=op_typed,
+                )
+                stub.AlterInbound(request, timeout=timeout)
 
-            stub.AlterInbound(request, timeout=timeout)
-            logger.info("Added user %s to node %s (%s)", sub_token, node.name, target)
+            logger.info("Added user %s to node %s (%s) on tags %s", sub_token, node.name, target, tags)
             return True
     except grpc.RpcError as exc:
         logger.warning("Failed to add user %s to node %s (%s): %s", sub_token, node.name, target, exc)
@@ -62,8 +82,9 @@ def add_user_to_node(node: Node, sub_uuid: str, sub_token: str, timeout: float =
 
 
 def remove_user_from_node(node: Node, sub_token: str, timeout: float = 5.0) -> bool:
-    """Remove a user dynamically from a remote Xray node via gRPC HandlerService."""
+    """Remove a user dynamically from a remote Xray node via gRPC HandlerService across all inbounds."""
     target = f"{node.host}:{node.grpc_port}"
+    tags = get_node_inbound_tags(node)
     try:
         with grpc.insecure_channel(target) as channel:
             stub = proxyman_grpc.HandlerServiceStub(channel)
@@ -74,13 +95,14 @@ def remove_user_from_node(node: Node, sub_token: str, timeout: float = 5.0) -> b
                 value=rm_op.SerializeToString(),
             )
 
-            request = proxyman_cmd.AlterInboundRequest(
-                tag="vless-reality",
-                operation=op_typed,
-            )
+            for tag in tags:
+                request = proxyman_cmd.AlterInboundRequest(
+                    tag=tag,
+                    operation=op_typed,
+                )
+                stub.AlterInbound(request, timeout=timeout)
 
-            stub.AlterInbound(request, timeout=timeout)
-            logger.info("Removed user %s from node %s (%s)", sub_token, node.name, target)
+            logger.info("Removed user %s from node %s (%s) on tags %s", sub_token, node.name, target, tags)
             return True
     except grpc.RpcError as exc:
         logger.warning("Failed to remove user %s from node %s (%s): %s", sub_token, node.name, target, exc)

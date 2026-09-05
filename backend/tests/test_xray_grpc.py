@@ -66,6 +66,48 @@ def test_add_user_to_node_success(mock_node: Node) -> None:
         assert req.operation.type == "xray.app.proxyman.command.AddUserOperation"
 
 
+def test_add_and_remove_user_multi_inbound() -> None:
+    """gRPC service registers user across all active inbound tags on multi-carrier node."""
+    from app.models.node import SniProfile
+    multi_node = Node(
+        name="Multi Node",
+        host="127.0.0.1",
+        inbound_port=8443,
+        grpc_port=10085,
+        reality_public_key="pub123",
+        reality_private_key="priv123",
+        reality_short_id="sid123",
+        is_active=True,
+        sni_profiles=[
+            SniProfile(carrier="Docomo", domain="images.apple.com", port=8443, is_active=True),
+            SniProfile(carrier="Linemo", domain="www.linemo.jp", port=8444, is_active=True),
+        ],
+    )
+
+    with patch("grpc.insecure_channel") as mock_chan, patch(
+        "xray.app.proxyman.command.command_pb2_grpc.HandlerServiceStub"
+    ) as mock_stub_cls:
+        mock_stub = MagicMock()
+        mock_stub_cls.return_value = mock_stub
+
+        # Test Add User
+        success = add_user_to_node(multi_node, "test-uuid", "test-token")
+        assert success is True
+        assert mock_stub.AlterInbound.call_count == 2
+        tags_called = [call[0][0].tag for call in mock_stub.AlterInbound.call_args_list]
+        assert "vless-reality-8443" in tags_called
+        assert "vless-reality-8444" in tags_called
+
+        # Test Remove User
+        mock_stub.reset_mock()
+        rm_success = remove_user_from_node(multi_node, "test-token")
+        assert rm_success is True
+        assert mock_stub.AlterInbound.call_count == 2
+        rm_tags = [call[0][0].tag for call in mock_stub.AlterInbound.call_args_list]
+        assert "vless-reality-8443" in rm_tags
+        assert "vless-reality-8444" in rm_tags
+
+
 def test_add_user_to_node_failure(mock_node: Node) -> None:
     with patch("grpc.insecure_channel") as mock_chan, patch(
         "xray.app.proxyman.command.command_pb2_grpc.HandlerServiceStub"

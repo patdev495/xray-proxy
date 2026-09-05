@@ -72,11 +72,13 @@ def build_subscription_bundle(uuid: str, nodes: list[Node]) -> str:
         for sni in active_snis:
             flag_prefix = f"{node.flag} " if node.flag else ""
             remark = f"{flag_prefix}{node.name} - {sni.carrier}"
+            raw_port = getattr(sni, "port", None)
+            sni_port = raw_port if isinstance(raw_port, int) else node.inbound_port
             links.append(
                 build_vless_link(
                     uuid=uuid,
                     host=node.host,
-                    port=node.inbound_port,
+                    port=sni_port,
                     public_key=node.reality_public_key,
                     short_id=node.reality_short_id,
                     sni=sni.domain,

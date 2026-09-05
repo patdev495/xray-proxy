@@ -61,10 +61,43 @@ def test_build_subscription_bundle() -> None:
     bundle_b64 = build_subscription_bundle(uuid=sub_uuid, nodes=[node1])
     decoded_text = base64.b64decode(bundle_b64.encode("utf-8")).decode("utf-8")
     lines = [line.strip() for line in decoded_text.strip().split("\n") if line.strip()]
-
     assert len(lines) == 2
     assert "Docomo" in lines[0] or "Docomo" in lines[1]
     assert "SoftBank" in lines[0] or "SoftBank" in lines[1]
+
+
+def test_build_subscription_bundle_multi_port() -> None:
+    """Bundle assigns each carrier SNI link to its dedicated port."""
+    from unittest.mock import MagicMock
+
+    sub_uuid = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+
+    sni1 = MagicMock(carrier="Docomo", domain="images.apple.com", port=8443, is_active=True)
+    sni2 = MagicMock(carrier="Linemo", domain="www.linemo.jp", port=8444, is_active=True)
+    node = MagicMock(
+        name="VPS-US-01",
+        flag="🇺🇸",
+        host="107.175.144.245",
+        inbound_port=8443,
+        reality_public_key="pubkey123",
+        reality_short_id="sid123",
+        is_active=True,
+        sni_profiles=[sni1, sni2],
+    )
+
+    bundle_b64 = build_subscription_bundle(uuid=sub_uuid, nodes=[node])
+    decoded_text = base64.b64decode(bundle_b64.encode("utf-8")).decode("utf-8")
+    lines = [line.strip() for line in decoded_text.strip().split("\n") if line.strip()]
+
+    assert len(lines) == 2
+    docomo_line = next(line for line in lines if "Docomo" in line)
+    linemo_line = next(line for line in lines if "Linemo" in line)
+
+    assert "@107.175.144.245:8443?" in docomo_line
+    assert "sni=images.apple.com" in docomo_line
+
+    assert "@107.175.144.245:8444?" in linemo_line
+    assert "sni=www.linemo.jp" in linemo_line
 
 
 @pytest.mark.asyncio

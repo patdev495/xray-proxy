@@ -10,6 +10,7 @@ class RealityKeysResponse(BaseModel):
 class SniProfileBase(BaseModel):
     carrier: str = Field(..., min_length=1, max_length=100)
     domain: str = Field(..., min_length=1, max_length=255)
+    port: int | None = Field(default=None, ge=1, le=65535)
     is_active: bool = True
 
 
@@ -20,12 +21,17 @@ class SniProfileCreate(SniProfileBase):
 class SniProfileUpdate(BaseModel):
     carrier: str | None = Field(default=None, min_length=1, max_length=100)
     domain: str | None = Field(default=None, min_length=1, max_length=255)
+    port: int | None = Field(default=None, ge=1, le=65535)
     is_active: bool | None = None
 
 
-class SniProfileResponse(SniProfileBase):
+class SniProfileResponse(BaseModel):
     id: int
     node_id: int
+    carrier: str
+    domain: str
+    port: int
+    is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
 

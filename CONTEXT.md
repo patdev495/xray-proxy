@@ -37,8 +37,8 @@ Cổng tiếp nhận kết nối proxy trên Node, sử dụng giao thức VLESS
 _Avoid_: Port, listener
 
 **SNI Profile**:
-Cấu hình nhãn hiển thị và tên miền SNI tùy biến trên Node, cho phép Admin tự do khai báo bất kỳ tên miền nào (nhằm tối ưu DPI theo từng nhà mạng ở bất kỳ quốc gia nào, hoặc cho mục đích vượt tường lửa, ẩn danh).
-_Avoid_: Fake domain, bug host
+Cấu hình nhãn nhà mạng (Carrier) và tên miền SNI (kèm điểm đích `dest` ngụy trang tương ứng) trên Node, nhằm phục vụ cơ chế Zero-Rating / bỏ qua bóp băng thông cước di động khi SIM hết dung lượng tốc độ cao. Trong kiến trúc Reality, mỗi SNI Profile khác gốc chứng chỉ bắt buộc phải đi kèm với một Inbound hoặc cơ chế phân luồng SNI riêng biệt.
+_Avoid_: Fake domain, arbitrary SNI, unverified bug host
 
 **Subscription Bundle**:
 Tập hợp danh sách các kết nối đại diện cho từng Node và các SNI Profile tương ứng, được định dạng chuẩn (Base64 URL) để Client App tự động cập nhật.

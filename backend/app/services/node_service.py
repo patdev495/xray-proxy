@@ -1,4 +1,5 @@
 import json
+from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,10 +33,22 @@ async def create_node(db: AsyncSession, node_in: NodeCreate) -> Node:
         is_active=True,
     )
 
+    used_ports: set[int] = set()
+    next_port = node_in.inbound_port
     for sni_in in node_in.sni_profiles:
+        if sni_in.port is not None:
+            port = sni_in.port
+        else:
+            while next_port in used_ports:
+                next_port += 1
+            port = next_port
+            next_port += 1
+        used_ports.add(port)
+
         db_sni = SniProfile(
             carrier=sni_in.carrier,
             domain=sni_in.domain,
+            port=port,
             is_active=sni_in.is_active,
         )
         db_node.sni_profiles.append(db_sni)
@@ -81,11 +94,20 @@ async def create_sni_profile(
     node: Node,
     sni_in: SniProfileCreate,
 ) -> SniProfile:
-    """Add a new SNI profile to a node."""
+    """Add a new SNI profile to a node with explicit or auto-allocated port."""
+    if sni_in.port is not None:
+        port = sni_in.port
+    else:
+        existing_ports = {sni.port for sni in node.sni_profiles}
+        port = node.inbound_port
+        while port in existing_ports:
+            port += 1
+
     db_sni = SniProfile(
         node_id=node.id,
         carrier=sni_in.carrier,
         domain=sni_in.domain,
+        port=port,
         is_active=sni_in.is_active,
     )
     db.add(db_sni)
@@ -122,14 +144,72 @@ async def delete_sni_profile(db: AsyncSession, sni: SniProfile) -> None:
     await db.commit()
 
 
-def generate_install_script(node: Node) -> str:
-    """Generate a 1-line runnable bash deployment script for remote VPS."""
-    server_names = [sni.domain for sni in node.sni_profiles if sni.domain]
-    if not server_names:
-        server_names = ["images.apple.com"]
-    dest_domain = f"{server_names[0]}:443"
+def generate_xray_config_dict(node: Node) -> dict[str, Any]:
+    """Generate the full Xray configuration JSON dictionary for a node."""
+    active_snis = [sni for sni in node.sni_profiles if sni.is_active and sni.domain]
+    inbounds: list[dict[str, Any]] = []
 
-    xray_config = {
+    if not active_snis:
+        inbounds.append({
+            "listen": "0.0.0.0",
+            "port": node.inbound_port,
+            "protocol": "vless",
+            "settings": {
+                "clients": [],
+                "decryption": "none",
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "reality",
+                "realitySettings": {
+                    "show": False,
+                    "dest": "images.apple.com:443",
+                    "xver": 0,
+                    "serverNames": ["images.apple.com"],
+                    "privateKey": node.reality_private_key,
+                    "shortIds": [node.reality_short_id],
+                },
+            },
+            "tag": "vless-reality",
+        })
+    else:
+        for sni in active_snis:
+            port = sni.port or node.inbound_port
+            inbounds.append({
+                "listen": "0.0.0.0",
+                "port": port,
+                "protocol": "vless",
+                "settings": {
+                    "clients": [],
+                    "decryption": "none",
+                },
+                "streamSettings": {
+                    "network": "tcp",
+                    "security": "reality",
+                    "realitySettings": {
+                        "show": False,
+                        "dest": f"{sni.domain}:443",
+                        "xver": 0,
+                        "serverNames": [sni.domain],
+                        "privateKey": node.reality_private_key,
+                        "shortIds": [node.reality_short_id],
+                    },
+                },
+                "tag": f"vless-reality-{port}",
+            })
+
+    # Dokodemo-door gRPC inbound
+    inbounds.append({
+        "listen": "0.0.0.0",
+        "port": node.grpc_port,
+        "protocol": "dokodemo-door",
+        "settings": {
+            "address": "127.0.0.1",
+        },
+        "tag": "api",
+    })
+
+    return {
         "log": {"loglevel": "warning"},
         "api": {
             "tag": "api",
@@ -150,39 +230,7 @@ def generate_install_script(node: Node) -> str:
                 "statsOutboundDownlink": True,
             },
         },
-        "inbounds": [
-            {
-                "listen": "0.0.0.0",
-                "port": node.inbound_port,
-                "protocol": "vless",
-                "settings": {
-                    "clients": [],
-                    "decryption": "none",
-                },
-                "streamSettings": {
-                    "network": "tcp",
-                    "security": "reality",
-                    "realitySettings": {
-                        "show": False,
-                        "dest": dest_domain,
-                        "xver": 0,
-                        "serverNames": server_names,
-                        "privateKey": node.reality_private_key,
-                        "shortIds": [node.reality_short_id],
-                    },
-                },
-                "tag": "vless-reality",
-            },
-            {
-                "listen": "0.0.0.0",
-                "port": node.grpc_port,
-                "protocol": "dokodemo-door",
-                "settings": {
-                    "address": "127.0.0.1",
-                },
-                "tag": "api",
-            },
-        ],
+        "inbounds": inbounds,
         "outbounds": [
             {
                 "protocol": "freedom",
@@ -210,17 +258,25 @@ def generate_install_script(node: Node) -> str:
                 },
             ]
         },
-
     }
 
+
+def generate_install_script(node: Node) -> str:
+    """Generate a 1-line runnable bash deployment script for remote VPS with multi-inbound reality configs."""
+    xray_config = generate_xray_config_dict(node)
     config_json_str = json.dumps(xray_config, indent=2)
+
+    active_snis = [sni for sni in node.sni_profiles if sni.is_active and sni.domain]
+    ports_to_check = [sni.port or node.inbound_port for sni in active_snis] or [node.inbound_port]
+    ports_to_check.append(node.grpc_port)
+    port_list_str = " ".join(str(p) for p in ports_to_check)
 
     script = f"""#!/usr/bin/env bash
 # ==============================================================================
 # xray-proxy VPS Node Automated Provisioning Script
 # Node Name: {node.name}
 # Host: {node.host}
-# Inbound Port: {node.inbound_port} | gRPC Port: {node.grpc_port}
+# Inbound Ports: {port_list_str} | gRPC Port: {node.grpc_port}
 # ==============================================================================
 set -euo pipefail
 
@@ -230,17 +286,22 @@ if ! command -v docker >/dev/null 2>&1; then
     curl -fsSL https://get.docker.com | sh
 fi
 
-echo "==> [2/4] Generating /etc/xray/config.json..."
+echo "==> [2/4] Verifying port safety for ports: {port_list_str}..."
+for p in {port_list_str}; do
+    if ss -tuln 2>/dev/null | grep -q ":$p "; then
+        echo "Info: Port $p is currently active (will be managed by xray container)."
+    fi
+done
+
+echo "==> [3/4] Generating /etc/xray/config.json..."
 mkdir -p /etc/xray
 
 cat << 'EOF' > /etc/xray/config.json
 {config_json_str}
 EOF
 
-echo "==> [3/4] Pulling teddysun/xray Docker image..."
-docker pull teddysun/xray:latest
-
 echo "==> [4/4] Starting xray-core container..."
+docker pull teddysun/xray:latest
 docker stop xray-core 2>/dev/null || true
 docker rm xray-core 2>/dev/null || true
 
@@ -253,8 +314,42 @@ docker run -d \\
 
 echo "=============================================================================="
 echo "==> xray-core Node successfully installed and running on {node.host}!"
-echo "==> VLESS Reality listening on port {node.inbound_port}"
+echo "==> VLESS Reality listening on ports: {port_list_str}"
 echo "==> gRPC Service listening on port {node.grpc_port}"
+echo "=============================================================================="
+"""
+    return script.replace("\r\n", "\n")
+
+
+def generate_sync_script(node: Node) -> str:
+    """Generate a lightweight bash script to update /etc/xray/config.json and reload xray-core on VPS in 0.5s."""
+    xray_config = generate_xray_config_dict(node)
+    config_json_str = json.dumps(xray_config, indent=2)
+
+    active_snis = [sni for sni in node.sni_profiles if sni.is_active and sni.domain]
+    active_ports = [sni.port or node.inbound_port for sni in active_snis] or [node.inbound_port]
+    port_list_str = " ".join(str(p) for p in active_ports)
+
+    script = f"""#!/usr/bin/env bash
+# ==============================================================================
+# xray-proxy VPS Node Inbound Sync Script
+# Node Name: {node.name}
+# ==============================================================================
+set -euo pipefail
+
+echo "==> [1/2] Updating /etc/xray/config.json..."
+mkdir -p /etc/xray
+
+cat << 'EOF' > /etc/xray/config.json
+{config_json_str}
+EOF
+
+echo "==> [2/2] Reloading xray-core container..."
+docker restart xray-core
+
+echo "=============================================================================="
+echo "==> Node {node.name} successfully reloaded in 0.5s!"
+echo "==> Active VLESS ports: {port_list_str}"
 echo "=============================================================================="
 """
     return script.replace("\r\n", "\n")

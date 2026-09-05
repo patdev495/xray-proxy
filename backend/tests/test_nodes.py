@@ -171,6 +171,52 @@ async def test_sni_profile_crud(client: AsyncClient, admin_token: str) -> None:
 
 
 @pytest.mark.asyncio
+async def test_sni_profile_port_allocation(client: AsyncClient, admin_token: str) -> None:
+    """Test explicit port setting and auto-increment port allocation for SNI profiles."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    # 1. Create node with base inbound_port 8443 and 2 SNI profiles without explicit ports
+    node_res = await client.post(
+        "/api/v1/admin/nodes",
+        json={
+            "name": "Port Test Node",
+            "host": "107.175.144.245",
+            "inbound_port": 8443,
+            "sni_profiles": [
+                {"carrier": "Docomo", "domain": "images.apple.com"},
+                {"carrier": "Linemo", "domain": "www.linemo.jp"},
+            ],
+        },
+        headers=headers,
+    )
+    assert node_res.status_code == 201
+    node_data = node_res.json()
+    node_id = node_data["id"]
+    snis = node_data["sni_profiles"]
+    assert len(snis) == 2
+    assert snis[0]["port"] == 8443
+    assert snis[1]["port"] == 8444
+
+    # 2. Add 3rd SNI profile with explicit custom port 8499
+    add_custom = await client.post(
+        f"/api/v1/admin/nodes/{node_id}/sni-profiles",
+        json={"carrier": "Custom", "domain": "custom.com", "port": 8499},
+        headers=headers,
+    )
+    assert add_custom.status_code == 201
+    assert add_custom.json()["port"] == 8499
+
+    # 3. Add 4th SNI profile without port -> should auto-allocate next available port (8445)
+    add_auto = await client.post(
+        f"/api/v1/admin/nodes/{node_id}/sni-profiles",
+        json={"carrier": "Viettel", "domain": "gateway.icloud.com"},
+        headers=headers,
+    )
+    assert add_auto.status_code == 201
+    assert add_auto.json()["port"] == 8445
+
+
+@pytest.mark.asyncio
 async def test_get_node_install_script(client: AsyncClient, admin_token: str) -> None:
     """Endpoint returns runnable bash script for remote VPS deployment."""
     headers = {"Authorization": f"Bearer {admin_token}"}
@@ -208,3 +254,84 @@ async def test_get_node_install_script(client: AsyncClient, admin_token: str) ->
     assert node["reality_short_id"] in script_text
     assert "images.apple.com" in script_text
     assert "www.yahoo.co.jp" in script_text
+
+
+@pytest.mark.asyncio
+async def test_generate_install_script_multi_inbound(client: AsyncClient, admin_token: str) -> None:
+    """Multi-carrier node generates independent inbounds for each SNI with matching dest and port."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    create_res = await client.post(
+        "/api/v1/admin/nodes",
+        json={
+            "name": "Multi Carrier VPS",
+            "host": "107.175.144.245",
+            "inbound_port": 8443,
+            "sni_profiles": [
+                {"carrier": "Docomo", "domain": "images.apple.com", "port": 8443},
+                {"carrier": "Linemo", "domain": "www.linemo.jp", "port": 8444},
+                {"carrier": "Viettel", "domain": "gateway.icloud.com", "port": 8445},
+            ],
+        },
+        headers=headers,
+    )
+    assert create_res.status_code == 201
+    node_id = create_res.json()["id"]
+
+    script_res = await client.get(
+        f"/api/v1/admin/nodes/{node_id}/install-script",
+        headers=headers,
+    )
+    assert script_res.status_code == 200
+    script_text = script_res.text
+
+    # Verify all ports exist
+    assert "8443" in script_text
+    assert "8444" in script_text
+    assert "8445" in script_text
+
+    # Verify all distinct dest domains exist
+    assert '"dest": "images.apple.com:443"' in script_text
+    assert '"dest": "www.linemo.jp:443"' in script_text
+    assert '"dest": "gateway.icloud.com:443"' in script_text
+
+    # Verify tags
+    assert '"tag": "vless-reality-8443"' in script_text
+    assert '"tag": "vless-reality-8444"' in script_text
+    assert '"tag": "vless-reality-8445"' in script_text
+
+
+@pytest.mark.asyncio
+async def test_get_node_sync_script(client: AsyncClient, admin_token: str) -> None:
+    """Endpoint returns lightweight 1-second reload script for syncing config changes to VPS."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    create_res = await client.post(
+        "/api/v1/admin/nodes",
+        json={
+            "name": "Sync VPS",
+            "host": "107.175.144.245",
+            "inbound_port": 8443,
+            "sni_profiles": [
+                {"carrier": "Docomo", "domain": "images.apple.com", "port": 8443},
+                {"carrier": "Linemo", "domain": "www.linemo.jp", "port": 8444},
+            ],
+        },
+        headers=headers,
+    )
+    node_id = create_res.json()["id"]
+
+    sync_res = await client.get(
+        f"/api/v1/admin/nodes/{node_id}/sync-script",
+        headers=headers,
+    )
+    assert sync_res.status_code == 200
+    assert "text/plain" in sync_res.headers.get("content-type", "")
+
+    script_text = sync_res.text
+    assert "#!/usr/bin/env bash" in script_text
+    assert "/etc/xray/config.json" in script_text
+    assert "docker restart xray-core" in script_text
+    assert "www.linemo.jp:443" in script_text
+    # Ensure it doesn't do heavy re-installation
+    assert "get.docker.com" not in script_text

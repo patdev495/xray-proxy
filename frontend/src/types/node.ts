@@ -3,18 +3,21 @@ export interface SniProfile {
   node_id: number;
   carrier: string;
   domain: string;
+  port: number;
   is_active: boolean;
 }
 
 export interface SniProfileCreate {
   carrier: string;
   domain: string;
+  port?: number;
   is_active?: boolean;
 }
 
 export interface SniProfileUpdate {
   carrier?: string;
   domain?: string;
+  port?: number;
   is_active?: boolean;
 }
 

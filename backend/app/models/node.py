@@ -38,6 +38,7 @@ class SniProfile(Base):
     )
     carrier: Mapped[str] = mapped_column(String(100), nullable=False)
     domain: Mapped[str] = mapped_column(String(255), nullable=False)
+    port: Mapped[int] = mapped_column(Integer, default=443, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     node: Mapped["Node"] = relationship("Node", back_populates="sni_profiles")
