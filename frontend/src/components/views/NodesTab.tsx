@@ -10,8 +10,7 @@ import {
   RefreshCw, 
   Layers,
   Sparkles,
-  Server,
-  Users
+  Server
 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -31,7 +30,6 @@ import {
   deleteSniProfile,
   fetchNodeInstallScript,
   fetchNodeSyncScript,
-  syncNodeUsers,
 } from '../../services/apiClient';
 import type { NodeItem, RealityKeys } from '../../types/node';
 
@@ -341,29 +339,6 @@ export const NodesTab: React.FC = () => {
     }
   };
 
-  const [isSyncingUsers, setIsSyncingUsers] = useState<boolean>(false);
-
-  const handleSyncNodeUsers = async (node: NodeItem) => {
-    if (!token) return;
-    try {
-      setIsSyncingUsers(true);
-      const res = await syncNodeUsers(token, node.id);
-      showToast({
-        type: 'success',
-        title: 'Users Synced to Node',
-        message: `Pushed ${res.synced_users} active subscription(s) to ${res.node_name} across ${res.inbound_tags.length} port(s).`,
-      });
-    } catch (err) {
-      showToast({
-        type: 'error',
-        title: 'Sync Users Failed',
-        message: err instanceof Error ? err.message : 'Failed to sync users via gRPC',
-      });
-    } finally {
-      setIsSyncingUsers(false);
-    }
-  };
-
   const handleOpenSyncScript = async (node: NodeItem) => {
     if (!token) return;
     setActiveScriptNode(node);
@@ -552,17 +527,6 @@ export const NodesTab: React.FC = () => {
                     {/* Actions */}
                     <td className="py-4 px-5 text-right">
                       <div className="inline-flex items-center gap-1.5">
-                        {/* Push Users via gRPC */}
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleSyncNodeUsers(node)}
-                          title="Push active users into Xray memory via gRPC"
-                        >
-                          <Users className="w-3.5 h-3.5" />
-                          <span className="hidden lg:inline">Users</span>
-                        </Button>
-
                         {/* 1-Line Sync Script */}
                         <Button
                           variant="secondary"
@@ -854,26 +818,14 @@ export const NodesTab: React.FC = () => {
                 <div className="font-semibold text-indigo-950">Apply Changes to VPS</div>
                 <div className="text-[11px] text-indigo-700/90">Reload multi-inbound ports on VPS in 0.5s (with all active users embedded).</div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  leftIcon={<Users className="w-3.5 h-3.5 text-indigo-600" />}
-                  isLoading={isSyncingUsers}
-                  onClick={() => handleSyncNodeUsers(activeSniNode)}
-                  title="Push active users to node via gRPC without restarting"
-                >
-                  Sync Users
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  leftIcon={<RefreshCw className="w-3.5 h-3.5 text-indigo-600" />}
-                  onClick={() => handleOpenSyncScript(activeSniNode)}
-                >
-                  View Sync Script
-                </Button>
-              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={<RefreshCw className="w-3.5 h-3.5 text-indigo-600" />}
+                onClick={() => handleOpenSyncScript(activeSniNode)}
+              >
+                View Sync Script
+              </Button>
             </div>
           )}
         </div>
