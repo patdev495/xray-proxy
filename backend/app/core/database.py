@@ -31,9 +31,20 @@ AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
 
 
 async def init_db() -> None:
-    """Initialize database tables."""
+    """Initialize database tables and apply schema updates if needed."""
+    from sqlalchemy import inspect as sa_inspect, text
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+        def _migrate(connection) -> None:
+            insp = sa_inspect(connection)
+            if "sni_profiles" in insp.get_table_names():
+                cols = [c["name"] for c in insp.get_columns("sni_profiles")]
+                if "port" not in cols:
+                    connection.execute(text("ALTER TABLE sni_profiles ADD COLUMN port INTEGER NOT NULL DEFAULT 443"))
+
+        await conn.run_sync(_migrate)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
