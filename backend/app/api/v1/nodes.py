@@ -221,7 +221,7 @@ async def get_node_install_script_endpoint(
         )
     active_subs = await get_active_subscriptions_for_node(db, node_id)
     clients = [
-        {"id": sub.uuid, "flow": "xtls-rprx-vision", "email": sub.token}
+        {"id": sub.uuid, "flow": "", "email": sub.token}
         for sub in active_subs
     ]
     script_content = generate_install_script(node, clients=clients)
@@ -250,7 +250,7 @@ async def get_node_sync_script_endpoint(
         )
     active_subs = await get_active_subscriptions_for_node(db, node_id)
     clients = [
-        {"id": sub.uuid, "flow": "xtls-rprx-vision", "email": sub.token}
+        {"id": sub.uuid, "flow": "", "email": sub.token}
         for sub in active_subs
     ]
     script_content = generate_sync_script(node, clients=clients)

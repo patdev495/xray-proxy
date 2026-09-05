@@ -36,7 +36,6 @@ def build_vless_link(
         "pbk": public_key,
         "headerType": "none",
         "type": "tcp",
-        "flow": "xtls-rprx-vision",
         "sni": sni,
         "sid": short_id,
         "fp": "chrome",

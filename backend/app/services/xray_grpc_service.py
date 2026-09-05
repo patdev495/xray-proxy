@@ -46,7 +46,7 @@ def add_user_to_node(node: Node, sub_uuid: str, sub_token: str, timeout: float =
         with grpc.insecure_channel(target) as channel:
             stub = proxyman_grpc.HandlerServiceStub(channel)
 
-            vless_acc = vless_account.Account(id=sub_uuid, flow="xtls-rprx-vision")
+            vless_acc = vless_account.Account(id=sub_uuid, flow="")
             acc_typed = serial_msg.TypedMessage(
                 type="xray.proxy.vless.Account",
                 value=vless_acc.SerializeToString(),
