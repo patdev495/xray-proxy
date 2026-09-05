@@ -74,6 +74,9 @@ def add_user_to_node(node: Node, sub_uuid: str, sub_token: str, timeout: float =
             logger.info("Added user %s to node %s (%s) on tags %s", sub_token, node.name, target, tags)
             return True
     except grpc.RpcError as exc:
+        if "already exists" in str(exc):
+            logger.info("User %s already registered in node %s (%s)", sub_token, node.name, target)
+            return True
         logger.warning("Failed to add user %s to node %s (%s): %s", sub_token, node.name, target, exc)
         return False
     except Exception as exc:
