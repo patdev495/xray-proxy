@@ -67,8 +67,14 @@ cat << 'EOF' > /etc/xray/config.json
           "privateKey": "qGPc6JKKUpHXPSMRQC2TIk2srUu9nvnWJW8NuBft_3Y",
           "shortIds": [
             "6760aa63fc01cff2"
-          ]
+          ],
+          "minClientVer": "0.0.0"
         }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": ["http", "tls", "quic"],
+        "routeOnly": false
       },
       "tag": "vless-reality"
     },

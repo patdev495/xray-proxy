@@ -200,7 +200,13 @@ def generate_xray_config_dict(
                     "serverNames": ["images.apple.com"],
                     "privateKey": node.reality_private_key,
                     "shortIds": [node.reality_short_id],
+                    "minClientVer": "0.0.0",
                 },
+            },
+            "sniffing": {
+                "enabled": True,
+                "destOverride": ["http", "tls", "quic"],
+                "routeOnly": False,
             },
             "tag": "vless-reality",
         })
@@ -225,7 +231,13 @@ def generate_xray_config_dict(
                         "serverNames": [sni.domain],
                         "privateKey": node.reality_private_key,
                         "shortIds": [node.reality_short_id],
+                        "minClientVer": "0.0.0",
                     },
+                },
+                "sniffing": {
+                    "enabled": True,
+                    "destOverride": ["http", "tls", "quic"],
+                    "routeOnly": False,
                 },
                 "tag": f"vless-reality-{port}",
             })
@@ -281,11 +293,6 @@ def generate_xray_config_dict(
                 {
                     "inboundTag": ["api"],
                     "outboundTag": "api",
-                    "type": "field",
-                },
-                {
-                    "ip": ["::/0"],
-                    "outboundTag": "blocked",
                     "type": "field",
                 },
             ]
