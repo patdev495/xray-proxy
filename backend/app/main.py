@@ -12,7 +12,10 @@ from app.api.v1.public_sub import router as public_sub_router
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal, init_db
 from app.services.user_service import seed_default_admin
-from app.services.xray_grpc_service import sync_all_nodes_stats_and_enforce
+from app.services.xray_grpc_service import (
+    sync_all_active_users_to_all_nodes,
+    sync_all_nodes_stats_and_enforce,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +43,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await init_db()
     async with AsyncSessionLocal() as session:
         await seed_default_admin(session)
+        try:
+            synced = await sync_all_active_users_to_all_nodes(session)
+            logger.info("Auto-synced active subscriptions to nodes on startup: %s", synced)
+        except Exception as exc:
+            logger.warning("Startup node user sync warning: %s", exc)
 
     # Start periodic poller in background
     poller = asyncio.create_task(periodic_poller_task(300))

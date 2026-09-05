@@ -263,6 +263,26 @@ export async function fetchNodeSyncScript(token: string, nodeId: number): Promis
   return response.text();
 }
 
+export async function syncNodeUsers(
+  token: string,
+  nodeId: number
+): Promise<{ node_id: number; node_name: string; synced_users: number; inbound_tags: string[] }> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/nodes/${nodeId}/sync-users`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to sync users to node');
+  }
+
+  return response.json();
+}
+
 // ---------------------------------------------------------------------------
 // Subscription Management API
 // ---------------------------------------------------------------------------

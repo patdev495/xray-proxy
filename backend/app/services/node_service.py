@@ -1,9 +1,11 @@
+from datetime import datetime, timezone
 import json
 from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.node import Node, SniProfile
+from app.models.subscription import Subscription, SubscriptionStatus
 from app.schemas.node import NodeCreate, NodeUpdate, SniProfileCreate, SniProfileUpdate
 from app.services.reality_service import generate_reality_keypair
 
@@ -144,9 +146,39 @@ async def delete_sni_profile(db: AsyncSession, sni: SniProfile) -> None:
     await db.commit()
 
 
-def generate_xray_config_dict(node: Node) -> dict[str, Any]:
-    """Generate the full Xray configuration JSON dictionary for a node."""
+async def get_active_subscriptions_for_node(db: AsyncSession, node_id: int) -> list[Subscription]:
+    """Retrieve all active, unexpired subscriptions applicable to the specified node."""
+    now = datetime.now(timezone.utc)
+    result = await db.execute(
+        select(Subscription).where(
+            Subscription.status == SubscriptionStatus.ACTIVE,
+        )
+    )
+    all_active = list(result.scalars().all())
+    applicable: list[Subscription] = []
+    for sub in all_active:
+        sub_expires_at = sub.expires_at
+        if sub_expires_at.tzinfo is None:
+            sub_expires_at = sub_expires_at.replace(tzinfo=timezone.utc)
+        if sub_expires_at <= now:
+            continue
+        if sub.traffic_quota_bytes > 0 and sub.traffic_used_bytes >= sub.traffic_quota_bytes:
+            continue
+        if sub.nodes:
+            if any(n.id == node_id for n in sub.nodes):
+                applicable.append(sub)
+        else:
+            applicable.append(sub)
+    return applicable
+
+
+def generate_xray_config_dict(
+    node: Node,
+    clients: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Generate the full Xray configuration JSON dictionary for a node with embedded clients."""
     active_snis = [sni for sni in node.sni_profiles if sni.is_active and sni.domain]
+    client_list: list[dict[str, Any]] = clients if clients is not None else []
     inbounds: list[dict[str, Any]] = []
 
     if not active_snis:
@@ -155,7 +187,7 @@ def generate_xray_config_dict(node: Node) -> dict[str, Any]:
             "port": node.inbound_port,
             "protocol": "vless",
             "settings": {
-                "clients": [],
+                "clients": client_list,
                 "decryption": "none",
             },
             "streamSettings": {
@@ -180,7 +212,7 @@ def generate_xray_config_dict(node: Node) -> dict[str, Any]:
                 "port": port,
                 "protocol": "vless",
                 "settings": {
-                    "clients": [],
+                    "clients": client_list,
                     "decryption": "none",
                 },
                 "streamSettings": {
@@ -261,9 +293,12 @@ def generate_xray_config_dict(node: Node) -> dict[str, Any]:
     }
 
 
-def generate_install_script(node: Node) -> str:
+def generate_install_script(
+    node: Node,
+    clients: list[dict[str, Any]] | None = None,
+) -> str:
     """Generate a 1-line runnable bash deployment script for remote VPS with multi-inbound reality configs."""
-    xray_config = generate_xray_config_dict(node)
+    xray_config = generate_xray_config_dict(node, clients=clients)
     config_json_str = json.dumps(xray_config, indent=2)
 
     active_snis = [sni for sni in node.sni_profiles if sni.is_active and sni.domain]
@@ -321,9 +356,12 @@ echo "==========================================================================
     return script.replace("\r\n", "\n")
 
 
-def generate_sync_script(node: Node) -> str:
+def generate_sync_script(
+    node: Node,
+    clients: list[dict[str, Any]] | None = None,
+) -> str:
     """Generate a lightweight bash script to update /etc/xray/config.json and reload xray-core on VPS in 0.5s."""
-    xray_config = generate_xray_config_dict(node)
+    xray_config = generate_xray_config_dict(node, clients=clients)
     config_json_str = json.dumps(xray_config, indent=2)
 
     active_snis = [sni for sni in node.sni_profiles if sni.is_active and sni.domain]

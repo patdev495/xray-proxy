@@ -1,3 +1,4 @@
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +20,7 @@ from app.services.node_service import (
     delete_sni_profile,
     generate_install_script,
     generate_sync_script,
+    get_active_subscriptions_for_node,
     get_node_by_id,
     get_nodes,
     get_sni_profile_by_id,
@@ -26,6 +28,7 @@ from app.services.node_service import (
     update_sni_profile,
 )
 from app.services.reality_service import generate_reality_keypair
+from app.services.xray_grpc_service import get_node_inbound_tags, sync_all_users_to_node
 
 router: APIRouter = APIRouter(
     prefix="/admin/nodes",
@@ -216,7 +219,12 @@ async def get_node_install_script_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Node {node_id} not found",
         )
-    script_content = generate_install_script(node)
+    active_subs = await get_active_subscriptions_for_node(db, node_id)
+    clients = [
+        {"id": sub.uuid, "flow": "", "email": sub.token}
+        for sub in active_subs
+    ]
+    script_content = generate_install_script(node, clients=clients)
     return Response(
         content=script_content,
         media_type="text/plain; charset=utf-8",
@@ -240,10 +248,39 @@ async def get_node_sync_script_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Node {node_id} not found",
         )
-    script_content = generate_sync_script(node)
+    active_subs = await get_active_subscriptions_for_node(db, node_id)
+    clients = [
+        {"id": sub.uuid, "flow": "", "email": sub.token}
+        for sub in active_subs
+    ]
+    script_content = generate_sync_script(node, clients=clients)
     return Response(
         content=script_content,
         media_type="text/plain; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="xray-sync-node-{node.id}.sh"'},
     )
+
+
+@router.post(
+    "/{node_id}/sync-users",
+    summary="Push all active subscriptions to node via gRPC",
+)
+async def sync_node_users_endpoint(
+    node_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """Trigger gRPC push of all active users to this node's inbound tags."""
+    node = await get_node_by_id(db, node_id)
+    if not node:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Node {node_id} not found",
+        )
+    synced_count = await sync_all_users_to_node(db, node)
+    return {
+        "node_id": node.id,
+        "node_name": node.name,
+        "synced_users": synced_count,
+        "inbound_tags": get_node_inbound_tags(node),
+    }
 

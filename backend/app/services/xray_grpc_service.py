@@ -188,6 +188,30 @@ async def remove_user_from_all_nodes(db: AsyncSession, subscription: Subscriptio
     return success_ids
 
 
+async def sync_all_users_to_node(db: AsyncSession, node: Node) -> int:
+    """Register all active applicable subscriptions to the specified node across all inbound tags."""
+    from app.services.node_service import get_active_subscriptions_for_node
+
+    active_subs = await get_active_subscriptions_for_node(db, node.id)
+    success_count = 0
+    for sub in active_subs:
+        if add_user_to_node(node, sub.uuid, sub.token):
+            success_count += 1
+    logger.info("Synced %d/%d active users to node %s", success_count, len(active_subs), node.name)
+    return success_count
+
+
+async def sync_all_active_users_to_all_nodes(db: AsyncSession) -> dict[str, int]:
+    """Startup & recovery routine: register all active subscriptions to all active nodes."""
+    res = await db.execute(select(Node).where(Node.is_active.is_(True)))
+    nodes = list(res.scalars().all())
+    stats: dict[str, int] = {}
+    for node in nodes:
+        count = await sync_all_users_to_node(db, node)
+        stats[node.name] = count
+    return stats
+
+
 
 async def sync_all_nodes_stats_and_enforce(db: AsyncSession) -> dict[str, Any]:
     """

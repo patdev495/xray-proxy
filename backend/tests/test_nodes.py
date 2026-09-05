@@ -335,3 +335,81 @@ async def test_get_node_sync_script(client: AsyncClient, admin_token: str) -> No
     assert "www.linemo.jp:443" in script_text
     # Ensure it doesn't do heavy re-installation
     assert "get.docker.com" not in script_text
+
+
+@pytest.mark.asyncio
+async def test_sync_script_embeds_active_subscribers(client: AsyncClient, admin_token: str) -> None:
+    """Sync script automatically embeds active subscriber UUIDs into config.json so restarts preserve clients."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    # 1. Create node
+    node_res = await client.post(
+        "/api/v1/admin/nodes",
+        json={
+            "name": "Embedded Clients Node",
+            "host": "1.2.3.4",
+            "inbound_port": 8443,
+            "sni_profiles": [
+                {"carrier": "Linemo", "domain": "www.linemo.jp", "port": 8443},
+            ],
+        },
+        headers=headers,
+    )
+    node_id = node_res.json()["id"]
+
+    # 2. Create subscription assigned to node
+    sub_res = await client.post(
+        "/api/v1/admin/subscriptions",
+        json={
+            "customer_name": "Embedded VIP User",
+            "traffic_quota_bytes": 100 * 1024 * 1024 * 1024,
+            "duration_days": 30,
+            "node_ids": [node_id],
+        },
+        headers=headers,
+    )
+    assert sub_res.status_code == 201
+    sub_data = sub_res.json()
+    sub_uuid = sub_data["uuid"]
+    sub_token = sub_data["token"]
+
+    # 3. Fetch sync script and install script
+    sync_res = await client.get(f"/api/v1/admin/nodes/{node_id}/sync-script", headers=headers)
+    assert sync_res.status_code == 200
+    assert sub_uuid in sync_res.text
+    assert sub_token in sync_res.text
+
+    install_res = await client.get(f"/api/v1/admin/nodes/{node_id}/install-script", headers=headers)
+    assert install_res.status_code == 200
+    assert sub_uuid in install_res.text
+
+
+@pytest.mark.asyncio
+async def test_sync_node_users_endpoint(client: AsyncClient, admin_token: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """POST /admin/nodes/{id}/sync-users calls gRPC to push active users to all inbound tags."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+
+    # Mock add_user_to_node to simulate successful gRPC registration
+    monkeypatch.setattr("app.services.xray_grpc_service.add_user_to_node", lambda *args, **kwargs: True)
+
+    node_res = await client.post(
+        "/api/v1/admin/nodes",
+        json={
+            "name": "gRPC Push Node",
+            "host": "1.2.3.4",
+            "inbound_port": 8443,
+            "sni_profiles": [
+                {"carrier": "Linemo", "domain": "www.linemo.jp", "port": 8443},
+            ],
+        },
+        headers=headers,
+    )
+    node_id = node_res.json()["id"]
+
+    # Trigger sync-users
+    sync_res = await client.post(f"/api/v1/admin/nodes/{node_id}/sync-users", headers=headers)
+    assert sync_res.status_code == 200
+    data = sync_res.json()
+    assert data["node_id"] == node_id
+    assert "synced_users" in data
+    assert data["inbound_tags"] == ["vless-reality-8443"]
