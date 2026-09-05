@@ -322,27 +322,39 @@ def generate_install_script(
 # ==============================================================================
 set -euo pipefail
 
-echo "==> [1/4] Checking Docker environment..."
+echo "==> [1/5] Checking Docker environment..."
 if ! command -v docker >/dev/null 2>&1; then
     echo "Docker not found. Installing Docker..."
     curl -fsSL https://get.docker.com | sh
 fi
 
-echo "==> [2/4] Verifying port safety for ports: {port_list_str}..."
+echo "==> [2/5] Verifying port safety for ports: {port_list_str}..."
 for p in {port_list_str}; do
     if ss -tuln 2>/dev/null | grep -q ":$p "; then
         echo "Info: Port $p is currently active (will be managed by xray container)."
     fi
 done
 
-echo "==> [3/4] Generating /etc/xray/config.json..."
+echo "==> [3/5] Generating /etc/xray/config.json..."
 mkdir -p /etc/xray
 
 cat << 'EOF' > /etc/xray/config.json
 {config_json_str}
 EOF
 
-echo "==> [4/4] Starting xray-core container..."
+echo "==> [4/5] Enabling TCP BBR & Kernel Network Buffer Tuning..."
+mkdir -p /etc/sysctl.d
+cat << 'EOF' > /etc/sysctl.d/99-xray-speed.conf
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+net.core.rmem_max = 33554432
+net.core.wmem_max = 33554432
+net.ipv4.tcp_rmem = 4096 87380 33554432
+net.ipv4.tcp_wmem = 4096 65536 33554432
+EOF
+sysctl --system >/dev/null 2>&1 || true
+
+echo "==> [5/5] Starting xray-core container..."
 docker pull teddysun/xray:latest
 docker stop xray-core 2>/dev/null || true
 docker rm xray-core 2>/dev/null || true
@@ -358,6 +370,7 @@ echo "==========================================================================
 echo "==> xray-core Node successfully installed and running on {node.host}!"
 echo "==> VLESS Reality listening on ports: {port_list_str}"
 echo "==> gRPC Service listening on port {node.grpc_port}"
+echo "==> TCP BBR Acceleration: ENABLED (32MB window buffers)"
 echo "=============================================================================="
 """
     return script.replace("\r\n", "\n")

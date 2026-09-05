@@ -112,10 +112,22 @@ cat << 'EOF' > /etc/xray/config.json
 }
 EOF
 
-echo "==> [3/4] Pulling teddysun/xray Docker image..."
+echo "==> [3/5] Pulling teddysun/xray Docker image..."
 docker pull teddysun/xray:latest
 
-echo "==> [4/4] Starting xray-core container..."
+echo "==> [4/5] Enabling TCP BBR & Kernel Network Buffer Tuning..."
+mkdir -p /etc/sysctl.d
+cat << 'EOF' > /etc/sysctl.d/99-xray-speed.conf
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+net.core.rmem_max = 33554432
+net.core.wmem_max = 33554432
+net.ipv4.tcp_rmem = 4096 87380 33554432
+net.ipv4.tcp_wmem = 4096 65536 33554432
+EOF
+sysctl --system >/dev/null 2>&1 || true
+
+echo "==> [5/5] Starting xray-core container..."
 docker stop xray-core 2>/dev/null || true
 docker rm xray-core 2>/dev/null || true
 
