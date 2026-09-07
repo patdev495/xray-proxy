@@ -90,3 +90,38 @@ export async function confirmAdminOrder(
   const data: Order = await response.json();
   return data;
 }
+
+export async function fetchMyOrders(token: string): Promise<Order[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/orders/my-orders`, {
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorDetail = await parseError(response, 'Failed to fetch my orders');
+    throw new Error(errorDetail);
+  }
+
+  const data: Order[] = await response.json();
+  return data;
+}
+
+export async function cancelMyOrder(token: string, orderId: number): Promise<Order> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/orders/${orderId}/cancel`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorDetail = await parseError(response, 'Failed to cancel order');
+    throw new Error(errorDetail);
+  }
+
+  const data: Order = await response.json();
+  return data;
+}

@@ -242,3 +242,96 @@ async def test_order_transfer_prefix_and_vietinbank(
         get_res = await client.get(f"/api/v1/orders/{code}")
         assert get_res.status_code == 200
         assert get_res.json()["transfer_content"] == f"MYSHOP {code}"
+
+
+@pytest.mark.asyncio
+async def test_get_my_orders(
+    test_plan_and_nodes: tuple[Plan, Region],
+    customer_token: str,
+) -> None:
+    """Authenticated customer can retrieve list of their own orders."""
+    plan, _ = test_plan_and_nodes
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as client:
+        # Create an order
+        res = await client.post(
+            "/api/v1/orders/create",
+            headers={"Authorization": f"Bearer {customer_token}"},
+            json={"plan_id": plan.id, "region": "VN"},
+        )
+        assert res.status_code == 200
+
+        # Query my orders
+        my_res = await client.get(
+            "/api/v1/orders/my-orders",
+            headers={"Authorization": f"Bearer {customer_token}"},
+        )
+        assert my_res.status_code == 200
+        orders = my_res.json()
+        assert isinstance(orders, list)
+        assert len(orders) >= 1
+        assert orders[0]["plan_id"] == plan.id
+        assert "transfer_content" in orders[0]
+
+
+@pytest.mark.asyncio
+async def test_cancel_my_pending_order(
+    test_plan_and_nodes: tuple[Plan, Region],
+    customer_token: str,
+) -> None:
+    """Customer can cancel their own pending order."""
+    plan, _ = test_plan_and_nodes
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as client:
+        # Create an order
+        create_res = await client.post(
+            "/api/v1/orders/create",
+            headers={"Authorization": f"Bearer {customer_token}"},
+            json={"plan_id": plan.id, "region": "VN"},
+        )
+        order_id = create_res.json()["id"]
+
+        # Cancel the order
+        cancel_res = await client.post(
+            f"/api/v1/orders/{order_id}/cancel",
+            headers={"Authorization": f"Bearer {customer_token}"},
+        )
+        assert cancel_res.status_code == 200
+        assert cancel_res.json()["status"] == "CANCELLED"
+
+        # Verify status is updated
+        code = create_res.json()["code"]
+        get_res = await client.get(f"/api/v1/orders/{code}")
+        assert get_res.json()["status"] == "CANCELLED"
+
+
+@pytest.mark.asyncio
+async def test_cannot_cancel_unauthorized_order(
+    test_plan_and_nodes: tuple[Plan, Region],
+    customer_token: str,
+    admin_token: str,
+) -> None:
+    """Cannot cancel an order belonging to another customer."""
+    plan, _ = test_plan_and_nodes
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as client:
+        # Admin creates an order
+        create_res = await client.post(
+            "/api/v1/orders/create",
+            headers={"Authorization": f"Bearer {admin_token}"},
+            json={"plan_id": plan.id, "region": "VN"},
+        )
+        order_id = create_res.json()["id"]
+
+        # Customer attempts to cancel Admin's order
+        cancel_res = await client.post(
+            f"/api/v1/orders/{order_id}/cancel",
+            headers={"Authorization": f"Bearer {customer_token}"},
+        )
+        assert cancel_res.status_code in (403, 404)

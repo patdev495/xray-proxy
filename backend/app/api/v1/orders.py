@@ -6,10 +6,12 @@ from app.models.order import OrderStatus
 from app.models.user import User
 from app.schemas.order import OrderCreate, OrderResponse
 from app.services.order_service import (
+    cancel_user_order,
     confirm_order_payment_manually,
     create_order,
     get_admin_orders,
     get_order_by_code,
+    get_user_orders,
     to_order_response,
 )
 
@@ -35,6 +37,28 @@ async def create_order_endpoint(
         plan_id=payload.plan_id,
         region=payload.region,
     )
+    return await to_order_response(order, db)
+
+
+@router.get("/my-orders", response_model=list[OrderResponse])
+async def list_my_orders_endpoint(
+    limit: int = Query(default=50, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[OrderResponse]:
+    """Retrieve list of orders belonging to the currently authenticated customer."""
+    orders = await get_user_orders(db, user_id=current_user.id, limit=limit)
+    return [await to_order_response(o, db) for o in orders]
+
+
+@router.post("/{order_id}/cancel", response_model=OrderResponse)
+async def cancel_order_endpoint(
+    order_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> OrderResponse:
+    """Customer cancels their own pending order."""
+    order = await cancel_user_order(db, order_id=order_id, user_id=current_user.id)
     return await to_order_response(order, db)
 
 

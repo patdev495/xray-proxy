@@ -322,6 +322,51 @@ async def get_admin_orders(
     return list(result.scalars().all())
 
 
+async def get_user_orders(
+    db: AsyncSession,
+    user_id: int,
+    limit: int = 50,
+) -> list[Order]:
+    """Retrieve orders for a specific user ordered by created_at desc."""
+    stmt = (
+        select(Order)
+        .where(Order.user_id == user_id)
+        .options(
+            selectinload(Order.plan),
+            selectinload(Order.user),
+            selectinload(Order.subscription),
+        )
+        .order_by(Order.created_at.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+async def cancel_user_order(
+    db: AsyncSession,
+    order_id: int,
+    user_id: int,
+) -> Order:
+    """Cancel a pending order belonging to the user."""
+    order = await get_order_by_id(db, order_id)
+    if not order or order.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Order {order_id} not found",
+        )
+    if order.status != OrderStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot cancel order with status {order.status.value}",
+        )
+    order.status = OrderStatus.CANCELLED
+    await db.commit()
+    await db.refresh(order)
+    reloaded = await get_order_by_id(db, order_id)
+    return reloaded or order
+
+
 async def to_order_response(order: Order, db: AsyncSession) -> OrderResponse:
     """Format Order entity into OrderResponse with dynamic VietQR details."""
     settings_dict = await get_system_settings(db)

@@ -66,5 +66,7 @@ export {
   fetchOrderByCode,
   fetchAdminOrders,
   confirmAdminOrder,
+  fetchMyOrders,
+  cancelMyOrder,
 } from './api/orders';
 
