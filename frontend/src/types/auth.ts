@@ -1,9 +1,12 @@
 export interface User {
   id: number;
   username: string;
+  email?: string | null;
   role: 'ADMIN' | 'CUSTOMER';
   is_active: boolean;
+  oauth_provider?: string | null;
 }
+
 
 export interface Token {
   access_token: string;

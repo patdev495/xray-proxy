@@ -51,3 +51,50 @@ export async function fetchCurrentUser(token: string): Promise<User> {
   const data: User = await response.json();
   return data;
 }
+
+export async function registerUser(
+  username: string,
+  password: string,
+  email?: string
+): Promise<Token> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      username,
+      password,
+      email: email && email.trim() ? email.trim() : null,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorDetail = await parseError(response, 'Registration failed');
+    throw new Error(errorDetail);
+  }
+
+  const data: Token = await response.json();
+  return data;
+}
+
+export async function loginWithGoogle(idToken: string): Promise<Token> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/auth/google`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({ id_token: idToken }),
+  });
+
+  if (!response.ok) {
+    const errorDetail = await parseError(response, 'Google authentication failed');
+    throw new Error(errorDetail);
+  }
+
+  const data: Token = await response.json();
+  return data;
+}
+

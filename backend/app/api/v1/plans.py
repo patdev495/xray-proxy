@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin, get_db
+from app.models.plan import Plan
 from app.schemas.plan import PlanCreate, PlanResponse, PlanUpdate
+
 from app.services.plan_service import (
     create_plan,
     delete_plan,
@@ -23,7 +25,7 @@ public_router: APIRouter = APIRouter(
 )
 
 
-def _to_response(plan) -> PlanResponse:
+def _to_response(plan: Plan) -> PlanResponse:
     quota_gb = int(plan.traffic_quota_bytes // (1024 * 1024 * 1024))
     return PlanResponse(
         id=plan.id,

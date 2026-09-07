@@ -1,6 +1,6 @@
 # 03-auth-google-customer-onboarding
 
-Status: ready-for-agent
+Status: done
 
 ## Parent
 
@@ -16,10 +16,10 @@ Role-based post-login redirection: `ADMIN` -> `/admin`, `CUSTOMER` -> `/portal`.
 
 ## Acceptance criteria
 
-- [ ] `User` model supports email and optional OAuth identity fields.
-- [ ] Customer can register with username/password and receive valid JWT session.
-- [ ] Google OAuth exchange endpoint functions when configured, frontend hides button gracefully when missing config.
-- [ ] Post-login redirection sends `ADMIN` to `/admin` and `CUSTOMER` to `/portal`.
+- [x] `User` model supports email and optional OAuth identity fields.
+- [x] Customer can register with username/password and receive valid JWT session.
+- [x] Google OAuth exchange endpoint functions when configured, frontend hides button gracefully when missing config.
+- [x] Post-login redirection sends `ADMIN` to `/admin` and `CUSTOMER` to `/portal`.
 
 ## Blocked by
 
@@ -28,3 +28,11 @@ Role-based post-login redirection: `ADMIN` -> `/admin`, `CUSTOMER` -> `/portal`.
 ## Comments
 
 > *Generated from architectural decisions in ADR 0010.*
+
+- Completed via TDD across backend and frontend.
+- Added `email`, `oauth_provider`, `oauth_id` to `User` model with nullable `hashed_password` for OAuth users.
+- Implemented `/api/v1/auth/register` (auto-logs in with CUSTOMER role JWT) and `/api/v1/auth/google` (Google tokeninfo verification + customer auto-provisioning).
+- Created Pristine Light unified auth page with Sign In / Register tabs and graceful Google OAuth fallback.
+- Added initial `CustomerPortal` shell and implemented role-based redirection (`ADMIN` -> `/admin`, `CUSTOMER` -> `/portal`).
+- Full test suite verified: 55 backend tests passing, static typing clean with `mypy`, frontend built cleanly with `tsc -b && vite build`.
+

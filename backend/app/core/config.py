@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     )
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
+    google_client_id: str | None = Field(
+        default=None,
+        description="Google OAuth Client ID for customer authentication",
+    )
+
 
     # CORS
     cors_origins: list[str] = Field(

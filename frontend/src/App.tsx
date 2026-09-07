@@ -13,6 +13,8 @@ import { SubscriptionsTab } from './components/views/SubscriptionsTab';
 import { NodeSyncTab } from './components/views/NodeSyncTab';
 import { PlansSettingsTab } from './components/views/PlansSettingsTab';
 
+import { CustomerPortal } from './components/portal/CustomerPortal';
+
 const AuthenticatedDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTabId>('overview');
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -68,6 +70,43 @@ const AuthenticatedDashboard: React.FC = () => {
 
 const AuthGate: React.FC = () => {
   const { token, user, isLoading } = useAuth();
+  const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname);
+
+  // Sync currentPath on browser back/forward
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Handle post-login redirection based on role
+  useEffect(() => {
+    if (!token || !user || isLoading) return;
+
+    if (user.role === 'ADMIN') {
+      if (currentPath !== '/admin') {
+        window.history.replaceState(null, '', '/admin');
+        setCurrentPath('/admin');
+      }
+    } else if (user.role === 'CUSTOMER') {
+      if (currentPath !== '/portal') {
+        window.history.replaceState(null, '', '/portal');
+        setCurrentPath('/portal');
+      }
+    }
+  }, [token, user, isLoading, currentPath]);
+
+  // Handle unauthenticated route redirection
+  useEffect(() => {
+    if (isLoading || token) return;
+    // If attempting to access /admin or /portal without token, redirect to /login
+    if (currentPath === '/admin' || currentPath === '/portal') {
+      window.history.replaceState(null, '', '/login');
+      setCurrentPath('/login');
+    }
+  }, [isLoading, token, currentPath]);
 
   if (isLoading) {
     return (
@@ -83,7 +122,21 @@ const AuthGate: React.FC = () => {
   }
 
   if (!token || !user) {
-    return <LoginPage />;
+    const authMode: 'login' | 'register' = currentPath === '/register' ? 'register' : 'login';
+    return (
+      <LoginPage
+        initialMode={authMode}
+        onModeChange={(newMode) => {
+          const targetPath = newMode === 'register' ? '/register' : '/login';
+          window.history.pushState(null, '', targetPath);
+          setCurrentPath(targetPath);
+        }}
+      />
+    );
+  }
+
+  if (user.role === 'CUSTOMER') {
+    return <CustomerPortal />;
   }
 
   return <AuthenticatedDashboard />;
@@ -100,3 +153,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+

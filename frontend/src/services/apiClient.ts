@@ -9,7 +9,10 @@ export {
   fetchHealth,
   loginUser,
   fetchCurrentUser,
+  registerUser,
+  loginWithGoogle,
 } from './api/auth';
+
 
 export {
   fetchNodes,
