@@ -21,6 +21,8 @@ interface CheckoutModalProps {
   onPaymentSuccess?: (order: Order) => void;
 }
 
+import { parseUtcDate } from '../../utils/date';
+
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   order,
   isOpen,
@@ -34,10 +36,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   useEffect(() => {
     setCurrentOrder(order);
     if (order) {
-      const expiresAt = new Date(order.expires_at).getTime();
+      const expiresAt = parseUtcDate(order.expires_at).getTime();
       const now = Date.now();
       const seconds = Math.max(0, Math.floor((expiresAt - now) / 1000));
-      setRemainingSeconds(seconds > 0 ? seconds : 15 * 60);
+      setRemainingSeconds(seconds);
     }
   }, [order]);
 

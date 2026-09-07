@@ -403,6 +403,14 @@ async def to_order_response(order: Order, db: AsyncSession) -> OrderResponse:
             sub_token = sub.token
             sub_url = f"/api/v1/subscriptions/{sub_token}/sub"
 
+    created_at = order.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+
+    expires_at = order.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
     return OrderResponse(
         id=order.id,
         code=order.code,
@@ -416,8 +424,8 @@ async def to_order_response(order: Order, db: AsyncSession) -> OrderResponse:
         subscription_id=order.subscription_id,
         subscription_token=sub_token,
         subscription_url=sub_url,
-        created_at=order.created_at,
-        expires_at=order.expires_at,
+        created_at=created_at,
+        expires_at=expires_at,
         vietqr_url=vietqr_url,
         bank_id=bank_id,
         bank_account_number=account_number,

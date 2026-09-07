@@ -21,6 +21,7 @@ import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { CheckoutModal } from '../store/CheckoutModal';
 import { fetchMyOrders, cancelMyOrder } from '../../services/apiClient';
+import { parseUtcDate } from '../../utils/date';
 import type { Order } from '../../types/order';
 
 interface CustomerPortalProps {
@@ -89,12 +90,12 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
   // Find active pending order with valid expiration
   const pendingOrder = orders.find((o) => {
     if (o.status !== 'PENDING') return false;
-    const expiresAt = new Date(o.expires_at);
+    const expiresAt = parseUtcDate(o.expires_at);
     return expiresAt.getTime() > now.getTime();
   });
 
   const getPendingRemainingTime = (order: Order) => {
-    const expiresAt = new Date(order.expires_at);
+    const expiresAt = parseUtcDate(order.expires_at);
     const diff = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000));
     const m = Math.floor(diff / 60);
     const s = diff % 60;
@@ -106,12 +107,20 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
   };
 
   const formatDate = (iso: string) => {
-    return new Date(iso).toLocaleString('vi-VN', {
+    return parseUtcDate(iso).toLocaleString('vi-VN', {
       hour: '2-digit',
       minute: '2-digit',
       day: '2-digit',
       month: '2-digit',
     });
+  };
+
+  const getEffectiveStatus = (o: Order) => {
+    if (o.status === 'PENDING') {
+      const isStillValid = parseUtcDate(o.expires_at).getTime() > now.getTime();
+      if (!isStillValid) return 'EXPIRED';
+    }
+    return o.status;
   };
 
   const getStatusBadge = (status: string) => {
@@ -353,7 +362,8 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {orders.map((o) => {
-                    const isPendingValid = o.status === 'PENDING' && new Date(o.expires_at).getTime() > now.getTime();
+                    const isPendingValid = o.status === 'PENDING' && parseUtcDate(o.expires_at).getTime() > now.getTime();
+                    const effectiveStatus = getEffectiveStatus(o);
                     return (
                       <tr key={o.id} className="hover:bg-slate-50/60 transition-colors">
                         <td className="py-3 px-4 font-mono font-bold text-slate-900">{o.code}</td>
@@ -367,7 +377,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                           {formatVND(o.amount_vnd)}
                         </td>
                         <td className="py-3 px-4 text-slate-400 text-[11px]">{formatDate(o.created_at)}</td>
-                        <td className="py-3 px-4">{getStatusBadge(o.status)}</td>
+                        <td className="py-3 px-4">{getStatusBadge(effectiveStatus)}</td>
                         <td className="py-3 px-4 text-right">
                           {isPendingValid ? (
                             <div className="inline-flex items-center gap-1.5">
@@ -391,6 +401,18 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                                 <XCircle className="w-3.5 h-3.5" />
                               </button>
                             </div>
+                          ) : effectiveStatus === 'EXPIRED' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (onNavigate) onNavigate('/');
+                                else window.location.href = '/';
+                              }}
+                              className="text-xs py-1 px-2.5 h-auto text-slate-600 hover:text-slate-900 border-slate-200"
+                            >
+                              Đặt lại đơn
+                            </Button>
                           ) : o.status === 'PAID' ? (
                             <Button
                               variant="secondary"
