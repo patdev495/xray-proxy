@@ -88,6 +88,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const seconds = remainingSeconds % 60;
   const timeFormatted = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   const isExpired = remainingSeconds <= 0 || currentOrder.status === 'EXPIRED';
+  const memoContent = currentOrder.transfer_content || currentOrder.code;
 
   return (
     <Modal
@@ -264,10 +265,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-bold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded text-xs">
-                    {currentOrder.code}
+                    {memoContent}
                   </span>
                   <button
-                    onClick={() => copyToClipboard(currentOrder.code, 'code')}
+                    onClick={() => copyToClipboard(memoContent, 'code')}
                     className="p-1 rounded text-amber-700 hover:bg-amber-100"
                     title="Sao chép mã"
                   >
@@ -282,7 +283,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <span>
                 <strong>Lưu ý:</strong> Vui lòng giữ chính xác nội dung chuyển tiền{' '}
-                <code className="bg-slate-200/70 text-slate-800 px-1 py-0.5 rounded font-mono">{currentOrder.code}</code> để hệ thống tự động nhận diện và kích hoạt trong vòng 3-5 giây.
+                <code className="bg-slate-200/70 text-slate-800 px-1 py-0.5 rounded font-mono">{memoContent}</code> để hệ thống tự động nhận diện và kích hoạt trong vòng 3-5 giây.
               </span>
             </div>
           </>

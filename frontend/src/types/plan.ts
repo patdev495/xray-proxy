@@ -38,4 +38,6 @@ export interface SystemSettings {
   bank_id?: string;
   bank_account_number?: string;
   bank_account_name?: string;
+  bank_transfer_prefix?: string;
+  sepay_api_key?: string;
 }

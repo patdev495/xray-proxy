@@ -10,6 +10,7 @@ DEFAULT_SETTINGS: dict[str, str] = {
     "bank_id": "MB",
     "bank_account_number": "0987654321",
     "bank_account_name": "XRAY PROXY",
+    "bank_transfer_prefix": "",
     "sepay_api_key": "",
 }
 

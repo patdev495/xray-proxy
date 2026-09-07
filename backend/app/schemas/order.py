@@ -26,5 +26,6 @@ class OrderResponse(BaseModel):
     bank_id: str
     bank_account_number: str
     bank_account_name: str
+    transfer_content: str
 
     model_config = ConfigDict(from_attributes=True)

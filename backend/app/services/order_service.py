@@ -328,13 +328,20 @@ async def to_order_response(order: Order, db: AsyncSession) -> OrderResponse:
     bank_id = settings_dict.get("bank_id", "MB") or "MB"
     account_number = settings_dict.get("bank_account_number", "0987654321") or "0987654321"
     account_name = settings_dict.get("bank_account_name", "XRAY PROXY") or "XRAY PROXY"
+    transfer_prefix = (settings_dict.get("bank_transfer_prefix") or "").strip()
+
+    # Auto-default to SEVQR if bank is VietinBank (ICB) and prefix not explicitly set
+    if not transfer_prefix and bank_id.upper() in {"ICB", "VIETINBANK"}:
+        transfer_prefix = "SEVQR"
+
+    transfer_content = f"{transfer_prefix} {order.code}".strip() if transfer_prefix else order.code
 
     vietqr_url = generate_vietqr_url(
         bank_id=bank_id,
         account_number=account_number,
         account_name=account_name,
         amount_vnd=order.amount_vnd,
-        content=order.code,
+        content=transfer_content,
     )
 
     plan_name = order.plan.name if order.plan else "Proxy Plan"
@@ -370,4 +377,5 @@ async def to_order_response(order: Order, db: AsyncSession) -> OrderResponse:
         bank_id=bank_id,
         bank_account_number=account_number,
         bank_account_name=account_name,
+        transfer_content=transfer_content,
     )

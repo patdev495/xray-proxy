@@ -17,6 +17,7 @@ export interface Order {
   bank_id: string;
   bank_account_number: string;
   bank_account_name: string;
+  transfer_content?: string;
 }
 
 export interface OrderCreateRequest {

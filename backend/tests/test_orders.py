@@ -206,3 +206,39 @@ async def test_get_order_by_code(
         assert order_data["code"] == code
         assert order_data["amount_vnd"] == 50000
         assert order_data["status"] == "PENDING"
+        assert "transfer_content" in order_data
+
+
+@pytest.mark.asyncio
+async def test_order_transfer_prefix_and_vietinbank(
+    test_plan_and_nodes: tuple[Plan, Region],
+    customer_token: str,
+    db_session: AsyncSession,
+) -> None:
+    """If bank is ICB or bank_transfer_prefix is configured, transfer_content includes prefix."""
+    from app.services.setting_service import update_system_settings
+
+    # 1. Update settings to ICB (VietinBank) with empty prefix -> auto defaults to SEVQR
+    await update_system_settings(db_session, {"bank_id": "ICB", "bank_transfer_prefix": ""})
+
+    plan, _ = test_plan_and_nodes
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as client:
+        res = await client.post(
+            "/api/v1/orders/create",
+            headers={"Authorization": f"Bearer {customer_token}"},
+            json={"plan_id": plan.id, "region": "VN"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert data["transfer_content"].startswith("SEVQR ORD-")
+        assert "SEVQR" in data["vietqr_url"]
+
+        # 2. Custom prefix on another bank
+        await update_system_settings(db_session, {"bank_id": "VCB", "bank_transfer_prefix": "MYSHOP"})
+        code = data["code"]
+        get_res = await client.get(f"/api/v1/orders/{code}")
+        assert get_res.status_code == 200
+        assert get_res.json()["transfer_content"] == f"MYSHOP {code}"

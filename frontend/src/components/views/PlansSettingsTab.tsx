@@ -44,6 +44,8 @@ export const PlansSettingsTab: React.FC = () => {
     bank_id: 'MB',
     bank_account_number: '',
     bank_account_name: '',
+    bank_transfer_prefix: '',
+    sepay_api_key: '',
   });
   const [isSavingSettings, setIsSavingSettings] = useState<boolean>(false);
 
@@ -66,6 +68,8 @@ export const PlansSettingsTab: React.FC = () => {
         bank_id: settingsData.bank_id || 'MB',
         bank_account_number: settingsData.bank_account_number || '',
         bank_account_name: settingsData.bank_account_name || '',
+        bank_transfer_prefix: settingsData.bank_transfer_prefix || '',
+        sepay_api_key: settingsData.sepay_api_key || '',
       });
     } catch (err) {
       showToast({
@@ -361,53 +365,70 @@ export const PlansSettingsTab: React.FC = () => {
                   Chọn ngân hàng từ danh sách chuẩn VietQR và nhập thông tin tài khoản thụ hưởng.
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* Select Bank Dropdown */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-700">Ngân hàng thụ hưởng</label>
+                    <label className="text-xs font-semibold text-slate-700">Ngân hàng</label>
                     <select
                       value={settings.bank_id || 'MB'}
-                      onChange={(e) => setSettings({ ...settings, bank_id: e.target.value })}
+                      onChange={(e) => {
+                        const newBank = e.target.value;
+                        const defaultPrefix = newBank === 'ICB' ? 'SEVQR' : settings.bank_transfer_prefix || '';
+                        setSettings({ ...settings, bank_id: newBank, bank_transfer_prefix: defaultPrefix });
+                      }}
                       className="w-full text-xs rounded-lg border border-slate-200 px-3 py-2 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-800"
                     >
                       {VIETQR_BANKS.map((b) => (
                         <option key={b.code} value={b.code}>
-                          {b.code} - {b.shortName} ({b.name})
+                          {b.code} - {b.shortName}
                         </option>
                       ))}
                     </select>
-                    <p className="text-[11px] text-slate-400">Chuẩn VietQR liên ngân hàng Napas247</p>
                   </div>
-
                   <Input
-                    label="Số tài khoản ngân hàng"
+                    label="Số tài khoản"
                     placeholder="VD: 0987654321"
                     value={settings.bank_account_number || ''}
                     onChange={(e) => setSettings({ ...settings, bank_account_number: e.target.value })}
-                    hint="Số tài khoản nhận tiền"
                     required
                   />
-
                   <Input
                     label="Tên chủ tài khoản"
                     placeholder="VD: NGUYEN VAN A"
                     value={settings.bank_account_name || ''}
                     onChange={(e) => setSettings({ ...settings, bank_account_name: e.target.value.toUpperCase() })}
-                    hint="Viết hoa không dấu"
                     required
+                  />
+                  <Input
+                    label="Tiền tố (Prefix)"
+                    placeholder="VD: SEVQR"
+                    value={settings.bank_transfer_prefix || ''}
+                    onChange={(e) => setSettings({ ...settings, bank_transfer_prefix: e.target.value })}
+                    hint="Bắt buộc 'SEVQR' cho VietinBank"
                   />
                 </div>
 
-                {/* Live Preview Box */}
-                <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
+                <div className="mt-3">
+                  <Input
+                    label="SePay API Key (Webhook)"
+                    type="password"
+                    placeholder="Nhập SePay API Token..."
+                    value={settings.sepay_api_key || ''}
+                    onChange={(e) => setSettings({ ...settings, sepay_api_key: e.target.value })}
+                    hint="Webhook URL: https://xray.peebot.shop/api/v1/payments/sepay-webhook"
+                  />
+                </div>
+
+                <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <QrCode className="w-4 h-4 text-slate-500" />
-                    <span className="text-slate-500">Mẫu nhận tiền:</span>
+                    <span className="text-slate-500">Mẫu nhận:</span>
                     <span className="font-semibold text-slate-800">
-                      {settings.bank_id || 'MB'} • {settings.bank_account_number || '(Chưa nhập)'} • {settings.bank_account_name || '(Chưa nhập)'}
+                      {settings.bank_id || 'MB'} • {settings.bank_account_number || '---'} • {settings.bank_account_name || '---'}
                     </span>
                   </div>
-                  <span className="text-[11px] text-emerald-600 font-medium">VietQR tự động gán mã ORD-XXXXXX</span>
+                  <span className="font-mono font-medium text-[11px] text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded">
+                    {settings.bank_transfer_prefix ? `${settings.bank_transfer_prefix} ORD-XXXXXX` : 'ORD-XXXXXX'}
+                  </span>
                 </div>
               </div>
 
@@ -427,14 +448,12 @@ export const PlansSettingsTab: React.FC = () => {
                     placeholder="https://t.me/peebot_admin"
                     value={settings.support_telegram_url}
                     onChange={(e) => setSettings({ ...settings, support_telegram_url: e.target.value })}
-                    hint="Link chat hoặc nhóm Telegram"
                   />
                   <Input
                     label="Zalo Support URL"
                     placeholder="https://zalo.me/0987654321"
                     value={settings.support_zalo_url}
                     onChange={(e) => setSettings({ ...settings, support_zalo_url: e.target.value })}
-                    hint="Link chat hoặc nhóm Zalo"
                   />
                 </div>
               </div>
