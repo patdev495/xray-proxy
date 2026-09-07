@@ -1,9 +1,11 @@
 import React from 'react';
-import { Menu, RefreshCw, ExternalLink } from 'lucide-react';
+import { Menu, RefreshCw, ExternalLink, LogOut } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { useAuth } from '../../context/AuthContext';
 import type { ConnectionStatus } from '../../types/api';
 import type { NavTabId } from './Sidebar';
+
 
 interface HeaderProps {
   activeTab: NavTabId;
@@ -22,7 +24,10 @@ export const Header: React.FC<HeaderProps> = ({
   lastChecked,
   onToggleMobileMenu,
 }) => {
+  const { logout } = useAuth();
+
   const tabTitles: Record<NavTabId, { title: string; subtitle: string }> = {
+
     overview: {
       title: 'System Overview',
       subtitle: 'Real-time telemetry across Control Plane and Data Plane nodes',
@@ -119,10 +124,23 @@ export const Header: React.FC<HeaderProps> = ({
             <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
             <span>API Docs</span>
           </a>
+
+          {/* Sign Out Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={logout}
+            leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-400" />}
+            className="text-xs text-slate-600 hover:text-rose-600 hover:bg-rose-50"
+            title="Sign out of Control Plane"
+          >
+            <span className="hidden sm:inline">Sign Out</span>
+          </Button>
         </div>
       </div>
     </header>
   );
 };
+
 
 export default Header;
