@@ -206,7 +206,7 @@ export const PlansSettingsTab: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Cài đặt VietQR &amp; Hỗ trợ
+            Cài đặt VietQR &amp; SePay
           </button>
         </div>
       </div>
