@@ -13,18 +13,17 @@ import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Modal } from '../ui/Modal';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import {
   fetchAdminPlans,
-  createAdminPlan,
   updateAdminPlan,
   deleteAdminPlan,
   fetchAdminSettings,
   updateAdminSettings,
 } from '../../services/apiClient';
 import type { PlanItem, SystemSettings } from '../../types/plan';
+import { PlanModal } from '../plans/PlanModal';
 
 export const PlansSettingsTab: React.FC = () => {
   const { token } = useAuth();
@@ -41,13 +40,6 @@ export const PlansSettingsTab: React.FC = () => {
   // Plan Modal state
   const [isPlanModalOpen, setIsPlanModalOpen] = useState<boolean>(false);
   const [editingPlan, setEditingPlan] = useState<PlanItem | null>(null);
-  const [planName, setPlanName] = useState<string>('');
-  const [planPrice, setPlanPrice] = useState<string>('30000');
-  const [planQuotaGb, setPlanQuotaGb] = useState<string>('100');
-  const [planDaysValid, setPlanDaysValid] = useState<string>('30');
-  const [planRegions, setPlanRegions] = useState<string>('🇻🇳, 🇸🇬, 🇯🇵');
-  const [planSortOrder, setPlanSortOrder] = useState<string>('1');
-  const [isSubmittingPlan, setIsSubmittingPlan] = useState<boolean>(false);
 
   const loadData = useCallback(async () => {
     if (!token) return;
@@ -100,86 +92,12 @@ export const PlansSettingsTab: React.FC = () => {
 
   const handleOpenCreatePlan = () => {
     setEditingPlan(null);
-    setPlanName('');
-    setPlanPrice('30000');
-    setPlanQuotaGb('100');
-    setPlanDaysValid('30');
-    setPlanRegions('🇻🇳, 🇸🇬, 🇯🇵');
-    setPlanSortOrder(String(plans.length + 1));
     setIsPlanModalOpen(true);
   };
 
   const handleOpenEditPlan = (plan: PlanItem) => {
     setEditingPlan(plan);
-    setPlanName(plan.name);
-    setPlanPrice(String(plan.price_vnd));
-    setPlanQuotaGb(String(plan.quota_gb));
-    setPlanDaysValid(String(plan.days_valid));
-    setPlanRegions(plan.allowed_regions.join(', '));
-    setPlanSortOrder(String(plan.sort_order));
     setIsPlanModalOpen(true);
-  };
-
-  const handleSubmitPlan = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) return;
-    if (!planName.trim()) {
-      showToast({
-        type: 'error',
-        title: 'Validation Error',
-        message: 'Plan name is required.',
-      });
-      return;
-    }
-
-    const regionsList = planRegions
-      .split(',')
-      .map((r) => r.trim())
-      .filter(Boolean);
-
-    try {
-      setIsSubmittingPlan(true);
-      if (editingPlan) {
-        await updateAdminPlan(token, editingPlan.id, {
-          name: planName.trim(),
-          price_vnd: parseInt(planPrice, 10) || 0,
-          quota_gb: parseInt(planQuotaGb, 10) || 50,
-          days_valid: parseInt(planDaysValid, 10) || 30,
-          allowed_regions: regionsList,
-          sort_order: parseInt(planSortOrder, 10) || 0,
-        });
-        showToast({
-          type: 'success',
-          title: 'Plan Updated',
-          message: `Plan ${planName} updated.`,
-        });
-      } else {
-        await createAdminPlan(token, {
-          name: planName.trim(),
-          price_vnd: parseInt(planPrice, 10) || 0,
-          quota_gb: parseInt(planQuotaGb, 10) || 50,
-          days_valid: parseInt(planDaysValid, 10) || 30,
-          allowed_regions: regionsList,
-          sort_order: parseInt(planSortOrder, 10) || 0,
-        });
-        showToast({
-          type: 'success',
-          title: 'Plan Created',
-          message: `Plan ${planName} created successfully.`,
-        });
-      }
-
-      setIsPlanModalOpen(false);
-      await loadData();
-    } catch (err) {
-      showToast({
-        type: 'error',
-        title: 'Plan Action Failed',
-        message: err instanceof Error ? err.message : 'Failed to save plan',
-      });
-    } finally {
-      setIsSubmittingPlan(false);
-    }
   };
 
   const handleTogglePlanActive = async (plan: PlanItem) => {
@@ -438,95 +356,14 @@ export const PlansSettingsTab: React.FC = () => {
       </Card>
 
       {/* Modal: Create / Edit Plan */}
-      <Modal
+      <PlanModal
         isOpen={isPlanModalOpen}
         onClose={() => setIsPlanModalOpen(false)}
-        title={editingPlan ? `Edit Plan: ${editingPlan.name}` : 'Create New Subscription Plan'}
-        description="Define customer package pricing, traffic limit, validity and available regions."
-        maxWidth="md"
-      >
-        <form onSubmit={handleSubmitPlan} className="space-y-4">
-          <Input
-            label="Plan Name"
-            placeholder="e.g. Gói 4G Viettel Tháng"
-            value={planName}
-            onChange={(e) => setPlanName(e.target.value)}
-            required
-            hint="Display name on storefront"
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Price (VND)"
-              type="number"
-              min="0"
-              step="1000"
-              placeholder="30000"
-              value={planPrice}
-              onChange={(e) => setPlanPrice(e.target.value)}
-              required
-            />
-            <Input
-              label="Data Quota (GB)"
-              type="number"
-              min="1"
-              placeholder="100"
-              value={planQuotaGb}
-              onChange={(e) => setPlanQuotaGb(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Validity (Days)"
-              type="number"
-              min="1"
-              placeholder="30"
-              value={planDaysValid}
-              onChange={(e) => setPlanDaysValid(e.target.value)}
-              required
-            />
-            <Input
-              label="Sort Order"
-              type="number"
-              min="0"
-              placeholder="1"
-              value={planSortOrder}
-              onChange={(e) => setPlanSortOrder(e.target.value)}
-              hint="Lower number shows first"
-            />
-          </div>
-
-          <Input
-            label="Allowed Regions (Country Flags)"
-            placeholder="🇻🇳, 🇸🇬, 🇯🇵"
-            value={planRegions}
-            onChange={(e) => setPlanRegions(e.target.value)}
-            hint="Comma-separated country flag emojis (e.g. 🇻🇳, 🇸🇬, 🇯🇵)"
-          />
-
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => setIsPlanModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              disabled={isSubmittingPlan}
-              leftIcon={<Save className="w-3.5 h-3.5" />}
-            >
-              {isSubmittingPlan ? 'Saving...' : editingPlan ? 'Update Plan' : 'Create Plan'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        editingPlan={editingPlan}
+        onSuccess={loadData}
+        token={token}
+        suggestedSortOrder={plans.length + 1}
+      />
     </div>
   );
 };
