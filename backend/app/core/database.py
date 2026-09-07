@@ -39,6 +39,11 @@ async def init_db() -> None:
 
         def _migrate(connection) -> None:
             insp = sa_inspect(connection)
+            if "nodes" in insp.get_table_names():
+                node_cols = [c["name"] for c in insp.get_columns("nodes")]
+                if "max_subscriptions" not in node_cols:
+                    connection.execute(text("ALTER TABLE nodes ADD COLUMN max_subscriptions INTEGER NOT NULL DEFAULT 100"))
+
             if "sni_profiles" in insp.get_table_names():
                 cols = [c["name"] for c in insp.get_columns("sni_profiles")]
                 if "port" not in cols:
