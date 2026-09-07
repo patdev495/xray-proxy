@@ -96,6 +96,19 @@ async def init_db() -> None:
                 if "port" not in cols:
                     connection.execute(text("ALTER TABLE sni_profiles ADD COLUMN port INTEGER NOT NULL DEFAULT 443"))
 
+            # 5. Users table migrations (for OAuth and Customer Onboarding)
+            if "users" in table_names:
+                user_cols = [c["name"] for c in insp.get_columns("users")]
+                if "email" not in user_cols:
+                    connection.execute(text("ALTER TABLE users ADD COLUMN email VARCHAR(255)"))
+                    connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_email ON users (email)"))
+                if "oauth_provider" not in user_cols:
+                    connection.execute(text("ALTER TABLE users ADD COLUMN oauth_provider VARCHAR(50)"))
+                if "oauth_id" not in user_cols:
+                    connection.execute(text("ALTER TABLE users ADD COLUMN oauth_id VARCHAR(255)"))
+                    connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_oauth_id ON users (oauth_id)"))
+
+
         await conn.run_sync(_migrate)
 
 

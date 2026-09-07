@@ -64,7 +64,7 @@ async def authenticate_user(
     user = await get_user_by_username(db, username)
     if not user:
         return None
-    if not user.hashed_password:
+    if not user.hashed_password or user.hashed_password.startswith("!"):
         return None
     if not verify_password(password, user.hashed_password):
         return None
@@ -166,10 +166,11 @@ async def authenticate_or_create_google_user(
         email=email,
         oauth_provider="google",
         oauth_id=oauth_id,
-        hashed_password=None,
+        hashed_password="!oauth:google",
         role=UserRole.CUSTOMER,
         is_active=True,
     )
+
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
