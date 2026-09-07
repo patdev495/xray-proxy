@@ -11,6 +11,7 @@ import { OverviewTab } from './components/views/OverviewTab';
 import { NodesTab } from './components/views/NodesTab';
 import { SubscriptionsTab } from './components/views/SubscriptionsTab';
 import { NodeSyncTab } from './components/views/NodeSyncTab';
+import { PlansSettingsTab } from './components/views/PlansSettingsTab';
 
 const AuthenticatedDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTabId>('overview');
@@ -58,10 +59,12 @@ const AuthenticatedDashboard: React.FC = () => {
       )}
       {activeTab === 'nodes' && <NodesTab />}
       {activeTab === 'subscriptions' && <SubscriptionsTab />}
+      {activeTab === 'plans' && <PlansSettingsTab />}
       {activeTab === 'sync' && <NodeSyncTab />}
     </DashboardLayout>
   );
 };
+
 
 const AuthGate: React.FC = () => {
   const { token, user, isLoading } = useAuth();

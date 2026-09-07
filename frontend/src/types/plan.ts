@@ -1,0 +1,38 @@
+export interface PlanItem {
+  id: number;
+  name: string;
+  price_vnd: number;
+  quota_gb: number;
+  days_valid: number;
+  allowed_regions: string[];
+  is_active: boolean;
+  sort_order: number;
+  traffic_quota_bytes: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlanCreate {
+  name: string;
+  price_vnd: number;
+  quota_gb: number;
+  days_valid: number;
+  allowed_regions?: string[];
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface PlanUpdate {
+  name?: string;
+  price_vnd?: number;
+  quota_gb?: number;
+  days_valid?: number;
+  allowed_regions?: string[];
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export interface SystemSettings {
+  support_telegram_url: string;
+  support_zalo_url: string;
+}

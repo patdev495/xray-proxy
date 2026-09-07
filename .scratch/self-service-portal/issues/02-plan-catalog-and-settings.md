@@ -1,6 +1,6 @@
 # 02-plan-catalog-and-settings
 
-Status: ready-for-agent
+Status: done
 
 ## Parent
 
@@ -17,10 +17,10 @@ Admin UI tab "Plans & Settings" to create, edit, toggle active status, and confi
 
 ## Acceptance criteria
 
-- [ ] DB models `Plan` and `SystemSetting` created with migrations.
-- [ ] Admin CRUD endpoints tested and functional for Plans and Settings.
-- [ ] Public endpoint returns active plans and support channels.
-- [ ] Admin UI tab allows adding/editing plans and updating Telegram/Zalo URLs.
+- [x] DB models `Plan` and `SystemSetting` created with migrations.
+- [x] Admin CRUD endpoints tested and functional for Plans and Settings.
+- [x] Public endpoint returns active plans and support channels.
+- [x] Admin UI tab allows adding/editing plans and updating Telegram/Zalo URLs.
 
 ## Blocked by
 
@@ -29,3 +29,5 @@ Admin UI tab "Plans & Settings" to create, edit, toggle active status, and confi
 ## Comments
 
 > *Generated from architectural decisions in ADR 0010.*
+> *Completed via TDD: 2 integration tests in `tests/test_plan_and_settings.py`, all 45 backend tests pass, full frontend UI tab with modals and support URLs built.*
+

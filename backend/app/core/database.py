@@ -33,6 +33,7 @@ AsyncSessionLocal: async_sessionmaker[AsyncSession] = async_sessionmaker(
 async def init_db() -> None:
     """Initialize database tables and apply schema updates if needed."""
     from sqlalchemy import inspect as sa_inspect, text
+    import app.models  # noqa: F401
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

@@ -35,6 +35,10 @@ export const Header: React.FC<HeaderProps> = ({
       title: 'Customer Subscriptions',
       subtitle: 'Traffic Quotas, token issuance, and Client App bundles (Shadowrocket)',
     },
+    plans: {
+      title: 'Plans & Support Settings',
+      subtitle: 'Customer package catalog, pricing quotas, regions and support channels',
+    },
     sync: {
       title: 'Node Sync & Telemetry',
       subtitle: 'Manual gRPC bandwidth query and automatic quota enforcement',

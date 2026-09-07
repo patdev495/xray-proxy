@@ -425,5 +425,133 @@ export async function fetchRegionsStatus(): Promise<import('../types/node').Regi
   return response.json();
 }
 
+// ---------------------------------------------------------------------------
+// Plan & Settings APIs (Issue 02)
+// ---------------------------------------------------------------------------
+
+export async function fetchAdminPlans(token: string): Promise<import('../types/plan').PlanItem[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/plans`, {
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch plans: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function createAdminPlan(
+  token: string,
+  payload: import('../types/plan').PlanCreate
+): Promise<import('../types/plan').PlanItem> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/plans`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to create plan');
+  }
+  return response.json();
+}
+
+export async function updateAdminPlan(
+  token: string,
+  planId: number,
+  payload: import('../types/plan').PlanUpdate
+): Promise<import('../types/plan').PlanItem> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/plans/${planId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to update plan');
+  }
+  return response.json();
+}
+
+export async function deleteAdminPlan(token: string, planId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/plans/${planId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to delete plan: ${response.statusText}`);
+  }
+}
+
+export async function fetchPublicPlans(): Promise<import('../types/plan').PlanItem[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/public/plans`, {
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch public plans: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function fetchAdminSettings(token: string): Promise<import('../types/plan').SystemSettings> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/settings`, {
+    headers: {
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch settings: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+export async function updateAdminSettings(
+  token: string,
+  payload: import('../types/plan').SystemSettings
+): Promise<import('../types/plan').SystemSettings> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/admin/settings`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to update settings');
+  }
+  return response.json();
+}
+
+export async function fetchPublicSettings(): Promise<import('../types/plan').SystemSettings> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/public/settings`, {
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch public settings: ${response.statusText}`);
+  }
+  return response.json();
+}
+
+
 
 
