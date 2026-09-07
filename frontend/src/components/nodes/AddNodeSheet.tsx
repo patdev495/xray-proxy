@@ -4,8 +4,9 @@ import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useToast } from '../../context/ToastContext';
-import { createNode, generateRealityKeys } from '../../services/apiClient';
+import { createNode, generateRealityKeys, fetchAdminRegions } from '../../services/apiClient';
 import type { RealityKeys } from '../../types/node';
+import type { RegionItem } from '../../types/region';
 
 interface AddNodeSheetProps {
   isOpen: boolean;
@@ -34,12 +35,31 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
   const [realityShortId, setRealityShortId] = useState<string>('');
   const [carrier, setCarrier] = useState<string>('Docomo 5G');
   const [sniDomain, setSniDomain] = useState<string>('images.apple.com');
+  const [regions, setRegions] = useState<RegionItem[]>([]);
+  const [regionId, setRegionId] = useState<number | undefined>(undefined);
   const [isGeneratingKeys, setIsGeneratingKeys] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (isOpen && token) {
+      fetchAdminRegions(token)
+        .then((res) => {
+          setRegions(res);
+          const active = res.filter((r) => r.is_active);
+          if (active.length > 0) {
+            setRegionId(active[0].id);
+            setLocation(active[0].name);
+            setFlag(active[0].flag);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen, token]);
 
   const resetForm = () => {
     setName('');
     setHost('');
+    setRegionId(undefined);
     setLocation('Japan 🇯🇵');
     setFlag('🇯🇵');
     setGrpcPort('10085');
@@ -90,13 +110,12 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
 
     try {
       setIsSubmitting(true);
-      const derivedFlag = location.includes('🇯🇵') ? '🇯🇵' : location.includes('🇸🇬') ? '🇸🇬' : flag || '🌐';
-
       await createNode(token, {
         name: name.trim(),
         host: host.trim(),
+        region_id: regionId,
         location: location.trim(),
-        flag: derivedFlag,
+        flag: flag || '🌐',
         grpc_port: parseInt(grpcPort, 10) || 10085,
         inbound_port: parseInt(inboundPort, 10) || 443,
         max_subscriptions: parseInt(maxSubscriptions, 10) || 100,
@@ -175,9 +194,35 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
           hint="Public IPv4 or IPv6 of the remote VPS"
         />
 
+        <div>
+          <label className="block text-xs font-medium text-slate-700 mb-1">
+            Server Region
+          </label>
+          <select
+            value={regionId || ''}
+            onChange={(e) => {
+              const val = e.target.value ? parseInt(e.target.value, 10) : undefined;
+              setRegionId(val);
+              const found = regions.find((r) => r.id === val);
+              if (found) {
+                setLocation(found.name);
+                setFlag(found.flag);
+              }
+            }}
+            className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md shadow-xs focus:border-slate-900 focus:outline-none transition-colors"
+          >
+            <option value="">-- Select Region --</option>
+            {regions.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.flag} {r.name} ({r.code}) {!r.is_active ? '(Inactive)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Region / Location"
+            label="Location Label"
             placeholder="Tokyo, Japan"
             value={location}
             onChange={(e) => setLocation(e.target.value)}

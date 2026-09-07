@@ -24,6 +24,7 @@ import {
 } from '../../services/apiClient';
 import type { PlanItem, SystemSettings } from '../../types/plan';
 import { PlanModal } from '../plans/PlanModal';
+import { RegionsSection } from '../regions/RegionsSection';
 
 export const PlansSettingsTab: React.FC = () => {
   const { token } = useAuth();
@@ -354,6 +355,9 @@ export const PlansSettingsTab: React.FC = () => {
           </table>
         </div>
       </Card>
+
+      {/* Managed Server Regions Section */}
+      <RegionsSection token={token} />
 
       {/* Modal: Create / Edit Plan */}
       <PlanModal

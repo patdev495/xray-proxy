@@ -49,3 +49,11 @@ export {
   updateAdminSettings,
   fetchPublicSettings,
 } from './api/plans';
+
+export {
+  fetchAdminRegions,
+  createAdminRegion,
+  updateAdminRegion,
+  deleteAdminRegion,
+  fetchPublicRegions,
+} from './api/regions';

@@ -1,5 +1,6 @@
 from app.models.node import Node, SniProfile
 from app.models.plan import Plan
+from app.models.region import Region
 from app.models.setting import SystemSetting
 from app.models.subscription import Subscription, SubscriptionStatus
 from app.models.user import User, UserRole
@@ -13,5 +14,6 @@ __all__ = [
     "SubscriptionStatus",
     "Plan",
     "SystemSetting",
+    "Region",
 ]
 

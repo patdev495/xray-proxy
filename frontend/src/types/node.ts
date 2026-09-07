@@ -27,6 +27,7 @@ export interface NodeItem {
   host: string;
   location: string;
   flag: string;
+  region_id?: number;
   grpc_port: number;
   inbound_port: number;
   reality_private_key: string;
@@ -41,6 +42,7 @@ export interface NodeItem {
 export interface NodeCreate {
   name: string;
   host: string;
+  region_id?: number;
   location?: string;
   flag?: string;
   grpc_port?: number;
@@ -55,6 +57,7 @@ export interface NodeCreate {
 export interface NodeUpdate {
   name?: string;
   host?: string;
+  region_id?: number;
   location?: string;
   flag?: string;
   grpc_port?: number;

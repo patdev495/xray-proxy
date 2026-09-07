@@ -8,6 +8,7 @@ from app.schemas.subscription import (
     SubscriptionResponse,
     SubscriptionUpdate,
 )
+from app.services.node_service import RegionOutOfCapacityError
 from app.services.subscription_service import (
     create_subscription,
     delete_subscription,
@@ -47,7 +48,13 @@ async def create_subscription_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> SubscriptionResponse:
     """Create a subscription with random token, UUID, and quota."""
-    sub = await create_subscription(db, sub_in)
+    try:
+        sub = await create_subscription(db, sub_in)
+    except (ValueError, RegionOutOfCapacityError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
     return SubscriptionResponse.model_validate(sub)
 
 

@@ -8,6 +8,8 @@ from app.core.database import Base
 
 if TYPE_CHECKING:
     from app.models.node import Node
+    from app.models.plan import Plan
+    from app.models.region import Region
 
 
 subscription_nodes = Table(
@@ -39,6 +41,17 @@ class Subscription(Base):
         default=SubscriptionStatus.ACTIVE,
         nullable=False,
     )
+    plan_id: Mapped[int | None] = mapped_column(
+        ForeignKey("plans.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    region_id: Mapped[int | None] = mapped_column(
+        ForeignKey("regions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -51,6 +64,9 @@ class Subscription(Base):
         nullable=False,
     )
 
+    plan: Mapped["Plan | None"] = relationship("Plan", lazy="selectin")
+    region: Mapped["Region | None"] = relationship("Region", lazy="selectin")
+
     nodes: Mapped[list["Node"]] = relationship(
         "Node",
         secondary=subscription_nodes,
@@ -60,4 +76,20 @@ class Subscription(Base):
     @property
     def node_ids(self) -> list[int]:
         return [n.id for n in self.nodes] if self.nodes else []
+
+    @property
+    def plan_name(self) -> str | None:
+        return self.plan.name if self.plan else None
+
+    @property
+    def region_code(self) -> str | None:
+        return self.region.code if self.region else None
+
+    @property
+    def region_name(self) -> str | None:
+        return self.region.name if self.region else None
+
+    @property
+    def region_flag(self) -> str | None:
+        return self.region.flag if self.region else None
 

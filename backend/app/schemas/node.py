@@ -44,6 +44,7 @@ class NodeBase(BaseModel):
     grpc_port: int = Field(default=10085, ge=1, le=65535)
     inbound_port: int = Field(default=443, ge=1, le=65535)
     max_subscriptions: int = Field(default=100, ge=1)
+    region_id: int | None = None
 
 
 class NodeCreate(NodeBase):
@@ -65,6 +66,7 @@ class NodeUpdate(BaseModel):
     reality_public_key: str | None = None
     reality_short_id: str | None = None
     is_active: bool | None = None
+    region_id: int | None = None
 
 
 class NodeResponse(NodeBase):
@@ -75,11 +77,16 @@ class NodeResponse(NodeBase):
     is_active: bool
     active_subscriptions_count: int = 0
     sni_profiles: list[SniProfileResponse] = []
+    region_id: int | None = None
+    region_code: str | None = None
+    region_name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class RegionStatusResponse(BaseModel):
+    code: str = ""
+    name: str = ""
     flag: str
     location: str = ""
     total_nodes: int

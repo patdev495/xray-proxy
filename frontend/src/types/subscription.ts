@@ -11,12 +11,20 @@ export interface SubscriptionItem {
   status: SubscriptionStatus;
   created_at: string;
   node_ids?: number[];
+  plan_id?: number | null;
+  plan_name?: string | null;
+  region_id?: number | null;
+  region_code?: string | null;
+  region_name?: string | null;
+  region_flag?: string | null;
 }
 
 export interface SubscriptionCreate {
   customer_name: string;
-  quota_gb: number;
-  days_valid: number;
+  quota_gb?: number;
+  days_valid?: number;
+  plan_id?: number;
+  region_id?: number;
   node_ids?: number[];
 }
 
@@ -27,5 +35,7 @@ export interface SubscriptionUpdate {
   add_days?: number;
   expires_at?: string;
   status?: SubscriptionStatus;
+  plan_id?: number;
+  region_id?: number;
   node_ids?: number[];
 }

@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.node import Node, SniProfile
+from app.models.region import Region
 from app.models.subscription import Subscription, SubscriptionStatus, subscription_nodes
 from app.schemas.node import NodeCreate, NodeUpdate, SniProfileCreate, SniProfileUpdate
 from app.services.reality_service import generate_reality_keypair
@@ -27,11 +28,24 @@ async def create_node(db: AsyncSession, node_in: NodeCreate) -> Node:
         pub_key = pub_key or generated.public_key
         short_id = short_id or generated.short_id
 
+    location = node_in.location
+    flag = node_in.flag
+    if node_in.region_id is not None:
+        reg_stmt = select(Region).where(Region.id == node_in.region_id)
+        reg_res = await db.execute(reg_stmt)
+        reg = reg_res.scalar_one_or_none()
+        if reg:
+            if not flag or flag in ("🇻🇳", "🌐"):
+                flag = reg.flag
+            if not location or location == "Unknown":
+                location = reg.name
+
     db_node = Node(
         name=node_in.name,
         host=node_in.host,
-        location=node_in.location,
-        flag=node_in.flag,
+        location=location,
+        flag=flag,
+        region_id=node_in.region_id,
         grpc_port=node_in.grpc_port,
         inbound_port=node_in.inbound_port,
         reality_private_key=priv_key,
@@ -82,6 +96,16 @@ async def get_node_by_id(db: AsyncSession, node_id: int) -> Node | None:
 async def update_node(db: AsyncSession, node: Node, node_in: NodeUpdate) -> Node:
     """Update node attributes."""
     update_data = node_in.model_dump(exclude_unset=True)
+    if "region_id" in update_data and update_data["region_id"] is not None:
+        reg_stmt = select(Region).where(Region.id == update_data["region_id"])
+        reg_res = await db.execute(reg_stmt)
+        reg = reg_res.scalar_one_or_none()
+        if reg:
+            if "flag" not in update_data:
+                node.flag = reg.flag
+            if "location" not in update_data:
+                node.location = reg.name
+
     for field, value in update_data.items():
         setattr(node, field, value)
 
@@ -199,18 +223,45 @@ async def get_node_active_subscriptions_count(db: AsyncSession, node_id: int) ->
     return int(result.scalar() or 0)
 
 
-async def allocate_node_for_region(db: AsyncSession, flag: str) -> Node:
-    """Find and return the least-loaded active node in the specified region (flag).
+async def allocate_node_for_region(
+    db: AsyncSession,
+    flag: str | None = None,
+    region_id: int | None = None,
+) -> Node:
+    """Find and return the least-loaded active node in the specified region.
 
     Raises RegionOutOfCapacityError if no active node exists or all active nodes
     have reached their max_subscriptions limit.
     """
-    stmt = select(Node).where(Node.flag == flag, Node.is_active.is_(True))
+    conditions = [Node.is_active.is_(True)]
+    if region_id is not None:
+        reg_stmt = select(Region).where(Region.id == region_id)
+        reg_res = await db.execute(reg_stmt)
+        reg = reg_res.scalar_one_or_none()
+        if reg:
+            conditions.append(
+                (Node.region_id == region_id) | (Node.flag == reg.flag) | (Node.flag == reg.code)
+            )
+        else:
+            conditions.append(Node.region_id == region_id)
+    elif flag:
+        reg_stmt = select(Region).where((Region.flag == flag) | (Region.code == flag.upper()))
+        reg_res = await db.execute(reg_stmt)
+        reg = reg_res.scalar_one_or_none()
+        if reg:
+            conditions.append(
+                (Node.region_id == reg.id) | (Node.flag == flag) | (Node.flag == reg.flag)
+            )
+        else:
+            conditions.append(Node.flag == flag)
+
+    stmt = select(Node).where(*conditions)
     result = await db.execute(stmt)
     active_nodes = list(result.scalars().all())
 
+    region_label = flag or f"id={region_id}"
     if not active_nodes:
-        raise RegionOutOfCapacityError(f"No active nodes in region '{flag}'")
+        raise RegionOutOfCapacityError(f"No active nodes in region '{region_label}'")
 
     eligible_nodes: list[tuple[Node, int]] = []
     for node in active_nodes:
@@ -219,7 +270,7 @@ async def allocate_node_for_region(db: AsyncSession, flag: str) -> Node:
             eligible_nodes.append((node, active_count))
 
     if not eligible_nodes:
-        raise RegionOutOfCapacityError(f"All nodes in region '{flag}' have reached maximum subscription capacity")
+        raise RegionOutOfCapacityError(f"All nodes in region '{region_label}' have reached maximum subscription capacity")
 
     eligible_nodes.sort(key=lambda x: x[1])
     return eligible_nodes[0][0]
@@ -227,36 +278,7 @@ async def allocate_node_for_region(db: AsyncSession, flag: str) -> Node:
 
 async def get_regions_status(db: AsyncSession) -> list[dict[str, Any]]:
     """Retrieve capacity and availability status for all distinct node regions."""
-    nodes_result = await db.execute(select(Node).order_by(Node.flag.asc(), Node.id.asc()))
-    nodes = list(nodes_result.scalars().all())
-
-    regions_map: dict[str, dict[str, Any]] = {}
-
-    for node in nodes:
-        flag = node.flag
-        if flag not in regions_map:
-            regions_map[flag] = {
-                "flag": flag,
-                "location": node.location,
-                "total_nodes": 0,
-                "active_nodes": 0,
-                "total_capacity": 0,
-                "active_subscriptions": 0,
-                "available_slots": 0,
-                "is_sold_out": True,
-            }
-        reg = regions_map[flag]
-        reg["total_nodes"] += 1
-        if node.is_active:
-            reg["active_nodes"] += 1
-            reg["total_capacity"] += node.max_subscriptions
-            active_count = await get_node_active_subscriptions_count(db, node.id)
-            reg["active_subscriptions"] += active_count
-
-    for reg in regions_map.values():
-        reg["available_slots"] = max(0, reg["total_capacity"] - reg["active_subscriptions"])
-        reg["is_sold_out"] = (reg["active_nodes"] == 0) or (reg["available_slots"] <= 0)
-
-    return list(regions_map.values())
+    from app.services.region_service import get_regions_status as get_reg_status
+    return await get_reg_status(db)
 
 

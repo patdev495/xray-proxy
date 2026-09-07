@@ -1,7 +1,11 @@
+from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.region import Region
 
 
 class Node(Base):
@@ -19,6 +23,13 @@ class Node(Base):
     reality_short_id: Mapped[str] = mapped_column(String(50), nullable=False)
     max_subscriptions: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    region_id: Mapped[int | None] = mapped_column(
+        ForeignKey("regions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    region: Mapped["Region | None"] = relationship("Region", back_populates="nodes", lazy="selectin")
 
     sni_profiles: Mapped[list["SniProfile"]] = relationship(
         "SniProfile",

@@ -6,11 +6,17 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.node import Node
+from app.models.plan import Plan
+from app.models.region import Region
 from app.models.subscription import Subscription, SubscriptionStatus
 from app.schemas.subscription import SubscriptionCreate, SubscriptionUpdate
+from app.services.node_service import allocate_node_for_region
+from app.services.plan_service import get_plan_by_id
+from app.services.region_service import get_region_by_id
 from app.services.xray_grpc_service import (
     add_user_to_node,
     remove_user_from_all_nodes,
@@ -91,20 +97,46 @@ def build_subscription_bundle(uuid: str, nodes: list[Node]) -> str:
 
 
 async def create_subscription(db: AsyncSession, sub_in: SubscriptionCreate) -> Subscription:
-    """Create a new subscription with unique token, UUID, quota, expiry, and assigned nodes."""
+    """Create a new subscription with unique token, UUID, quota, expiry, plan, and assigned nodes."""
     token = f"sub_{secrets.token_urlsafe(16)}"
     client_uuid = str(uuid.uuid4())
-    quota_bytes = int(sub_in.quota_gb * 1024 * 1024 * 1024)
-    expires_at = datetime.now(timezone.utc) + timedelta(days=sub_in.days_valid)
 
-    # Assign specific nodes or default to all active nodes
-    if sub_in.node_ids is not None and len(sub_in.node_ids) > 0:
+    plan: Plan | None = None
+    if sub_in.plan_id is not None:
+        plan = await get_plan_by_id(db, sub_in.plan_id)
+        if not plan or not plan.is_active:
+            raise ValueError("Selected plan is not found or inactive")
+        quota_bytes = plan.traffic_quota_bytes if sub_in.quota_gb is None else int(sub_in.quota_gb * 1024 * 1024 * 1024)
+        days = plan.days_valid if sub_in.days_valid is None else sub_in.days_valid
+    else:
+        quota_bytes = int(sub_in.quota_gb * 1024 * 1024 * 1024) if sub_in.quota_gb is not None else 0
+        days = sub_in.days_valid if sub_in.days_valid is not None else 30
+
+    expires_at = datetime.now(timezone.utc) + timedelta(days=days)
+
+    # Determine region and node allocation
+    assigned_region_id: int | None = None
+    if sub_in.region_id is not None:
+        region = await get_region_by_id(db, sub_in.region_id)
+        if not region:
+            raise ValueError(f"Region ID {sub_in.region_id} not found")
+        if not region.is_active:
+            raise ValueError(f"Region '{region.name}' is currently inactive")
+        if plan and plan.allowed_regions and len(plan.allowed_regions) > 0:
+            if region.code not in plan.allowed_regions:
+                raise ValueError(f"Region '{region.code}' is not permitted for plan '{plan.name}'")
+        allocated_node = await allocate_node_for_region(db, region_id=region.id)
+        assigned_nodes = [allocated_node]
+        assigned_region_id = region.id
+    elif sub_in.node_ids is not None and len(sub_in.node_ids) > 0:
         node_query = select(Node).where(Node.id.in_(sub_in.node_ids), Node.is_active.is_(True))
+        nodes_res = await db.execute(node_query)
+        assigned_nodes = list(nodes_res.scalars().all())
+        assigned_region_id = assigned_nodes[0].region_id if (len(assigned_nodes) == 1 and assigned_nodes[0].region_id) else None
     else:
         node_query = select(Node).where(Node.is_active.is_(True))
-    
-    nodes_res = await db.execute(node_query)
-    assigned_nodes = list(nodes_res.scalars().all())
+        nodes_res = await db.execute(node_query)
+        assigned_nodes = list(nodes_res.scalars().all())
 
     db_sub = Subscription(
         customer_name=sub_in.customer_name,
@@ -114,35 +146,67 @@ async def create_subscription(db: AsyncSession, sub_in: SubscriptionCreate) -> S
         traffic_used_bytes=0,
         expires_at=expires_at,
         status=SubscriptionStatus.ACTIVE,
+        plan_id=sub_in.plan_id,
+        region_id=assigned_region_id,
         nodes=assigned_nodes,
     )
     db.add(db_sub)
     await db.commit()
     await db.refresh(db_sub)
 
+    # Eager load relationships for response serialization
+    db_sub = await get_subscription_by_id(db, db_sub.id)  # type: ignore
+
     # Sync new active subscription to assigned nodes
-    if db_sub.status == SubscriptionStatus.ACTIVE:
+    if db_sub and db_sub.status == SubscriptionStatus.ACTIVE:
         await sync_user_to_all_nodes(db, db_sub)
 
-    return db_sub
+    return db_sub  # type: ignore
 
 
 
 async def get_subscriptions(db: AsyncSession) -> list[Subscription]:
-    """Retrieve all subscriptions ordered by ID descending."""
-    result = await db.execute(select(Subscription).order_by(Subscription.id.desc()))
+    """Retrieve all subscriptions ordered by ID descending with relations eager loaded."""
+    stmt = (
+        select(Subscription)
+        .options(
+            selectinload(Subscription.nodes),
+            selectinload(Subscription.plan),
+            selectinload(Subscription.region),
+        )
+        .order_by(Subscription.id.desc())
+    )
+    result = await db.execute(stmt)
     return list(result.scalars().all())
 
 
 async def get_subscription_by_id(db: AsyncSession, sub_id: int) -> Subscription | None:
-    """Retrieve subscription by primary key."""
-    result = await db.execute(select(Subscription).where(Subscription.id == sub_id))
+    """Retrieve subscription by primary key with relations eager loaded."""
+    stmt = (
+        select(Subscription)
+        .options(
+            selectinload(Subscription.nodes),
+            selectinload(Subscription.plan),
+            selectinload(Subscription.region),
+        )
+        .where(Subscription.id == sub_id)
+    )
+    result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
 
 async def get_subscription_by_token(db: AsyncSession, token: str) -> Subscription | None:
-    """Retrieve subscription by secret token."""
-    result = await db.execute(select(Subscription).where(Subscription.token == token))
+    """Retrieve subscription by secret token with relations eager loaded."""
+    stmt = (
+        select(Subscription)
+        .options(
+            selectinload(Subscription.nodes),
+            selectinload(Subscription.plan),
+            selectinload(Subscription.region),
+        )
+        .where(Subscription.token == token)
+    )
+    result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
 
@@ -157,6 +221,12 @@ async def update_subscription(
 
     if sub_in.customer_name is not None:
         sub.customer_name = sub_in.customer_name
+
+    if sub_in.plan_id is not None:
+        sub.plan_id = sub_in.plan_id
+
+    if sub_in.region_id is not None:
+        sub.region_id = sub_in.region_id
 
     if sub_in.traffic_quota_gb is not None and sub_in.traffic_quota_gb > 0:
         sub.traffic_quota_bytes = int(sub_in.traffic_quota_gb * 1024 * 1024 * 1024)

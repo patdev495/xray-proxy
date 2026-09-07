@@ -53,10 +53,23 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
     <tr className="hover:bg-slate-50/60 transition-colors">
       {/* Subscriber Info */}
       <td className="py-4 px-5">
-        <div className="font-semibold text-slate-900 text-sm">
-          {sub.customer_name}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-semibold text-slate-900 text-sm">
+            {sub.customer_name}
+          </span>
+          {sub.plan_name && (
+            <span className="inline-flex items-center text-[10px] font-medium bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+              {sub.plan_name}
+            </span>
+          )}
+          {sub.region_code && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
+              <span>{sub.region_flag || '🌐'}</span>
+              <span>{sub.region_code}</span>
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
+        <div className="flex items-center gap-1.5 mt-1">
           <code className="text-[11px] font-mono text-slate-500 bg-slate-100 px-1 py-0.5 rounded">
             {sub.token.substring(0, 14)}...
           </code>

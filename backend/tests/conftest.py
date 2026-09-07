@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import AsyncSessionLocal, Base, engine
 from app.core.security import create_access_token
 from app.main import app
+from app.services.region_service import seed_default_regions
 from app.services.user_service import seed_default_admin
 
 
@@ -16,6 +17,7 @@ async def setup_test_db() -> AsyncGenerator[None, None]:
         await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal() as session:
         await seed_default_admin(session)
+        await seed_default_regions(session)
     yield
 
 
