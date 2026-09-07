@@ -57,19 +57,27 @@ Cơ chế đồng bộ trực tiếp qua gRPC giữa Control Plane và các Node
 _Avoid_: Background sync, cron updater
 
 **Plan**:
-Bản thiết kế gói dịch vụ do Admin định nghĩa và quản lý (tên gói, giá cước, hạn mức Traffic Quota, số ngày hiệu lực, và danh sách các Region được phép áp dụng).
+Bản thiết kế gói dịch vụ do Admin định nghĩa với cơ chế định giá kép (Composite Pricing): bắt buộc có cấu hình chu kỳ Tháng chính thức (`price_monthly_vnd`, `quota_monthly_bytes`, 30 ngày) và tùy chọn kích hoạt chu kỳ Ngày dùng thử (`enable_daily`, `price_daily_vnd`, `quota_daily_bytes`, 24 giờ) cùng danh sách Region áp dụng.
 _Avoid_: Pricing package, product tier
+
+**Billing Cycle**:
+Chu kỳ tính cước và hiệu lực của Subscription, gồm `MONTHLY` (30 ngày) và `DAILY` (24 giờ dùng thử).
+_Avoid_: Plan duration, renewal cycle, subscription type
+
+**Daily Test Option**:
+Tùy chọn bán gói theo ngày trong Plan (`enable_daily`), cho phép khách hàng trả phí nhỏ để dùng thử trong đúng 24 giờ. Subscription chu kỳ Daily không có Grace Period và không hỗ trợ In-place Renewal nhằm ngăn chặn tình trạng ngâm slot giá rẻ trên Node.
+_Avoid_: Trial plan, promo code, free sub
 
 **Region**:
 Vùng địa lý hoặc quốc gia (ví dụ: Vietnam 🇻🇳, Singapore 🇸🇬, Japan 🇯🇵) gắn liền với mã quốc gia hoặc cờ hiệu (`flag`) của Node. Customer lựa chọn Region khi khởi tạo Subscription, Control Plane tự động ánh xạ và phân phối các Node thuộc Region đó.
 _Avoid_: Location, country filter
 
 **Order**:
-Giao dịch mua mới hoặc gia hạn Subscription do Customer khởi tạo, được quản lý theo vòng đời trạng thái (`PENDING`, `PAID`, `CANCELLED`, `EXPIRED`) và mã đối soát thanh toán (VietQR / Webhook).
+Giao dịch mua mới hoặc gia hạn Subscription do Customer khởi tạo, được quản lý theo vòng đời trạng thái (`PENDING`, `PAID`, `CANCELLED`, `EXPIRED`), chu kỳ (`DAILY` hoặc `MONTHLY`), và mã đối soát thanh toán (VietQR / Webhook).
 _Avoid_: Invoice, bill, payment record
 
 **In-place Renewal**:
-Cơ chế gia hạn Subscription trực tiếp trên bản ghi hiện tại (cộng thêm ngày hết hạn và cấp lại dung lượng mới) mà không thay đổi UUID và Subscription Token, đảm bảo Client App trên thiết bị người dùng tiếp tục hoạt động mà không cần cấu hình lại.
+Cơ chế gia hạn Subscription trực tiếp trên bản ghi hiện tại (cộng thêm ngày hết hạn và cấp lại dung lượng mới) mà không thay đổi UUID và Subscription Token, đảm bảo Client App trên thiết bị người dùng tiếp tục hoạt động mà không cần cấu hình lại. Áp dụng độc quyền cho Subscription chu kỳ Tháng; Subscription chu kỳ Daily không hỗ trợ gia hạn tại chỗ mà điều hướng mua gói Tháng mới.
 _Avoid_: Re-subscription, token refresh
 
 **Node Capacity**:
@@ -81,7 +89,7 @@ Thuật toán phân phối tải của Control Plane, tự động lựa chọn 
 _Avoid_: Round-robin, random allocation
 
 **Grace Period**:
-Khoảng thời gian ân hạn (mặc định 3 ngày) sau khi Subscription hết hạn (`EXPIRED`), trong đó vị trí slot trên Node Capacity và cặp khóa UUID/Token vẫn được bảo lưu nhằm cho phép Customer thực hiện In-place Renewal mà không bị tranh chấp slot bởi người dùng mới.
+Khoảng thời gian ân hạn (3 ngày đối với Subscription chu kỳ Tháng; 0 ngày đối với chu kỳ Daily) sau khi Subscription hết hạn (`EXPIRED`), trong đó vị trí slot trên Node Capacity và cặp khóa UUID/Token vẫn được bảo lưu nhằm cho phép Customer thực hiện In-place Renewal mà không bị tranh chấp slot bởi người dùng mới.
 _Avoid_: Extension window, buffer time
 
 **Support Channel**:
@@ -96,13 +104,13 @@ _Avoid_: Re-provisioning, manual re-assignment
 
 - Một **Control Plane** quản lý nhiều **Node** qua **Xray gRPC Service**
 - Mỗi **Node** được cấu hình một **Node Capacity** (`max_subscriptions`)
-- **Admin** thiết lập và điều chỉnh các **Plan** cùng thông tin liên hệ **Support Channel**
-- **Customer** tạo **Order** thanh toán để sở hữu một hoặc nhiều **Subscription**
-- Mỗi **Subscription** thuộc về một **Customer** và được cấp phát dựa trên **Plan** và **Region** đã chọn
+- **Admin** thiết lập và điều chỉnh các **Plan** với cấu hình định giá kép (**Monthly** và tùy chọn **Daily**) cùng **Support Channel**
+- **Customer** tạo **Order** chọn **Plan**, **Region** và **Billing Cycle** (`DAILY` hoặc `MONTHLY`)
+- Mỗi **Subscription** thuộc về một **Customer** và được cấp phát dựa trên **Plan**, **Billing Cycle** và **Region** đã chọn
 - **Control Plane** áp dụng **Node Load Balancing** để tự động phân phối Node tối ưu trong Region vào **Subscription**
 - **Customer** có thể thực hiện **Node Switching** để đổi sang Node khác cùng Region khi cần
-- Khi hết hạn, **Grace Period** bảo lưu slot của **Subscription** trên **Node** trong 3 ngày trước khi giải phóng hoàn toàn
-- **In-place Renewal** gia hạn một **Subscription** mà không làm thay đổi Subscription Token hay Client App
+- Khi hết hạn: **Subscription** chu kỳ **Monthly** được **Grace Period** bảo lưu slot 3 ngày; **Subscription** chu kỳ **Daily** hết hạn sau 24 giờ và giải phóng slot ngay lập tức (0 ngày ân hạn)
+- **In-place Renewal** chỉ áp dụng cho **Subscription** chu kỳ **Monthly**; chu kỳ **Daily** không hỗ trợ gia hạn mà điều hướng mua mới
 - Quá trình **Node Sync** định kỳ cập nhật số liệu tiêu thụ vào **Traffic Quota** của từng **Subscription**
 - Mỗi **Node** chạy một hoặc nhiều **Inbound** (VLESS-Reality)
 - Một **Subscription** cung cấp thông tin kết nối tới các **Node** được phân phối cho một **Client App**
@@ -112,7 +120,8 @@ _Avoid_: Re-provisioning, manual re-assignment
 
 - "VPS" thường bị dùng lẫn giữa máy chủ chạy web quản trị và máy chủ làm proxy — đã phân tách: Control Plane (Web) và Node (Proxy Xray).
 - "3x-ui" bị nhầm là thành phần bắt buộc — đã làm rõ: Node chỉ cần chạy `xray-core` với gRPC API, Control Plane tự viết sẽ thay thế 3x-ui.
-- "Gia hạn" dễ bị nhầm là tạo cấu hình mới — đã làm rõ với khái niệm In-place Renewal: giữ nguyên UUID/Token để người dùng không phải cài lại app.
+- "Gia hạn" dễ bị nhầm là tạo cấu hình mới — đã làm rõ với khái niệm In-place Renewal: giữ nguyên UUID/Token để người dùng không phải cài lại app (chỉ áp dụng cho gói Tháng).
 - "Chọn Node" bị nhầm là việc của người dùng — đã làm rõ: Customer chỉ chọn Region, Control Plane tự động cân bằng tải Node (Node Load Balancing) dựa trên Node Capacity.
 - "Node chết bị kẹt" — đã giải quyết bằng cơ chế Node Switching: đổi server ngay trong Portal, giữ nguyên UUID.
-- "Thu hồi slot ngay khi hết hạn" — đã làm rõ bằng Grace Period: bảo lưu 3 ngày để người dùng cũ gia hạn mượt mà.
+- "Thu hồi slot ngay khi hết hạn" — đã làm rõ: Gói Tháng có Grace Period 3 ngày; Gói Ngày (Test) giải phóng slot ngay sau 24 giờ để tránh chiếm dụng VPS giá rẻ.
+- "Gói ngày tạo riêng lẻ" bị nhầm là phải tạo 2 Plan độc lập — đã làm rõ: 1 Plan hỗ trợ định giá kép (Composite Pricing: Ngày + Tháng) trên cùng một thực thể Plan.
