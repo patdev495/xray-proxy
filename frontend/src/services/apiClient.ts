@@ -410,4 +410,20 @@ export async function fetchSyncStatus(token: string): Promise<import('../types/s
   return response.json();
 }
 
+export async function fetchRegionsStatus(): Promise<import('../types/node').RegionStatus[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/regions/status`, {
+    headers: {
+      'Accept': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new Error(err.detail || 'Failed to fetch regions status');
+  }
+
+  return response.json();
+}
+
+
 

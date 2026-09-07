@@ -1,13 +1,18 @@
 from datetime import datetime, timezone
 import json
 from typing import Any
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.node import Node, SniProfile
-from app.models.subscription import Subscription, SubscriptionStatus
+from app.models.subscription import Subscription, SubscriptionStatus, subscription_nodes
 from app.schemas.node import NodeCreate, NodeUpdate, SniProfileCreate, SniProfileUpdate
 from app.services.reality_service import generate_reality_keypair
+
+
+class RegionOutOfCapacityError(Exception):
+    """Raised when a region has no active nodes or all nodes have reached max_subscriptions capacity."""
+    pass
 
 
 async def create_node(db: AsyncSession, node_in: NodeCreate) -> Node:
@@ -32,6 +37,7 @@ async def create_node(db: AsyncSession, node_in: NodeCreate) -> Node:
         reality_private_key=priv_key,
         reality_public_key=pub_key,
         reality_short_id=short_id,
+        max_subscriptions=node_in.max_subscriptions,
         is_active=True,
     )
 
@@ -411,4 +417,80 @@ echo "==> Active VLESS ports: {port_list_str}"
 echo "=============================================================================="
 """
     return script.replace("\r\n", "\n")
+
+
+async def get_node_active_subscriptions_count(db: AsyncSession, node_id: int) -> int:
+    """Count number of active subscriptions bound to a node."""
+    stmt = (
+        select(func.count(Subscription.id))
+        .join(subscription_nodes, subscription_nodes.c.subscription_id == Subscription.id)
+        .where(
+            subscription_nodes.c.node_id == node_id,
+            Subscription.status == SubscriptionStatus.ACTIVE,
+        )
+    )
+    result = await db.execute(stmt)
+    return int(result.scalar() or 0)
+
+
+async def allocate_node_for_region(db: AsyncSession, flag: str) -> Node:
+    """Find and return the least-loaded active node in the specified region (flag).
+
+    Raises RegionOutOfCapacityError if no active node exists or all active nodes
+    have reached their max_subscriptions limit.
+    """
+    stmt = select(Node).where(Node.flag == flag, Node.is_active.is_(True))
+    result = await db.execute(stmt)
+    active_nodes = list(result.scalars().all())
+
+    if not active_nodes:
+        raise RegionOutOfCapacityError(f"No active nodes in region '{flag}'")
+
+    eligible_nodes: list[tuple[Node, int]] = []
+    for node in active_nodes:
+        active_count = await get_node_active_subscriptions_count(db, node.id)
+        if active_count < node.max_subscriptions:
+            eligible_nodes.append((node, active_count))
+
+    if not eligible_nodes:
+        raise RegionOutOfCapacityError(f"All nodes in region '{flag}' have reached maximum subscription capacity")
+
+    eligible_nodes.sort(key=lambda x: x[1])
+    return eligible_nodes[0][0]
+
+
+async def get_regions_status(db: AsyncSession) -> list[dict[str, Any]]:
+    """Retrieve capacity and availability status for all distinct node regions."""
+    nodes_result = await db.execute(select(Node).order_by(Node.flag.asc(), Node.id.asc()))
+    nodes = list(nodes_result.scalars().all())
+
+    regions_map: dict[str, dict[str, Any]] = {}
+
+    for node in nodes:
+        flag = node.flag
+        if flag not in regions_map:
+            regions_map[flag] = {
+                "flag": flag,
+                "location": node.location,
+                "total_nodes": 0,
+                "active_nodes": 0,
+                "total_capacity": 0,
+                "active_subscriptions": 0,
+                "available_slots": 0,
+                "is_sold_out": True,
+            }
+        reg = regions_map[flag]
+        reg["total_nodes"] += 1
+        if node.is_active:
+            reg["active_nodes"] += 1
+            reg["total_capacity"] += node.max_subscriptions
+            active_count = await get_node_active_subscriptions_count(db, node.id)
+            reg["active_subscriptions"] += active_count
+
+    for reg in regions_map.values():
+        reg["available_slots"] = max(0, reg["total_capacity"] - reg["active_subscriptions"])
+        reg["is_sold_out"] = (reg["active_nodes"] == 0) or (reg["available_slots"] <= 0)
+
+    return list(regions_map.values())
+
 

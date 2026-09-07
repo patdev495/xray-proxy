@@ -52,6 +52,7 @@ export const NodesTab: React.FC = () => {
   const [flag, setFlag] = useState<string>('🇯🇵');
   const [grpcPort, setGrpcPort] = useState<string>('10085');
   const [inboundPort, setInboundPort] = useState<string>('443');
+  const [maxSubscriptions, setMaxSubscriptions] = useState<string>('100');
   const [realityPrivKey, setRealityPrivKey] = useState<string>('');
   const [realityPubKey, setRealityPubKey] = useState<string>('');
   const [realityShortId, setRealityShortId] = useState<string>('');
@@ -152,6 +153,7 @@ export const NodesTab: React.FC = () => {
         flag: derivedFlag,
         grpc_port: parseInt(grpcPort, 10) || 10085,
         inbound_port: parseInt(inboundPort, 10) || 443,
+        max_subscriptions: parseInt(maxSubscriptions, 10) || 100,
         reality_private_key: realityPrivKey.trim() || undefined,
         reality_public_key: realityPubKey.trim() || undefined,
         reality_short_id: realityShortId.trim() || undefined,
@@ -173,6 +175,7 @@ export const NodesTab: React.FC = () => {
       setFlag('🇯🇵');
       setGrpcPort('10085');
       setInboundPort('443');
+      setMaxSubscriptions('100');
       setRealityPrivKey('');
       setRealityPubKey('');
       setRealityShortId('');
@@ -189,6 +192,37 @@ export const NodesTab: React.FC = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePromptEditCapacity = async (node: NodeItem) => {
+    if (!token) return;
+    const current = node.max_subscriptions || 100;
+    const input = window.prompt(`Update Max Subscriptions capacity for ${node.name}:`, String(current));
+    if (input === null) return;
+    const parsed = parseInt(input.trim(), 10);
+    if (isNaN(parsed) || parsed < 1) {
+      showToast({
+        type: 'error',
+        title: 'Invalid Capacity',
+        message: 'Capacity must be a positive number greater than or equal to 1.',
+      });
+      return;
+    }
+    try {
+      await updateNode(token, node.id, { max_subscriptions: parsed });
+      showToast({
+        type: 'success',
+        title: 'Capacity Updated',
+        message: `Capacity for ${node.name} set to ${parsed} subscriptions.`,
+      });
+      await loadNodes();
+    } catch (err) {
+      showToast({
+        type: 'error',
+        title: 'Update Error',
+        message: err instanceof Error ? err.message : 'Failed to update capacity',
+      });
     }
   };
 
@@ -399,6 +433,7 @@ export const NodesTab: React.FC = () => {
               <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider">
                 <th className="py-3 px-5">Node &amp; Region</th>
                 <th className="py-3 px-5">Host &amp; Inbound</th>
+                <th className="py-3 px-5">Capacity / Subs</th>
                 <th className="py-3 px-5">State &amp; Reality Keys</th>
                 <th className="py-3 px-5">Carrier SNI Profiles</th>
                 <th className="py-3 px-5 text-right">Actions</th>
@@ -407,14 +442,14 @@ export const NodesTab: React.FC = () => {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400">
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-400" />
                     Loading node infrastructure...
                   </td>
                 </tr>
               ) : nodes.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center">
+                  <td colSpan={6} className="py-12 text-center">
                     <Server className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                     <p className="text-sm font-semibold text-slate-700">No nodes registered yet</p>
                     <p className="text-xs text-slate-400 mt-1">Register a remote VPS to start serving VLESS-Reality proxies.</p>
@@ -464,6 +499,58 @@ export const NodesTab: React.FC = () => {
                       <span className="text-[11px] text-slate-400 font-mono">
                         gRPC Port: {node.grpc_port}
                       </span>
+                    </td>
+
+                    {/* Capacity & Active Subs */}
+                    <td className="py-4 px-5">
+                      <div className="space-y-1.5 min-w-[130px]">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-slate-800">
+                            {node.active_subscriptions_count ?? 0}{' '}
+                            <span className="text-slate-400 font-normal">/ {node.max_subscriptions || 100}</span>
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              (node.active_subscriptions_count ?? 0) >= (node.max_subscriptions || 100)
+                                ? 'bg-rose-100 text-rose-700'
+                                : (node.active_subscriptions_count ?? 0) > (node.max_subscriptions || 100) * 0.8
+                                ? 'bg-amber-100 text-amber-700'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {(node.active_subscriptions_count ?? 0) >= (node.max_subscriptions || 100)
+                              ? 'Full'
+                              : `${Math.round(
+                                  ((node.active_subscriptions_count ?? 0) / (node.max_subscriptions || 100)) * 100
+                                )}%`}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-300 ${
+                              (node.active_subscriptions_count ?? 0) >= (node.max_subscriptions || 100)
+                                ? 'bg-rose-500'
+                                : (node.active_subscriptions_count ?? 0) > (node.max_subscriptions || 100) * 0.8
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500'
+                            }`}
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.round(
+                                  ((node.active_subscriptions_count ?? 0) / (node.max_subscriptions || 100)) * 100
+                                )
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                        <button
+                          onClick={() => handlePromptEditCapacity(node)}
+                          className="text-[10px] text-slate-400 hover:text-slate-700 hover:underline flex items-center gap-1"
+                        >
+                          Edit capacity
+                        </button>
+                      </div>
                     </td>
 
                     {/* State & Reality Keys */}
@@ -658,6 +745,17 @@ export const NodesTab: React.FC = () => {
               hint="VLESS Reality listener"
             />
           </div>
+
+          <Input
+            label="Max Subscriptions (Capacity Limit)"
+            type="number"
+            min="1"
+            placeholder="100"
+            value={maxSubscriptions}
+            onChange={(e) => setMaxSubscriptions(e.target.value)}
+            hint="Maximum client subscriptions allowed on this VPS before auto-routing considers it full"
+            required
+          />
 
           {/* Reality Cryptographic Keys Section */}
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3">

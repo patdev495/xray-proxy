@@ -21,6 +21,7 @@ from app.services.node_service import (
     generate_install_script,
     generate_sync_script,
     get_active_subscriptions_for_node,
+    get_node_active_subscriptions_count,
     get_node_by_id,
     get_nodes,
     get_sni_profile_by_id,
@@ -60,7 +61,13 @@ async def generate_keys_endpoint() -> RealityKeysResponse:
 async def list_nodes(db: AsyncSession = Depends(get_db)) -> list[NodeResponse]:
     """List all registered proxy nodes."""
     nodes = await get_nodes(db)
-    return [NodeResponse.model_validate(n) for n in nodes]
+    responses: list[NodeResponse] = []
+    for n in nodes:
+        active_count = await get_node_active_subscriptions_count(db, n.id)
+        resp = NodeResponse.model_validate(n)
+        resp.active_subscriptions_count = active_count
+        responses.append(resp)
+    return responses
 
 
 @router.post(
@@ -75,7 +82,9 @@ async def register_node(
 ) -> NodeResponse:
     """Create a new proxy node with auto-generated Reality keys if omitted."""
     node = await create_node(db, node_in)
-    return NodeResponse.model_validate(node)
+    resp = NodeResponse.model_validate(node)
+    resp.active_subscriptions_count = 0
+    return resp
 
 
 @router.get(
@@ -94,7 +103,10 @@ async def get_node(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Node {node_id} not found",
         )
-    return NodeResponse.model_validate(node)
+    active_count = await get_node_active_subscriptions_count(db, node.id)
+    resp = NodeResponse.model_validate(node)
+    resp.active_subscriptions_count = active_count
+    return resp
 
 
 @router.patch(
@@ -115,7 +127,11 @@ async def update_node_endpoint(
             detail=f"Node {node_id} not found",
         )
     updated = await update_node(db, node, node_in)
-    return NodeResponse.model_validate(updated)
+    active_count = await get_node_active_subscriptions_count(db, updated.id)
+    resp = NodeResponse.model_validate(updated)
+    resp.active_subscriptions_count = active_count
+    return resp
+
 
 
 @router.delete(

@@ -1,6 +1,6 @@
 # 01-node-capacity-load-balancing
 
-Status: ready-for-agent
+Status: done
 
 ## Parent
 
@@ -14,10 +14,10 @@ Backend allocation service: when assigning a Node for a given Region, filter act
 
 ## Acceptance criteria
 
-- [ ] `Node` table has `max_subscriptions: int` column with schema migration/default.
-- [ ] Admin UI displays Node Capacity and current load on Node cards, allows updating `max_subscriptions`.
-- [ ] Backend service `allocate_node_for_region(db, region)` returns least-loaded node or raises `RegionOutOfCapacityError`.
-- [ ] Endpoint `/api/v1/regions/status` returns list of regions with availability (`is_sold_out: bool`, `available_slots: int`).
+- [x] `Node` table has `max_subscriptions: int` column with schema migration/default.
+- [x] Admin UI displays Node Capacity and current load on Node cards, allows updating `max_subscriptions`.
+- [x] Backend service `allocate_node_for_region(db, region)` returns least-loaded node or raises `RegionOutOfCapacityError`.
+- [x] Endpoint `/api/v1/regions/status` returns list of regions with availability (`is_sold_out: bool`, `available_slots: int`).
 
 ## Blocked by
 
@@ -26,3 +26,5 @@ Backend allocation service: when assigning a Node for a given Region, filter act
 ## Comments
 
 > *Generated from architectural decisions in ADR 0010.*
+> *Completed via TDD: 5 unit/integration tests added in `tests/test_node_capacity_load_balancing.py`, all 43 backend tests pass, frontend built cleanly.*
+

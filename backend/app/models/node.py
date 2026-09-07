@@ -17,6 +17,7 @@ class Node(Base):
     reality_private_key: Mapped[str] = mapped_column(String(100), nullable=False)
     reality_public_key: Mapped[str] = mapped_column(String(100), nullable=False)
     reality_short_id: Mapped[str] = mapped_column(String(50), nullable=False)
+    max_subscriptions: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     sni_profiles: Mapped[list["SniProfile"]] = relationship(

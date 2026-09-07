@@ -32,6 +32,8 @@ export interface NodeItem {
   reality_private_key: string;
   reality_public_key: string;
   reality_short_id: string;
+  max_subscriptions: number;
+  active_subscriptions_count?: number;
   is_active: boolean;
   sni_profiles: SniProfile[];
 }
@@ -43,6 +45,7 @@ export interface NodeCreate {
   flag?: string;
   grpc_port?: number;
   inbound_port?: number;
+  max_subscriptions?: number;
   reality_private_key?: string;
   reality_public_key?: string;
   reality_short_id?: string;
@@ -56,6 +59,7 @@ export interface NodeUpdate {
   flag?: string;
   grpc_port?: number;
   inbound_port?: number;
+  max_subscriptions?: number;
   reality_private_key?: string;
   reality_public_key?: string;
   reality_short_id?: string;
@@ -67,3 +71,15 @@ export interface RealityKeys {
   public_key: string;
   short_id: string;
 }
+
+export interface RegionStatus {
+  flag: string;
+  location: string;
+  total_nodes: number;
+  active_nodes: number;
+  total_capacity: number;
+  active_subscriptions: number;
+  available_slots: number;
+  is_sold_out: boolean;
+}
+
