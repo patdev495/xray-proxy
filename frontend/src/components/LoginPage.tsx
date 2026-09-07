@@ -120,12 +120,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
     setError(null);
 
     if (mode === 'register') {
+      if (username.trim().length < 3) {
+        setError('Tên đăng nhập phải có ít nhất 3 ký tự');
+        return;
+      }
       if (password !== confirmPassword) {
-        setError('Passwords do not match');
+        setError('Mật khẩu xác nhận không trùng khớp');
         return;
       }
       if (password.length < 6) {
-        setError('Password must be at least 6 characters');
+        setError('Mật khẩu phải có ít nhất 6 ký tự');
         return;
       }
     }
@@ -143,7 +147,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         login(tokenData.access_token, userData);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
+      const rawMsg = err instanceof Error ? err.message : 'Xác thực thất bại';
+      if (rawMsg.includes('Username already taken')) {
+        setError('Tên đăng nhập đã tồn tại trên hệ thống. Vui lòng chọn tên khác.');
+      } else if (rawMsg.includes('Email already registered')) {
+        setError('Địa chỉ email này đã được đăng ký tài khoản.');
+      } else if (rawMsg.includes('Incorrect username or password')) {
+        setError('Tên đăng nhập hoặc mật khẩu không chính xác.');
+      } else {
+        setError(rawMsg);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -245,15 +258,36 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             />
 
             {mode === 'register' && (
-              <Input
-                label="Confirm Password"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                leftIcon={<Lock className="w-4 h-4" />}
-              />
+              <div className="space-y-1">
+                <Input
+                  label="Confirm Password"
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  leftIcon={<Lock className="w-4 h-4" />}
+                />
+                {confirmPassword.length > 0 && (
+                  <p
+                    className={`text-[11px] flex items-center gap-1 font-medium ${
+                      confirmPassword === password ? 'text-emerald-600' : 'text-rose-500'
+                    }`}
+                  >
+                    {confirmPassword === password ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Mật khẩu trùng khớp</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span>Mật khẩu xác nhận không khớp</span>
+                      </>
+                    )}
+                  </p>
+                )}
+              </div>
             )}
 
             <Button

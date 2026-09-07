@@ -336,35 +336,60 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                     </div>
 
                     {/* Region Selector */}
-                    <div className="border-t border-slate-100 pt-4 space-y-1.5">
+                    <div className="border-t border-slate-100 pt-4 space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <label className="font-semibold text-slate-700">Khu vực máy chủ:</label>
+                        <label className="font-semibold text-slate-700">Chọn khu vực máy chủ:</label>
                         {isRegionSoldOut && (
-                          <span className="text-rose-600 font-semibold text-[11px]">Hết chỗ</span>
+                          <span className="text-rose-600 font-semibold text-[11px]">Đã hết slot</span>
                         )}
                       </div>
 
-                      <select
-                        value={selectedReg}
-                        onChange={(e) => handleRegionChange(plan.id, e.target.value)}
-                        className={`w-full text-xs rounded-lg border px-3 py-2 bg-white text-slate-800 transition-colors focus:outline-none focus:ring-1 ${
-                          isRegionSoldOut
-                            ? 'border-rose-300 focus:ring-rose-500'
-                            : 'border-slate-200 focus:ring-slate-800'
-                        }`}
-                      >
+                      <div className="space-y-1.5">
                         {allowedList.map((regCode) => {
                           const r = regions.find((item) => item.code === regCode || item.location === regCode);
-                          const soldOut = r?.is_sold_out;
+                          const soldOut = Boolean(r?.is_sold_out || (r && r.available_slots <= 0));
+                          const isSelected = selectedReg === regCode;
                           const flag = r?.flag || '🌐';
-                          const label = r ? `${flag} ${r.location || r.name || regCode}` : regCode;
+                          const label = r ? (r.location || r.name || regCode) : regCode;
+
                           return (
-                            <option key={regCode} value={regCode}>
-                              {label} {soldOut ? '(Hết chỗ - Sold out)' : `(${r?.available_slots ?? 0} slots)`}
-                            </option>
+                            <button
+                              key={regCode}
+                              type="button"
+                              disabled={soldOut}
+                              onClick={() => handleRegionChange(plan.id, regCode)}
+                              className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-all text-left ${
+                                soldOut
+                                  ? 'bg-rose-50/60 border border-rose-200 text-slate-400 cursor-not-allowed opacity-75'
+                                  : isSelected
+                                  ? 'bg-slate-900 text-white border-2 border-slate-900 shadow-xs'
+                                  : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-sm">{flag}</span>
+                                <span className={`font-medium truncate ${isSelected ? 'text-white' : soldOut ? 'text-rose-800' : 'text-slate-800'}`}>
+                                  {label}
+                                </span>
+                              </div>
+
+                              {soldOut ? (
+                                <span className="shrink-0 px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                                  Hết chỗ
+                                </span>
+                              ) : (
+                                <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-medium border ${
+                                  isSelected
+                                    ? 'bg-slate-800 text-slate-200 border-slate-700'
+                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                }`}>
+                                  Còn {r?.available_slots ?? 0} slots
+                                </span>
+                              )}
+                            </button>
                           );
                         })}
-                      </select>
+                      </div>
                     </div>
                   </div>
 

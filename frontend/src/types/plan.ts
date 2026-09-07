@@ -35,4 +35,7 @@ export interface PlanUpdate {
 export interface SystemSettings {
   support_telegram_url: string;
   support_zalo_url: string;
+  bank_id?: string;
+  bank_account_number?: string;
+  bank_account_name?: string;
 }

@@ -8,6 +8,7 @@ import {
   Save,
   MessageCircle,
   Edit2,
+  CreditCard,
 } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -35,6 +36,9 @@ export const PlansSettingsTab: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettings>({
     support_telegram_url: '',
     support_zalo_url: '',
+    bank_id: 'MB',
+    bank_account_number: '',
+    bank_account_name: '',
   });
   const [isSavingSettings, setIsSavingSettings] = useState<boolean>(false);
 
@@ -175,46 +179,84 @@ export const PlansSettingsTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Support Channels Configuration Card */}
+      {/* System Settings (VietQR Bank & Support Channels) */}
       <Card>
-        <div className="p-5">
-          <div className="flex items-center gap-2 mb-1">
-            <MessageCircle className="w-4 h-4 text-slate-700" />
-            <h3 className="text-sm font-bold text-slate-900">Support Channels Configuration</h3>
-          </div>
-          <p className="text-xs text-slate-500 mb-4">
-            These links appear on the public storefront and customer portal for direct help.
-          </p>
+        <div className="p-5 space-y-5">
+          {/* VietQR Bank Account Settings */}
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <CreditCard className="w-4 h-4 text-slate-700" />
+              <h3 className="text-sm font-bold text-slate-900">Cấu hình tài khoản nhận tiền VietQR</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Thông tin tài khoản ngân hàng thụ hưởng dùng để sinh mã VietQR thanh toán cho khách hàng.
+            </p>
 
-          <form onSubmit={handleSaveSettings} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Input
+                label="Mã ngân hàng (Bank ID)"
+                placeholder="VD: MB, VCB, ACB, TPB, VPB"
+                value={settings.bank_id || ''}
+                onChange={(e) => setSettings({ ...settings, bank_id: e.target.value.toUpperCase() })}
+                hint="Mã ngân hàng chuẩn VietQR"
+              />
+              <Input
+                label="Số tài khoản ngân hàng"
+                placeholder="VD: 0987654321"
+                value={settings.bank_account_number || ''}
+                onChange={(e) => setSettings({ ...settings, bank_account_number: e.target.value })}
+                hint="Số tài khoản nhận tiền"
+              />
+              <Input
+                label="Tên chủ tài khoản"
+                placeholder="VD: NGUYEN VAN A"
+                value={settings.bank_account_name || ''}
+                onChange={(e) => setSettings({ ...settings, bank_account_name: e.target.value.toUpperCase() })}
+                hint="Tên in hoa không dấu"
+              />
+            </div>
+          </div>
+
+          {/* Support Channels Settings */}
+          <div className="border-t border-slate-100 pt-4">
+            <div className="flex items-center gap-2 mb-1">
+              <MessageCircle className="w-4 h-4 text-slate-700" />
+              <h3 className="text-sm font-bold text-slate-900">Kênh hỗ trợ khách hàng</h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-3">
+              Liên kết hỗ trợ hiển thị trên trang chủ công khai và portal khách hàng.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input
                 label="Telegram Support URL"
                 placeholder="https://t.me/peebot_admin"
                 value={settings.support_telegram_url}
                 onChange={(e) => setSettings({ ...settings, support_telegram_url: e.target.value })}
-                hint="Direct Telegram chat or support group link"
+                hint="Link nhóm hoặc chat Telegram"
               />
               <Input
                 label="Zalo Support URL"
                 placeholder="https://zalo.me/0987654321"
                 value={settings.support_zalo_url}
                 onChange={(e) => setSettings({ ...settings, support_zalo_url: e.target.value })}
-                hint="Direct Zalo chat or contact URL"
+                hint="Link liên hệ hoặc nhóm Zalo"
               />
             </div>
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                variant="primary"
-                size="sm"
-                leftIcon={<Save className="w-3.5 h-3.5" />}
-                disabled={isSavingSettings}
-              >
-                {isSavingSettings ? 'Saving...' : 'Save Support Links'}
-              </Button>
-            </div>
-          </form>
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              leftIcon={<Save className="w-3.5 h-3.5" />}
+              onClick={handleSaveSettings}
+              disabled={isSavingSettings}
+            >
+              {isSavingSettings ? 'Đang lưu...' : 'Lưu toàn bộ cài đặt'}
+            </Button>
+          </div>
         </div>
       </Card>
 
