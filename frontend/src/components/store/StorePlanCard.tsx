@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, ArrowRight, Clock, Sparkles } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Clock, Sparkles, Plus, Minus } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -11,10 +11,12 @@ interface StorePlanCardProps {
   regions: RegionStatus[];
   selectedRegion: string;
   onSelectRegion: (planId: number, regionCode: string) => void;
-  onBuyPlan: (plan: PlanItem, cycle: 'MONTHLY' | 'DAILY') => void;
+  onBuyPlan: (plan: PlanItem, cycle: 'MONTHLY' | 'DAILY', durationDays: number) => void;
   isBuying: boolean;
   isLoggedIn: boolean;
 }
+
+const DAY_PRESETS = [1, 3, 7];
 
 export const StorePlanCard: React.FC<StorePlanCardProps> = ({
   plan,
@@ -26,6 +28,9 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
   isLoggedIn,
 }) => {
   const [cycle, setCycle] = useState<'MONTHLY' | 'DAILY'>('MONTHLY');
+  const [selectedDays, setSelectedDays] = useState<number>(1);
+  const [customInput, setCustomInput] = useState<string>('');
+  const [isCustom, setIsCustom] = useState<boolean>(false);
 
   const allowedList =
     plan.allowed_regions && plan.allowed_regions.length > 0
@@ -38,13 +43,56 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
   const isRegionSoldOut = Boolean(currentRegStatus && currentRegStatus.is_sold_out);
 
   const isDaily = cycle === 'DAILY';
+
+  // Computed display values
+  const priceDaily = plan.price_daily_vnd ?? 3000;
+  const quotaDailyGb = plan.quota_daily_gb ?? 6;
+
   const displayPrice = isDaily
-    ? (plan.price_daily_vnd ?? 3000)
+    ? priceDaily * selectedDays
     : plan.price_vnd;
+
   const displayQuota = isDaily
-    ? (plan.quota_daily_gb ? `${plan.quota_daily_gb} GB` : '6 GB')
+    ? `${quotaDailyGb * selectedDays} GB`
     : (plan.quota_gb > 0 ? `${plan.quota_gb} GB` : 'Không giới hạn');
-  const displayDays = isDaily ? '1 Ngày (24 Giờ)' : `${plan.days_valid} Ngày`;
+
+  const displayDays = isDaily
+    ? `${selectedDays} Ngày (${selectedDays * 24} Giờ)`
+    : `${plan.days_valid} Ngày`;
+
+  const handlePresetClick = (days: number) => {
+    setSelectedDays(days);
+    setIsCustom(false);
+    setCustomInput('');
+  };
+
+  const handleCustomToggle = () => {
+    setIsCustom(true);
+    setCustomInput(String(selectedDays));
+  };
+
+  const handleCustomChange = (val: string) => {
+    setCustomInput(val);
+    const n = parseInt(val, 10);
+    if (!isNaN(n) && n >= 1 && n <= 90) {
+      setSelectedDays(n);
+    }
+  };
+
+  const handleStepDays = (delta: number) => {
+    const next = Math.min(90, Math.max(1, selectedDays + delta));
+    setSelectedDays(next);
+    if (isCustom) setCustomInput(String(next));
+  };
+
+  const handleSwitchCycle = (c: 'MONTHLY' | 'DAILY') => {
+    setCycle(c);
+    if (c === 'DAILY') {
+      setSelectedDays(1);
+      setIsCustom(false);
+      setCustomInput('');
+    }
+  };
 
   return (
     <Card className="flex flex-col justify-between p-6 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow relative bg-white">
@@ -54,21 +102,21 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
           <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl border border-slate-200/80 text-xs font-semibold">
             <button
               type="button"
-              onClick={() => setCycle('MONTHLY')}
+              onClick={() => handleSwitchCycle('MONTHLY')}
               className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                 cycle === 'MONTHLY'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <span>30 Ngày</span>
+              <span>Theo Tháng</span>
               <span className="text-[10px] text-slate-400 font-mono font-normal">
                 {plan.price_vnd.toLocaleString('vi-VN')}đ
               </span>
             </button>
             <button
               type="button"
-              onClick={() => setCycle('DAILY')}
+              onClick={() => handleSwitchCycle('DAILY')}
               className={`py-1.5 px-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
                 cycle === 'DAILY'
                   ? 'bg-white text-slate-900 shadow-xs'
@@ -76,7 +124,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
               }`}
             >
               <Sparkles className="w-3 h-3 text-amber-500" />
-              <span>Dùng thử 1 Ngày</span>
+              <span>Theo Ngày</span>
             </button>
           </div>
         )}
@@ -88,7 +136,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
             {isDaily ? (
               <Badge variant="amber" size="sm" className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                <span>Test 24H</span>
+                <span>{selectedDays}N / {selectedDays * 24}H</span>
               </Badge>
             ) : (
               <Badge variant="indigo" size="sm">{plan.days_valid} Ngày</Badge>
@@ -102,22 +150,99 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
             <span className="text-xs font-semibold text-slate-400 uppercase">VND</span>
             {isDaily && (
               <span className="text-[11px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-medium ml-2">
-                Gói 24h dùng thử
+                {priceDaily.toLocaleString('vi-VN')}đ/ngày
               </span>
             )}
           </div>
 
           <p className="text-xs text-slate-500 font-mono">
             Lưu lượng: <strong className="text-slate-800">{displayQuota}</strong>
-            {isDaily && ' / 24 giờ'}
+            {isDaily && ` (${quotaDailyGb} GB/ngày)`}
           </p>
 
           {isDaily && (
             <p className="text-[11px] text-slate-400 italic">
-              * Thu hồi slot máy chủ ngay sau 24h. Không hỗ trợ gia hạn in-place.
+              * Thu hồi slot máy chủ ngay sau khi hết hạn. Không hỗ trợ gia hạn in-place.
             </p>
           )}
         </div>
+
+        {/* Day Selector — only shown when DAILY cycle */}
+        {isDaily && (
+          <div className="space-y-2 border border-slate-100 rounded-xl p-3 bg-slate-50">
+            <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Chọn số ngày</p>
+
+            {/* Preset chips */}
+            <div className="flex gap-2 flex-wrap">
+              {DAY_PRESETS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => handlePresetClick(d)}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                    !isCustom && selectedDays === d
+                      ? 'bg-slate-900 text-white border-slate-900'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                  }`}
+                >
+                  {d} Ngày
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={handleCustomToggle}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                  isCustom
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
+                }`}
+              >
+                Tuỳ chỉnh
+              </button>
+            </div>
+
+            {/* Stepper / custom input */}
+            <div className="flex items-center gap-2 mt-1">
+              <button
+                type="button"
+                onClick={() => handleStepDays(-1)}
+                disabled={selectedDays <= 1}
+                className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                <Minus className="w-3 h-3" />
+              </button>
+
+              {isCustom ? (
+                <input
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={customInput}
+                  onChange={(e) => handleCustomChange(e.target.value)}
+                  className="w-16 h-7 text-center text-sm font-mono font-bold border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400 bg-white text-slate-900"
+                />
+              ) : (
+                <span className="w-16 h-7 flex items-center justify-center text-sm font-mono font-bold text-slate-900 bg-white border border-slate-200 rounded-lg">
+                  {selectedDays}
+                </span>
+              )}
+
+              <button
+                type="button"
+                onClick={() => handleStepDays(1)}
+                disabled={selectedDays >= 90}
+                className="w-7 h-7 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:border-slate-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                <Plus className="w-3 h-3" />
+              </button>
+
+              <span className="text-xs text-slate-500 font-mono">
+                = <strong className="text-slate-800">{displayPrice.toLocaleString('vi-VN')}đ</strong>
+                {' / '}<strong className="text-slate-800">{displayQuota}</strong>
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Features list */}
         <div className="border-t border-slate-100 pt-4 space-y-2 text-xs text-slate-600">
@@ -208,7 +333,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
         <Button
           variant={isRegionSoldOut ? 'secondary' : 'primary'}
           size="md"
-          onClick={() => onBuyPlan(plan, cycle)}
+          onClick={() => onBuyPlan(plan, cycle, isDaily ? selectedDays : plan.days_valid)}
           disabled={isRegionSoldOut || isBuying}
           isLoading={isBuying}
           className="w-full text-xs font-semibold justify-center"
@@ -218,8 +343,8 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
             ? 'Hết chỗ (Sold out)'
             : isLoggedIn
             ? isDaily
-              ? 'Đăng Ký Gói Test 1 Ngày'
-              : 'Mua Gói 30 Ngày'
+              ? `Đăng Ký ${selectedDays} Ngày — ${displayPrice.toLocaleString('vi-VN')}đ`
+              : 'Mua Gói Tháng'
             : 'Đăng nhập để Mua'}
         </Button>
       </div>

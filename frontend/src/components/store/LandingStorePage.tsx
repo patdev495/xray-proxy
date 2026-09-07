@@ -90,7 +90,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     setSelectedRegions((prev) => ({ ...prev, [planId]: regionCode }));
   };
 
-  const handleBuyPlan = async (plan: PlanItem, cycle: 'MONTHLY' | 'DAILY' = 'MONTHLY') => {
+  const handleBuyPlan = async (plan: PlanItem, cycle: 'MONTHLY' | 'DAILY' = 'MONTHLY', durationDays: number = 30) => {
     if (!token || !user) {
       showToast({
         type: 'info',
@@ -124,7 +124,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
 
     setCreatingPlanId(plan.id);
     try {
-      const order = await createOrder(token, plan.id, region, cycle);
+      const order = await createOrder(token, plan.id, region, cycle, durationDays);
       setActiveOrder(order);
       setIsCheckoutOpen(true);
     } catch (err: unknown) {
