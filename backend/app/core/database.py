@@ -82,7 +82,17 @@ async def init_db() -> None:
                     WHERE region_id IS NULL AND (flag = '🇺🇸' OR location LIKE '%US%')
                 """))
 
-            # 3. Subscriptions migrations
+            # 3. Plans migrations
+            if "plans" in table_names:
+                plan_cols = [c["name"] for c in insp.get_columns("plans")]
+                if "enable_daily" not in plan_cols:
+                    connection.execute(text("ALTER TABLE plans ADD COLUMN enable_daily BOOLEAN NOT NULL DEFAULT 0"))
+                if "price_daily_vnd" not in plan_cols:
+                    connection.execute(text("ALTER TABLE plans ADD COLUMN price_daily_vnd INTEGER"))
+                if "quota_daily_bytes" not in plan_cols:
+                    connection.execute(text("ALTER TABLE plans ADD COLUMN quota_daily_bytes BIGINT"))
+
+            # 4. Subscriptions migrations
             if "subscriptions" in table_names:
                 sub_cols = [c["name"] for c in insp.get_columns("subscriptions")]
                 if "plan_id" not in sub_cols:
@@ -91,14 +101,18 @@ async def init_db() -> None:
                     connection.execute(text("ALTER TABLE subscriptions ADD COLUMN region_id INTEGER REFERENCES regions(id)"))
                 if "user_id" not in sub_cols:
                     connection.execute(text("ALTER TABLE subscriptions ADD COLUMN user_id INTEGER REFERENCES users(id)"))
+                if "billing_cycle" not in sub_cols:
+                    connection.execute(text("ALTER TABLE subscriptions ADD COLUMN billing_cycle VARCHAR(10) NOT NULL DEFAULT 'MONTHLY'"))
 
-            # 4. Orders migrations
+            # 5. Orders migrations
             if "orders" in table_names:
                 order_cols = [c["name"] for c in insp.get_columns("orders")]
                 if "subscription_id" not in order_cols:
                     connection.execute(text("ALTER TABLE orders ADD COLUMN subscription_id INTEGER REFERENCES subscriptions(id)"))
+                if "billing_cycle" not in order_cols:
+                    connection.execute(text("ALTER TABLE orders ADD COLUMN billing_cycle VARCHAR(10) NOT NULL DEFAULT 'MONTHLY'"))
 
-            # 5. SNI profiles migrations
+            # 6. SNI profiles migrations
             if "sni_profiles" in table_names:
                 cols = [c["name"] for c in insp.get_columns("sni_profiles")]
                 if "port" not in cols:
