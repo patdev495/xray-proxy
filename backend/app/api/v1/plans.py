@@ -27,6 +27,11 @@ public_router: APIRouter = APIRouter(
 
 def _to_response(plan: Plan) -> PlanResponse:
     quota_gb = int(plan.traffic_quota_bytes // (1024 * 1024 * 1024))
+    quota_daily_gb = (
+        round(plan.quota_daily_bytes / (1024 * 1024 * 1024), 2)
+        if plan.quota_daily_bytes is not None
+        else None
+    )
     return PlanResponse(
         id=plan.id,
         name=plan.name,
@@ -37,6 +42,10 @@ def _to_response(plan: Plan) -> PlanResponse:
         is_active=plan.is_active,
         sort_order=plan.sort_order,
         traffic_quota_bytes=plan.traffic_quota_bytes,
+        enable_daily=plan.enable_daily,
+        price_daily_vnd=plan.price_daily_vnd,
+        quota_daily_gb=quota_daily_gb,
+        quota_daily_bytes=plan.quota_daily_bytes,
         created_at=plan.created_at,
         updated_at=plan.updated_at,
     )

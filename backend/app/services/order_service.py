@@ -56,32 +56,23 @@ def generate_vietqr_url(
     )
 
 
+ORDER_LOAD_OPTIONS = (
+    selectinload(Order.plan),
+    selectinload(Order.user),
+    selectinload(Order.subscription),
+)
+
+
 async def get_order_by_code(db: AsyncSession, code: str) -> Order | None:
     """Retrieve an order by unique order code."""
-    stmt = (
-        select(Order)
-        .where(Order.code == code)
-        .options(
-            selectinload(Order.plan),
-            selectinload(Order.user),
-            selectinload(Order.subscription),
-        )
-    )
+    stmt = select(Order).where(Order.code == code).options(*ORDER_LOAD_OPTIONS)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
 
 async def get_order_by_id(db: AsyncSession, order_id: int) -> Order | None:
     """Retrieve an order by internal primary key."""
-    stmt = (
-        select(Order)
-        .where(Order.id == order_id)
-        .options(
-            selectinload(Order.plan),
-            selectinload(Order.user),
-            selectinload(Order.subscription),
-        )
-    )
+    stmt = select(Order).where(Order.id == order_id).options(*ORDER_LOAD_OPTIONS)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
@@ -91,9 +82,19 @@ async def create_order(
     user_id: int,
     plan_id: int,
     region: str,
+    billing_cycle: str = "MONTHLY",
     subscription_id: int | None = None,
 ) -> Order:
-    """Validate capacity and create a new pending order (new or renewal)."""
+    """Validate capacity, auto-cancel older pending orders, and create a new pending order."""
+    # 0. Cancel any existing pending orders for this user (Max 1 pending order rule)
+    existing_pending_stmt = select(Order).where(
+        Order.user_id == user_id,
+        Order.status == OrderStatus.PENDING,
+    )
+    existing_pending_res = await db.execute(existing_pending_stmt)
+    for old_order in existing_pending_res.scalars().all():
+        old_order.status = OrderStatus.CANCELLED
+
     # 1. Validate Plan
     plan = await get_plan_by_id(db, plan_id)
     if not plan or not plan.is_active:
@@ -101,6 +102,19 @@ async def create_order(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Plan is not available",
         )
+
+    # Validate Billing Cycle and Price
+    cycle = billing_cycle.upper() if billing_cycle else "MONTHLY"
+    if cycle == "DAILY":
+        if not plan.enable_daily or plan.price_daily_vnd is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Daily test billing is not available for this plan",
+            )
+        amount_vnd = plan.price_daily_vnd
+    else:
+        cycle = "MONTHLY"
+        amount_vnd = plan.price_vnd
 
     # 2. Validate Allowed Regions
     if plan.allowed_regions and region not in plan.allowed_regions:
@@ -146,7 +160,8 @@ async def create_order(
         user_id=user_id,
         plan_id=plan.id,
         region=region,
-        amount_vnd=plan.price_vnd,
+        billing_cycle=cycle,
+        amount_vnd=amount_vnd,
         status=OrderStatus.PENDING,
         subscription_id=subscription_id,
         created_at=now,
@@ -226,19 +241,26 @@ async def provision_order_subscription(db: AsyncSession, order: Order) -> Subscr
     customer_name = order.user.username if order.user else f"Customer-{order.user_id}"
 
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(days=plan.days_valid)
+    is_daily = order.billing_cycle == "DAILY"
+    if is_daily:
+        expires_at = now + timedelta(hours=24)
+        quota_bytes = plan.quota_daily_bytes if plan.quota_daily_bytes is not None else plan.traffic_quota_bytes
+    else:
+        expires_at = now + timedelta(days=plan.days_valid)
+        quota_bytes = plan.traffic_quota_bytes
 
     # 3. Create Subscription
     subscription = Subscription(
         customer_name=customer_name,
         token=sub_token,
         uuid=client_uuid,
-        traffic_quota_bytes=plan.traffic_quota_bytes,
+        traffic_quota_bytes=quota_bytes,
         traffic_used_bytes=0,
         expires_at=expires_at,
         status=SubscriptionStatus.ACTIVE,
         plan_id=plan.id,
         region_id=region_id,
+        billing_cycle="DAILY" if is_daily else "MONTHLY",
         user_id=order.user_id,
         nodes=[allocated_node],
     )
@@ -345,17 +367,7 @@ async def get_admin_orders(
     offset: int = 0,
 ) -> list[Order]:
     """Retrieve orders for Admin dashboard with filters and eager loading."""
-    stmt = (
-        select(Order)
-        .options(
-            selectinload(Order.plan),
-            selectinload(Order.user),
-            selectinload(Order.subscription),
-        )
-        .order_by(Order.created_at.desc())
-        .limit(limit)
-        .offset(offset)
-    )
+    stmt = select(Order).options(*ORDER_LOAD_OPTIONS).order_by(Order.created_at.desc()).limit(limit).offset(offset)
     if status_filter is not None:
         stmt = stmt.where(Order.status == status_filter)
 
@@ -372,11 +384,7 @@ async def get_user_orders(
     stmt = (
         select(Order)
         .where(Order.user_id == user_id)
-        .options(
-            selectinload(Order.plan),
-            selectinload(Order.user),
-            selectinload(Order.subscription),
-        )
+        .options(*ORDER_LOAD_OPTIONS)
         .order_by(Order.created_at.desc())
         .limit(limit)
     )
@@ -460,6 +468,7 @@ async def to_order_response(order: Order, db: AsyncSession) -> OrderResponse:
         plan_id=order.plan_id,
         plan_name=plan_name,
         region=order.region,
+        billing_cycle=order.billing_cycle or "MONTHLY",
         amount_vnd=order.amount_vnd,
         status=order.status.value,
         subscription_id=order.subscription_id,

@@ -1,6 +1,6 @@
 # 07-composite-pricing-daily-test-plans
 
-Status: ready-for-agent
+Status: done
 
 ## Parent
 
@@ -31,11 +31,11 @@ Composite Pricing on Plan model and resource-controlled Daily Test Tier (24h val
 
 ## Acceptance criteria
 
-- [ ] Plan model and Admin UI allow configuring monthly price/quota and optional daily price/quota in one form.
-- [ ] Storefront displays cycle selector toggle on eligible plans and creates order with selected `billing_cycle`.
-- [ ] Daily subscriptions expire after exactly 24 hours and have zero grace period (slot freed immediately upon expiry).
-- [ ] Node capacity slot calculation respects 0 grace period for daily subs and 3 days for monthly subs.
-- [ ] Customer portal hides in-place renewal for daily subscriptions and provides "Nâng cấp gói tháng" upgrade action.
+- [x] Plan model and Admin UI allow configuring monthly price/quota and optional daily price/quota in one form.
+- [x] Storefront displays cycle selector toggle on eligible plans and creates order with selected `billing_cycle`.
+- [x] Daily subscriptions expire after exactly 24 hours and have zero grace period (slot freed immediately upon expiry).
+- [x] Node capacity slot calculation respects 0 grace period for daily subs and 3 days for monthly subs.
+- [x] Customer portal hides in-place renewal for daily subscriptions and provides "Nâng cấp gói tháng" upgrade action.
 
 ## Blocked by
 

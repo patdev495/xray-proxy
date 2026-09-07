@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class OrderCreate(BaseModel):
     plan_id: int = Field(..., description="ID of selected Plan")
     region: str = Field(..., min_length=2, max_length=10, description="Selected Region code (e.g. VN)")
+    billing_cycle: str = Field(default="MONTHLY", description="Billing cycle: MONTHLY or DAILY")
     subscription_id: int | None = Field(default=None, description="Optional Subscription ID for in-place renewal")
 
 
@@ -16,6 +17,7 @@ class OrderResponse(BaseModel):
     plan_id: int
     plan_name: str
     region: str
+    billing_cycle: str = "MONTHLY"
     amount_vnd: int
     status: str
     subscription_id: int | None = None

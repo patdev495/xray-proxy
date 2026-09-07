@@ -19,6 +19,11 @@ class Plan(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     sort_order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
+    # Composite daily test tier options
+    enable_daily: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    price_daily_vnd: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    quota_daily_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

@@ -43,6 +43,8 @@ class SubscriptionResponse(BaseModel):
     region_code: str | None = None
     region_name: str | None = None
     region_flag: str | None = None
+    billing_cycle: str = "MONTHLY"
+    is_renewable: bool = True
 
     model_config = ConfigDict(from_attributes=True)
 

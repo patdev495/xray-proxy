@@ -4,7 +4,8 @@ import { API_BASE_URL, parseError } from './client';
 export async function createOrder(
   token: string,
   planId: number,
-  region: string
+  region: string,
+  billingCycle: 'MONTHLY' | 'DAILY' = 'MONTHLY'
 ): Promise<Order> {
   const response = await fetch(`${API_BASE_URL}/api/v1/orders/create`, {
     method: 'POST',
@@ -13,7 +14,7 @@ export async function createOrder(
       'Accept': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ plan_id: planId, region }),
+    body: JSON.stringify({ plan_id: planId, region, billing_cycle: billingCycle }),
   });
 
   if (!response.ok) {

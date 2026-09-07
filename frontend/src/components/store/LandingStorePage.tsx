@@ -7,7 +7,6 @@ import {
   MessageSquare,
   Send,
   Layers,
-  ArrowRight,
   LogOut,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -23,8 +22,8 @@ import type { RegionStatus } from '../../types/node';
 import type { Order } from '../../types/order';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { Card } from '../ui/Card';
 import { CheckoutModal } from './CheckoutModal';
+import { StorePlanCard } from './StorePlanCard';
 
 interface LandingStorePageProps {
   onNavigate: (path: string) => void;
@@ -91,7 +90,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     setSelectedRegions((prev) => ({ ...prev, [planId]: regionCode }));
   };
 
-  const handleBuyPlan = async (plan: PlanItem) => {
+  const handleBuyPlan = async (plan: PlanItem, cycle: 'MONTHLY' | 'DAILY' = 'MONTHLY') => {
     if (!token || !user) {
       showToast({
         type: 'info',
@@ -125,7 +124,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
 
     setCreatingPlanId(plan.id);
     try {
-      const order = await createOrder(token, plan.id, region);
+      const order = await createOrder(token, plan.id, region, cycle);
       setActiveOrder(order);
       setIsCheckoutOpen(true);
     } catch (err: unknown) {
@@ -277,143 +276,18 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {plans.map((plan) => {
-              const selectedReg = selectedRegions[plan.id] || '';
-              const allowedList = plan.allowed_regions && plan.allowed_regions.length > 0
-                ? plan.allowed_regions
-                : regions.map((r) => r.code || r.location);
-
-              const currentRegStatus = regions.find(
-                (r) => r.code === selectedReg || r.location === selectedReg
-              );
-              const isRegionSoldOut = Boolean(currentRegStatus && currentRegStatus.is_sold_out);
-              const isBuying = creatingPlanId === plan.id;
-
-              return (
-                <Card
-                  key={plan.id}
-                  className="flex flex-col justify-between p-6 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow relative bg-white"
-                >
-                  <div className="space-y-5">
-                    {/* Header */}
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-slate-900">{plan.name}</h3>
-                        <Badge variant="indigo" size="sm">{plan.days_valid} Ngày</Badge>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-3xl font-extrabold text-slate-900 font-mono">
-                          {plan.price_vnd.toLocaleString('vi-VN')}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-400 uppercase">VND</span>
-                      </div>
-                      <p className="text-xs text-slate-500 font-mono">
-                        Lưu lượng:{' '}
-                        <strong className="text-slate-800">
-                          {plan.quota_gb > 0 ? `${plan.quota_gb} GB` : 'Không giới hạn'}
-                        </strong>
-                      </p>
-                    </div>
-
-                    {/* Features list */}
-                    <div className="border-t border-slate-100 pt-4 space-y-2 text-xs text-slate-600">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Mã hóa TLS 1.3 chống chặn phát hiện</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Bypass SNI không tốn 4G tốc độ cao</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Đa nền tảng iOS, Android, Windows, Mac</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Hỗ trợ cấu hình Streisand, Shadowrocket, V2ray</span>
-                      </div>
-                    </div>
-
-                    {/* Region Selector */}
-                    <div className="border-t border-slate-100 pt-4 space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <label className="font-semibold text-slate-700">Chọn khu vực máy chủ:</label>
-                        {isRegionSoldOut && (
-                          <span className="text-rose-600 font-semibold text-[11px]">Đã hết slot</span>
-                        )}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        {allowedList.map((regCode) => {
-                          const r = regions.find((item) => item.code === regCode || item.location === regCode);
-                          const soldOut = Boolean(r?.is_sold_out || (r && r.available_slots <= 0));
-                          const isSelected = selectedReg === regCode;
-                          const flag = r?.flag || '🌐';
-                          const label = r ? (r.location || r.name || regCode) : regCode;
-
-                          return (
-                            <button
-                              key={regCode}
-                              type="button"
-                              disabled={soldOut}
-                              onClick={() => handleRegionChange(plan.id, regCode)}
-                              className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-all text-left ${
-                                soldOut
-                                  ? 'bg-rose-50/60 border border-rose-200 text-slate-400 cursor-not-allowed opacity-75'
-                                  : isSelected
-                                  ? 'bg-slate-900 text-white border-2 border-slate-900 shadow-xs'
-                                  : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-                              }`}
-                            >
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-sm">{flag}</span>
-                                <span className={`font-medium truncate ${isSelected ? 'text-white' : soldOut ? 'text-rose-800' : 'text-slate-800'}`}>
-                                  {label}
-                                </span>
-                              </div>
-
-                              {soldOut ? (
-                                <span className="shrink-0 px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold">
-                                  Hết chỗ
-                                </span>
-                              ) : (
-                                <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-medium border ${
-                                  isSelected
-                                    ? 'bg-slate-800 text-slate-200 border-slate-700'
-                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                }`}>
-                                  Còn {r?.available_slots ?? 0} slots
-                                </span>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CTA Action */}
-                  <div className="pt-6">
-                    <Button
-                      variant={isRegionSoldOut ? 'secondary' : 'primary'}
-                      size="md"
-                      onClick={() => handleBuyPlan(plan)}
-                      disabled={isRegionSoldOut || isBuying}
-                      isLoading={isBuying}
-                      className="w-full text-xs font-semibold justify-center"
-                      rightIcon={!isRegionSoldOut && !isBuying ? <ArrowRight className="w-3.5 h-3.5" /> : undefined}
-                    >
-                      {isRegionSoldOut
-                        ? 'Hết chỗ (Sold out)'
-                        : user
-                        ? 'Mua Ngay'
-                        : 'Đăng nhập để Mua Ngay'}
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
+            {plans.map((plan) => (
+              <StorePlanCard
+                key={plan.id}
+                plan={plan}
+                regions={regions}
+                selectedRegion={selectedRegions[plan.id] || ''}
+                onSelectRegion={handleRegionChange}
+                onBuyPlan={handleBuyPlan}
+                isBuying={creatingPlanId === plan.id}
+                isLoggedIn={Boolean(user)}
+              />
+            ))}
           </div>
         )}
       </main>

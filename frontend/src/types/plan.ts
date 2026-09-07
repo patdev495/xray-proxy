@@ -8,6 +8,10 @@ export interface PlanItem {
   is_active: boolean;
   sort_order: number;
   traffic_quota_bytes: number;
+  enable_daily?: boolean;
+  price_daily_vnd?: number;
+  quota_daily_gb?: number;
+  quota_daily_bytes?: number;
   created_at: string;
   updated_at: string;
 }
@@ -20,6 +24,9 @@ export interface PlanCreate {
   allowed_regions?: string[];
   is_active?: boolean;
   sort_order?: number;
+  enable_daily?: boolean;
+  price_daily_vnd?: number;
+  quota_daily_gb?: number;
 }
 
 export interface PlanUpdate {
@@ -30,6 +37,9 @@ export interface PlanUpdate {
   allowed_regions?: string[];
   is_active?: boolean;
   sort_order?: number;
+  enable_daily?: boolean;
+  price_daily_vnd?: number;
+  quota_daily_gb?: number;
 }
 
 export interface SystemSettings {

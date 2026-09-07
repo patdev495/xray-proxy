@@ -51,6 +51,8 @@ def to_subscription_response(sub: Subscription) -> SubscriptionResponse:
         region_code=sub.region_code,
         region_name=sub.region_name,
         region_flag=sub.region_flag,
+        billing_cycle=sub.billing_cycle or "MONTHLY",
+        is_renewable=(sub.billing_cycle != "DAILY"),
     )
 
 
@@ -217,6 +219,11 @@ async def create_renewal_order_for_subscription(
 ) -> Order:
     """Create renewal Order pre-populated with subscription's region and plan."""
     sub = await get_customer_subscription_by_id(db, subscription_id, user_id)
+    if sub.billing_cycle == "DAILY":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Daily test subscriptions cannot be renewed in-place. Please purchase a monthly plan.",
+        )
 
     target_plan_id = plan_id or sub.plan_id
     if not target_plan_id:

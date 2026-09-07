@@ -36,6 +36,7 @@ async def create_order_endpoint(
         user_id=current_user.id,
         plan_id=payload.plan_id,
         region=payload.region,
+        billing_cycle=payload.billing_cycle,
         subscription_id=payload.subscription_id,
     )
     return await to_order_response(order, db)

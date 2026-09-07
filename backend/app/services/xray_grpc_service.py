@@ -255,11 +255,20 @@ async def sync_all_nodes_stats_and_enforce(db: AsyncSession) -> dict[str, Any]:
             sub.status = SubscriptionStatus.EXPIRED if is_expired else SubscriptionStatus.SUSPENDED
             await remove_user_from_all_nodes(db, sub)
             suspended_count += 1
-
-        # Grace period release: after 3 days expired without renewal, release slot on node
-        if sub.status == SubscriptionStatus.EXPIRED and sub_expires_at + timedelta(days=3) < now:
-            if sub.nodes:
+            if is_expired and sub.billing_cycle == "DAILY":
                 sub.nodes = []
+
+        # Grace period release:
+        # - Daily subscriptions: 0-day grace period (release node slot immediately upon expiry)
+        # - Monthly subscriptions: 3-day grace period
+        if sub.status == SubscriptionStatus.EXPIRED:
+            is_daily = sub.billing_cycle == "DAILY"
+            if is_daily and sub_expires_at < now:
+                if sub.nodes:
+                    sub.nodes = []
+            elif not is_daily and sub_expires_at + timedelta(days=3) < now:
+                if sub.nodes:
+                    sub.nodes = []
 
     await db.commit()
 

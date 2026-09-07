@@ -7,7 +7,15 @@ from app.schemas.plan import PlanCreate, PlanUpdate
 
 async def create_plan(db: AsyncSession, plan_in: PlanCreate) -> Plan:
     """Create a new plan with calculated traffic_quota_bytes."""
-    quota_bytes = plan_in.quota_gb * 1024 * 1024 * 1024
+    quota_gb = plan_in.traffic_quota_gb if plan_in.traffic_quota_gb is not None else plan_in.quota_gb
+    quota_bytes = int(quota_gb * 1024 * 1024 * 1024)
+
+    quota_daily_bytes: int | None = None
+    if plan_in.quota_daily_gb is not None:
+        quota_daily_bytes = int(plan_in.quota_daily_gb * 1024 * 1024 * 1024)
+    elif plan_in.quota_daily_bytes is not None:
+        quota_daily_bytes = plan_in.quota_daily_bytes
+
     plan = Plan(
         name=plan_in.name,
         price_vnd=plan_in.price_vnd,
@@ -16,6 +24,9 @@ async def create_plan(db: AsyncSession, plan_in: PlanCreate) -> Plan:
         allowed_regions=plan_in.allowed_regions,
         is_active=plan_in.is_active,
         sort_order=plan_in.sort_order,
+        enable_daily=plan_in.enable_daily,
+        price_daily_vnd=plan_in.price_daily_vnd,
+        quota_daily_bytes=quota_daily_bytes,
     )
     db.add(plan)
     await db.commit()
@@ -41,11 +52,20 @@ async def get_plan_by_id(db: AsyncSession, plan_id: int) -> Plan | None:
 async def update_plan(db: AsyncSession, plan: Plan, plan_in: PlanUpdate) -> Plan:
     """Update plan attributes."""
     update_data = plan_in.model_dump(exclude_unset=True)
-    if "quota_gb" in update_data and update_data["quota_gb"] is not None:
-        plan.traffic_quota_bytes = update_data["quota_gb"] * 1024 * 1024 * 1024
+
+    if "traffic_quota_gb" in update_data and update_data["traffic_quota_gb"] is not None:
+        plan.traffic_quota_bytes = int(update_data["traffic_quota_gb"] * 1024 * 1024 * 1024)
+    elif "quota_gb" in update_data and update_data["quota_gb"] is not None:
+        plan.traffic_quota_bytes = int(update_data["quota_gb"] * 1024 * 1024 * 1024)
+
+    if "quota_daily_gb" in update_data:
+        if update_data["quota_daily_gb"] is not None:
+            plan.quota_daily_bytes = int(update_data["quota_daily_gb"] * 1024 * 1024 * 1024)
+        else:
+            plan.quota_daily_bytes = None
 
     for field, value in update_data.items():
-        if field != "quota_gb":
+        if field not in ("quota_gb", "traffic_quota_gb", "quota_daily_gb"):
             setattr(plan, field, value)
 
     await db.commit()

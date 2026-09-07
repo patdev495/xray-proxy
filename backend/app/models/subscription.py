@@ -42,6 +42,7 @@ class Subscription(Base):
         default=SubscriptionStatus.ACTIVE,
         nullable=False,
     )
+    billing_cycle: Mapped[str] = mapped_column(String(10), default="MONTHLY", nullable=False)
     plan_id: Mapped[int | None] = mapped_column(
         ForeignKey("plans.id", ondelete="SET NULL"),
         nullable=True,

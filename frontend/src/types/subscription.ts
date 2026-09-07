@@ -19,6 +19,8 @@ export interface SubscriptionItem {
   region_code?: string | null;
   region_name?: string | null;
   region_flag?: string | null;
+  billing_cycle?: 'MONTHLY' | 'DAILY';
+  is_renewable?: boolean;
 }
 
 export interface EligibleNode {

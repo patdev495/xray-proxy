@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Server,
   ShieldAlert,
+  Sparkles,
   Zap,
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
@@ -62,11 +63,20 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
     const now = new Date();
     const expiresAt = parseUtcDate(sub.expires_at);
     const diffMs = expiresAt.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const isDaily = sub.billing_cycle === 'DAILY';
 
     if (diffMs > 0) {
+      const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+      if (isDaily) {
+        return {
+          label: `Còn ${diffHours} giờ`,
+          badge: <Badge variant="amber" size="sm" dot>Dùng thử ({diffHours}h)</Badge>,
+          isExpired: false,
+          inGrace: false,
+        };
+      }
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       if (diffDays === 1) {
-        const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
         return {
           label: `Còn ${diffHours} giờ`,
           badge: <Badge variant="amber" size="sm" dot>Sắp hết hạn ({diffHours}h)</Badge>,
@@ -82,17 +92,19 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
       };
     }
 
-    // Expired - check 3-day grace period
-    const graceEndMs = expiresAt.getTime() + 3 * 24 * 60 * 60 * 1000;
-    const graceDiffMs = graceEndMs - now.getTime();
-    if (graceDiffMs > 0) {
-      const graceDays = Math.ceil(graceDiffMs / (1000 * 60 * 60 * 24));
-      return {
-        label: `Ân hạn còn ${graceDays} ngày`,
-        badge: <Badge variant="rose" size="sm" dot pulseDot>Ân hạn ({graceDays} ngày)</Badge>,
-        isExpired: true,
-        inGrace: true,
-      };
+    // Expired - check grace period (0 grace for daily, 3-day grace for monthly)
+    if (!isDaily) {
+      const graceEndMs = expiresAt.getTime() + 3 * 24 * 60 * 60 * 1000;
+      const graceDiffMs = graceEndMs - now.getTime();
+      if (graceDiffMs > 0) {
+        const graceDays = Math.ceil(graceDiffMs / (1000 * 60 * 60 * 24));
+        return {
+          label: `Ân hạn còn ${graceDays} ngày`,
+          badge: <Badge variant="rose" size="sm" dot pulseDot>Ân hạn ({graceDays} ngày)</Badge>,
+          isExpired: true,
+          inGrace: true,
+        };
+      }
     }
 
     return {
@@ -183,6 +195,11 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                     <span className="font-bold text-slate-900 text-sm">
                       {sub.plan_name || 'Gói cước Proxy'}
                     </span>
+                    {sub.billing_cycle === 'DAILY' && (
+                      <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                        Gói ngày (Dùng thử)
+                      </span>
+                    )}
                     <span className="text-[11px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
                       #{sub.id}
                     </span>
@@ -275,17 +292,30 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   Đổi Server
                 </Button>
 
-                {/* In-place Renewal */}
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => setRenewSub(sub)}
-                  className="text-xs justify-center font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
-                  leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-                  title="Gia hạn gói cước tại chỗ"
-                >
-                  Gia hạn
-                </Button>
+                {/* In-place Renewal or Upgrade */}
+                {sub.billing_cycle === 'DAILY' ? (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={onNavigateStore}
+                    className="text-xs justify-center font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-xs"
+                    leftIcon={<Sparkles className="w-3.5 h-3.5 text-amber-400" />}
+                    title="Nâng cấp lên gói tháng tại cửa hàng"
+                  >
+                    Lên gói tháng
+                  </Button>
+                ) : (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setRenewSub(sub)}
+                    className="text-xs justify-center font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                    leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+                    title="Gia hạn gói cước tại chỗ"
+                  >
+                    Gia hạn
+                  </Button>
+                )}
               </div>
             </Card>
           );

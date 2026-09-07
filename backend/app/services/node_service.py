@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import json
 from typing import Any
-from sqlalchemy import ColumnElement, func, or_, select
+from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.node import Node, SniProfile
@@ -210,7 +210,7 @@ from app.services.node_script_service import (
 
 
 async def get_node_active_subscriptions_count(db: AsyncSession, node_id: int) -> int:
-    """Count number of active subscriptions bound to a node, respecting 3-day grace period."""
+    """Count number of active subscriptions bound to a node (3-day grace for monthly, 0 grace for daily)."""
     now = datetime.now(timezone.utc)
     grace_cutoff = now - timedelta(days=3)
     stmt = (
@@ -219,8 +219,20 @@ async def get_node_active_subscriptions_count(db: AsyncSession, node_id: int) ->
         .where(
             subscription_nodes.c.node_id == node_id,
             or_(
-                Subscription.status == SubscriptionStatus.ACTIVE,
-                Subscription.expires_at >= grace_cutoff,
+                # Daily tier: 0-day grace period (must be ACTIVE and expires_at >= now)
+                and_(
+                    Subscription.billing_cycle == "DAILY",
+                    Subscription.status == SubscriptionStatus.ACTIVE,
+                    Subscription.expires_at >= now,
+                ),
+                # Monthly tier: 3-day grace period
+                and_(
+                    or_(Subscription.billing_cycle != "DAILY", Subscription.billing_cycle.is_(None)),
+                    or_(
+                        Subscription.status == SubscriptionStatus.ACTIVE,
+                        Subscription.expires_at >= grace_cutoff,
+                    ),
+                ),
             ),
         )
     )
