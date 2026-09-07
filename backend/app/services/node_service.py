@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 import json
 from typing import Any
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.node import Node, SniProfile
@@ -203,9 +203,9 @@ async def get_active_subscriptions_for_node(db: AsyncSession, node_id: int) -> l
 
 
 from app.services.node_script_service import (
-    generate_install_script,
-    generate_sync_script,
-    generate_xray_config_dict,
+    generate_install_script as generate_install_script,
+    generate_sync_script as generate_sync_script,
+    generate_xray_config_dict as generate_xray_config_dict,
 )
 
 
@@ -233,24 +233,32 @@ async def allocate_node_for_region(
     Raises RegionOutOfCapacityError if no active node exists or all active nodes
     have reached their max_subscriptions limit.
     """
-    conditions = [Node.is_active.is_(True)]
+    conditions: list[ColumnElement[bool]] = [Node.is_active.is_(True)]
     if region_id is not None:
         reg_stmt = select(Region).where(Region.id == region_id)
         reg_res = await db.execute(reg_stmt)
         reg = reg_res.scalar_one_or_none()
         if reg:
             conditions.append(
-                (Node.region_id == region_id) | (Node.flag == reg.flag) | (Node.flag == reg.code)
+                or_(
+                    Node.region_id == region_id,
+                    Node.flag == reg.flag,
+                    Node.flag == reg.code,
+                )
             )
         else:
             conditions.append(Node.region_id == region_id)
     elif flag:
-        reg_stmt = select(Region).where((Region.flag == flag) | (Region.code == flag.upper()))
+        reg_stmt = select(Region).where(or_(Region.flag == flag, Region.code == flag.upper()))
         reg_res = await db.execute(reg_stmt)
         reg = reg_res.scalar_one_or_none()
         if reg:
             conditions.append(
-                (Node.region_id == reg.id) | (Node.flag == flag) | (Node.flag == reg.flag)
+                or_(
+                    Node.region_id == reg.id,
+                    Node.flag == flag,
+                    Node.flag == reg.flag,
+                )
             )
         else:
             conditions.append(Node.flag == flag)

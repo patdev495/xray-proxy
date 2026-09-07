@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from sqlalchemy import Connection
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -38,7 +39,7 @@ async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-        def _migrate(connection) -> None:
+        def _migrate(connection: Connection) -> None:
             insp = sa_inspect(connection)
             table_names = insp.get_table_names()
 
