@@ -76,6 +76,8 @@ export interface RealityKeys {
 }
 
 export interface RegionStatus {
+  code?: string;
+  name?: string;
   flag: string;
   location: string;
   total_nodes: number;

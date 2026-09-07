@@ -13,7 +13,11 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 
-export const CustomerPortal: React.FC = () => {
+interface CustomerPortalProps {
+  onNavigate?: (path: string) => void;
+}
+
+export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) => {
   const { user, logout } = useAuth();
 
   return (
@@ -34,6 +38,16 @@ export const CustomerPortal: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {onNavigate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onNavigate('/')}
+              className="text-xs"
+            >
+              Cửa hàng gói cước
+            </Button>
+          )}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-700">
             <UserIcon className="w-3.5 h-3.5 text-slate-500" />
             <span className="font-medium font-mono">{user?.username}</span>
@@ -109,6 +123,16 @@ export const CustomerPortal: React.FC = () => {
             <div className="space-y-2 text-xs text-slate-500">
               <p>In-place subscription renewal and node load balancing are ready for automated provisioning.</p>
               <p className="text-[11px] text-slate-400">Choose from available plans to activate your dedicated connection link.</p>
+              {onNavigate && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => onNavigate('/')}
+                  className="w-full mt-2 text-xs font-medium"
+                >
+                  Mua / Gia hạn gói cước
+                </Button>
+              )}
             </div>
           </Card>
 

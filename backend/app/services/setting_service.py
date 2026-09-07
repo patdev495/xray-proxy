@@ -7,7 +7,11 @@ from app.models.setting import SystemSetting
 DEFAULT_SETTINGS: dict[str, str] = {
     "support_telegram_url": "",
     "support_zalo_url": "",
+    "bank_id": "MB",
+    "bank_account_number": "0987654321",
+    "bank_account_name": "XRAY PROXY",
 }
+
 
 
 async def get_system_settings(db: AsyncSession) -> dict[str, str]:

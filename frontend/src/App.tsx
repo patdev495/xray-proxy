@@ -12,8 +12,8 @@ import { NodesTab } from './components/views/NodesTab';
 import { SubscriptionsTab } from './components/views/SubscriptionsTab';
 import { NodeSyncTab } from './components/views/NodeSyncTab';
 import { PlansSettingsTab } from './components/views/PlansSettingsTab';
-
 import { CustomerPortal } from './components/portal/CustomerPortal';
+import { LandingStorePage } from './components/store/LandingStorePage';
 
 const AuthenticatedDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTabId>('overview');
@@ -67,7 +67,6 @@ const AuthenticatedDashboard: React.FC = () => {
   );
 };
 
-
 const AuthGate: React.FC = () => {
   const { token, user, isLoading } = useAuth();
   const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname);
@@ -81,27 +80,27 @@ const AuthGate: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  // Handle post-login redirection based on role
+  const navigate = useCallback((path: string) => {
+    window.history.pushState(null, '', path);
+    setCurrentPath(path);
+  }, []);
+
+  // Post-login redirect if currently on auth pages
   useEffect(() => {
     if (!token || !user || isLoading) return;
 
-    if (user.role === 'ADMIN') {
-      if (currentPath !== '/admin') {
-        window.history.replaceState(null, '', '/admin');
-        setCurrentPath('/admin');
-      }
-    } else if (user.role === 'CUSTOMER') {
-      if (currentPath !== '/portal') {
-        window.history.replaceState(null, '', '/portal');
-        setCurrentPath('/portal');
+    if (currentPath === '/login' || currentPath === '/register') {
+      if (user.role === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/portal');
       }
     }
-  }, [token, user, isLoading, currentPath]);
+  }, [token, user, isLoading, currentPath, navigate]);
 
-  // Handle unauthenticated route redirection
+  // Handle protected routes redirection when not logged in
   useEffect(() => {
     if (isLoading || token) return;
-    // If attempting to access /admin or /portal without token, redirect to /login
     if (currentPath === '/admin' || currentPath === '/portal') {
       window.history.replaceState(null, '', '/login');
       setCurrentPath('/login');
@@ -121,25 +120,47 @@ const AuthGate: React.FC = () => {
     );
   }
 
-  if (!token || !user) {
+  // Auth pages (login / register)
+  if (currentPath === '/login' || currentPath === '/register') {
+    if (token && user) {
+      return user.role === 'ADMIN' ? (
+        <AuthenticatedDashboard />
+      ) : (
+        <CustomerPortal onNavigate={navigate} />
+      );
+    }
     const authMode: 'login' | 'register' = currentPath === '/register' ? 'register' : 'login';
     return (
       <LoginPage
         initialMode={authMode}
         onModeChange={(newMode) => {
-          const targetPath = newMode === 'register' ? '/register' : '/login';
-          window.history.pushState(null, '', targetPath);
-          setCurrentPath(targetPath);
+          navigate(newMode === 'register' ? '/register' : '/login');
         }}
       />
     );
   }
 
-  if (user.role === 'CUSTOMER') {
-    return <CustomerPortal />;
+  // Protected Admin route
+  if (currentPath === '/admin') {
+    if (!token || !user) {
+      return null;
+    }
+    if (user.role !== 'ADMIN') {
+      return <CustomerPortal onNavigate={navigate} />;
+    }
+    return <AuthenticatedDashboard />;
   }
 
-  return <AuthenticatedDashboard />;
+  // Protected Customer Portal route
+  if (currentPath === '/portal') {
+    if (!token || !user) {
+      return null;
+    }
+    return <CustomerPortal onNavigate={navigate} />;
+  }
+
+  // Default: Public Landing Store at '/'
+  return <LandingStorePage onNavigate={navigate} />;
 };
 
 export const App: React.FC = () => {
@@ -153,4 +174,3 @@ export const App: React.FC = () => {
 };
 
 export default App;
-

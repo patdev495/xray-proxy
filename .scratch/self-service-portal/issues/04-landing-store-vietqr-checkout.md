@@ -1,6 +1,6 @@
 # 04-landing-store-vietqr-checkout
 
-Status: ready-for-agent
+Status: done
 
 ## Parent
 
@@ -15,10 +15,10 @@ Checkout flow: Customer selects Plan and Region. If Region is full, shows "Sold 
 
 ## Acceptance criteria
 
-- [ ] `Order` DB model and `/api/v1/orders/create` endpoint created.
-- [ ] Landing page displays available plans and support channel links cleanly.
-- [ ] Region selector shows "Sold out" when capacity exhausted.
-- [ ] Checkout modal renders valid VietQR code and transfer content.
+- [x] `Order` DB model and `/api/v1/orders/create` endpoint created.
+- [x] Landing page displays available plans and support channel links cleanly.
+- [x] Region selector shows "Sold out" when capacity exhausted.
+- [x] Checkout modal renders valid VietQR code and transfer content.
 
 ## Blocked by
 
@@ -28,3 +28,4 @@ Checkout flow: Customer selects Plan and Region. If Region is full, shows "Sold 
 ## Comments
 
 > *Generated from architectural decisions in ADR 0010.*
+> *Completed: Full TDD backend order model and endpoints + LandingStorePage at `/` with capacity-aware region selection + CheckoutModal with VietQR and 15-minute countdown timer.*

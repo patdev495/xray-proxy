@@ -60,3 +60,9 @@ export {
   deleteAdminRegion,
   fetchPublicRegions,
 } from './api/regions';
+
+export {
+  createOrder,
+  fetchOrderByCode,
+} from './api/orders';
+

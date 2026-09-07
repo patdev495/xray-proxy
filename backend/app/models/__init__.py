@@ -1,4 +1,5 @@
 from app.models.node import Node, SniProfile
+from app.models.order import Order, OrderStatus
 from app.models.plan import Plan
 from app.models.region import Region
 from app.models.setting import SystemSetting
@@ -15,5 +16,8 @@ __all__ = [
     "Plan",
     "SystemSetting",
     "Region",
+    "Order",
+    "OrderStatus",
 ]
+
 
