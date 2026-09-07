@@ -155,13 +155,16 @@ async def create_subscription(db: AsyncSession, sub_in: SubscriptionCreate) -> S
     await db.refresh(db_sub)
 
     # Eager load relationships for response serialization
-    db_sub = await get_subscription_by_id(db, db_sub.id)  # type: ignore
+    reloaded_sub = await get_subscription_by_id(db, db_sub.id)
+    if reloaded_sub is None:
+        raise RuntimeError(f"Failed to reload created subscription with ID {db_sub.id}")
 
     # Sync new active subscription to assigned nodes
-    if db_sub and db_sub.status == SubscriptionStatus.ACTIVE:
-        await sync_user_to_all_nodes(db, db_sub)
+    if reloaded_sub.status == SubscriptionStatus.ACTIVE:
+        await sync_user_to_all_nodes(db, reloaded_sub)
 
-    return db_sub  # type: ignore
+    return reloaded_sub
+
 
 
 
