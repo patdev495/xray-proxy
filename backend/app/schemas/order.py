@@ -6,7 +6,7 @@ class OrderCreate(BaseModel):
     plan_id: int = Field(..., description="ID of selected Plan")
     region: str = Field(..., min_length=2, max_length=10, description="Selected Region code (e.g. VN)")
     billing_cycle: str = Field(default="MONTHLY", description="Billing cycle: MONTHLY or DAILY")
-    duration_days: int = Field(default=30, ge=1, le=365, description="Number of days for subscription")
+    duration_days: int | None = Field(default=None, ge=1, le=365, description="Number of days for subscription; if omitted, defaults to 1 for DAILY and plan.days_valid for MONTHLY")
     subscription_id: int | None = Field(default=None, description="Optional Subscription ID for in-place renewal")
 
 
@@ -19,7 +19,7 @@ class OrderResponse(BaseModel):
     plan_name: str
     region: str
     billing_cycle: str = "MONTHLY"
-    duration_days: int = 30
+    duration_days: int = 1
     amount_vnd: int
     status: str
     subscription_id: int | None = None
