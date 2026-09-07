@@ -12,12 +12,14 @@ from app.api.v1.regions import (
     router as regions_router,
 )
 from app.api.v1.settings import admin_router as settings_admin_router, public_router as settings_public_router
+from app.api.v1.portal import router as portal_router
 from app.api.v1.subscriptions import router as subscriptions_router
 from app.api.v1.sync import router as sync_router
 
 api_router: APIRouter = APIRouter()
 api_router.include_router(health_router, prefix="", tags=["health"])
 api_router.include_router(auth_router)
+api_router.include_router(portal_router)
 api_router.include_router(orders_router)
 api_router.include_router(orders_admin_router)
 api_router.include_router(payments_router)

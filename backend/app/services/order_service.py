@@ -91,8 +91,9 @@ async def create_order(
     user_id: int,
     plan_id: int,
     region: str,
+    subscription_id: int | None = None,
 ) -> Order:
-    """Validate capacity and create a new pending order."""
+    """Validate capacity and create a new pending order (new or renewal)."""
     # 1. Validate Plan
     plan = await get_plan_by_id(db, plan_id)
     if not plan or not plan.is_active:
@@ -108,23 +109,31 @@ async def create_order(
             detail=f"Region {region} is not permitted for this plan",
         )
 
-    # 3. Validate Region Capacity
-    region_statuses = await region_service.get_regions_status(db)
-    matched_status = next(
-        (s for s in region_statuses if s.get("code") == region),
-        None,
-    )
-    if not matched_status or matched_status.get("is_sold_out", False):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Region is currently sold out",
+    # 3. Validate Region Capacity (skip check if renewing an existing subscription that already holds a node slot)
+    if subscription_id is not None:
+        existing = await get_subscription_by_id(db, subscription_id)
+        if not existing or existing.user_id != user_id:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Subscription not found or not owned by user",
+            )
+    else:
+        region_statuses = await region_service.get_regions_status(db)
+        matched_status = next(
+            (s for s in region_statuses if s.get("code") == region),
+            None,
         )
+        if not matched_status or matched_status.get("is_sold_out", False):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Region is currently sold out",
+            )
 
     # 4. Generate unique code
     code = generate_order_code()
     for _ in range(5):
-        existing = await get_order_by_code(db, code)
-        if not existing:
+        existing_order = await get_order_by_code(db, code)
+        if not existing_order:
             break
         code = generate_order_code()
 
@@ -139,6 +148,7 @@ async def create_order(
         region=region,
         amount_vnd=plan.price_vnd,
         status=OrderStatus.PENDING,
+        subscription_id=subscription_id,
         created_at=now,
         expires_at=expires_at,
     )
@@ -152,18 +162,49 @@ async def create_order(
 
 
 async def provision_order_subscription(db: AsyncSession, order: Order) -> Subscription:
-    """Provision a new active subscription for a paid order and sync to node via gRPC."""
-    if order.subscription_id is not None:
-        existing_sub = await get_subscription_by_id(db, order.subscription_id)
-        if existing_sub:
-            return existing_sub
-
+    """Provision a new active subscription or renew an existing subscription for a paid order."""
     plan = order.plan or await get_plan_by_id(db, order.plan_id)
     if not plan:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Plan {order.plan_id} not found",
         )
+
+    # In-place renewal logic if subscription_id is associated
+    if order.subscription_id is not None:
+        existing_sub = await get_subscription_by_id(db, order.subscription_id)
+        if existing_sub:
+            if order.status == OrderStatus.PAID:
+                return existing_sub
+
+            now = datetime.now(timezone.utc)
+            sub_exp = existing_sub.expires_at
+            if sub_exp.tzinfo is None:
+                sub_exp = sub_exp.replace(tzinfo=timezone.utc)
+
+            base_date = sub_exp if sub_exp > now else now
+            existing_sub.expires_at = base_date + timedelta(days=plan.days_valid)
+            existing_sub.traffic_used_bytes = 0
+            existing_sub.traffic_quota_bytes = plan.traffic_quota_bytes
+            existing_sub.status = SubscriptionStatus.ACTIVE
+            existing_sub.plan_id = plan.id
+
+            if not existing_sub.nodes:
+                reg_node = await allocate_node_for_region(
+                    db,
+                    region_id=existing_sub.region_id,
+                    flag=order.region,
+                )
+                existing_sub.nodes = [reg_node]
+
+            await db.commit()
+            await db.refresh(existing_sub)
+            await sync_user_to_all_nodes(db, existing_sub)
+
+            order.status = OrderStatus.PAID
+            await db.commit()
+            await db.refresh(order)
+            return existing_sub
 
     # 1. Allocate least-loaded node in order's region
     reg_stmt = select(Region).where(

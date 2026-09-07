@@ -70,3 +70,11 @@ export {
   cancelMyOrder,
 } from './api/orders';
 
+export {
+  fetchMySubscriptions,
+  fetchEligibleNodes,
+  switchSubscriptionNode,
+  renewSubscription,
+} from './api/portal';
+
+

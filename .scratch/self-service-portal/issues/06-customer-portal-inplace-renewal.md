@@ -1,6 +1,6 @@
 # 06-customer-portal-inplace-renewal
 
-Status: ready-for-agent
+Status: done
 
 ## Parent
 
@@ -17,11 +17,11 @@ Node Sync job updated: respects 3-day grace period for slot calculations while s
 
 ## Acceptance criteria
 
-- [ ] Customer portal renders active subscriptions with traffic usage bars and quick import actions.
-- [ ] Renewal order extends expiration and resets quota without altering client UUID or subscription link.
-- [ ] Node Switching endpoint and UI allows moving subscription to another eligible node in region without breaking client config.
-- [ ] 3-day grace period keeps node slot reserved after expiration.
-- [ ] Expired or quota-exceeded subscriptions are disabled on node via gRPC until renewed.
+- [x] Customer portal renders active subscriptions with traffic usage bars and quick import actions.
+- [x] Renewal order extends expiration and resets quota without altering client UUID or subscription link.
+- [x] Node Switching endpoint and UI allows moving subscription to another eligible node in region without breaking client config.
+- [x] 3-day grace period keeps node slot reserved after expiration.
+- [x] Expired or quota-exceeded subscriptions are disabled on node via gRPC until renewed.
 
 ## Blocked by
 

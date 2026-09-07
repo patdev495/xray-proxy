@@ -11,6 +11,8 @@ export interface SubscriptionItem {
   status: SubscriptionStatus;
   created_at: string;
   node_ids?: number[];
+  node_names?: string[];
+  subscription_url?: string;
   plan_id?: number | null;
   plan_name?: string | null;
   region_id?: number | null;
@@ -18,6 +20,17 @@ export interface SubscriptionItem {
   region_name?: string | null;
   region_flag?: string | null;
 }
+
+export interface EligibleNode {
+  id: number;
+  name: string;
+  host: string;
+  flag: string;
+  location: string;
+  available_slots: number;
+  max_subscriptions: number;
+}
+
 
 export interface SubscriptionCreate {
   customer_name: string;

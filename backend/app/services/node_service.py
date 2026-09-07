@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 from typing import Any
 from sqlalchemy import ColumnElement, func, or_, select
@@ -210,13 +210,18 @@ from app.services.node_script_service import (
 
 
 async def get_node_active_subscriptions_count(db: AsyncSession, node_id: int) -> int:
-    """Count number of active subscriptions bound to a node."""
+    """Count number of active subscriptions bound to a node, respecting 3-day grace period."""
+    now = datetime.now(timezone.utc)
+    grace_cutoff = now - timedelta(days=3)
     stmt = (
         select(func.count(Subscription.id))
         .join(subscription_nodes, subscription_nodes.c.subscription_id == Subscription.id)
         .where(
             subscription_nodes.c.node_id == node_id,
-            Subscription.status == SubscriptionStatus.ACTIVE,
+            or_(
+                Subscription.status == SubscriptionStatus.ACTIVE,
+                Subscription.expires_at >= grace_cutoff,
+            ),
         )
     )
     result = await db.execute(stmt)

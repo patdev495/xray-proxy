@@ -1,9 +1,10 @@
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import grpc
 from sqlalchemy import inspect as sa_inspect, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.node import Node
@@ -230,7 +231,7 @@ async def sync_all_nodes_stats_and_enforce(db: AsyncSession) -> dict[str, Any]:
         for token, delta_bytes in node_stats.items():
             aggregated_deltas[token] = aggregated_deltas.get(token, 0) + delta_bytes
 
-    sub_result = await db.execute(select(Subscription))
+    sub_result = await db.execute(select(Subscription).options(selectinload(Subscription.nodes)))
     subscriptions = sub_result.scalars().all()
 
     now = datetime.now(timezone.utc)
@@ -254,6 +255,11 @@ async def sync_all_nodes_stats_and_enforce(db: AsyncSession) -> dict[str, Any]:
             sub.status = SubscriptionStatus.EXPIRED if is_expired else SubscriptionStatus.SUSPENDED
             await remove_user_from_all_nodes(db, sub)
             suspended_count += 1
+
+        # Grace period release: after 3 days expired without renewal, release slot on node
+        if sub.status == SubscriptionStatus.EXPIRED and sub_expires_at + timedelta(days=3) < now:
+            if sub.nodes:
+                sub.nodes = []
 
     await db.commit()
 

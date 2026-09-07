@@ -35,6 +35,8 @@ class SubscriptionResponse(BaseModel):
     status: SubscriptionStatus
     created_at: datetime
     node_ids: list[int] = Field(default_factory=list)
+    node_names: list[str] = Field(default_factory=list)
+    subscription_url: str | None = None
     plan_id: int | None = None
     plan_name: str | None = None
     region_id: int | None = None
@@ -43,4 +45,24 @@ class SubscriptionResponse(BaseModel):
     region_flag: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class EligibleNodeResponse(BaseModel):
+    id: int
+    name: str
+    host: str
+    flag: str
+    location: str
+    available_slots: int
+    max_subscriptions: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SwitchNodeRequest(BaseModel):
+    target_node_id: int = Field(..., description="ID of destination node in same region")
+
+
+class RenewSubscriptionRequest(BaseModel):
+    plan_id: int | None = Field(default=None, description="Optional new plan ID for renewal, defaults to current plan")
 
