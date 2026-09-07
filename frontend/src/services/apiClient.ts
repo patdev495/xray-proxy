@@ -77,4 +77,8 @@ export {
   renewSubscription,
 } from './api/portal';
 
+export {
+  fetchAdminUsers,
+} from './api/users';
 
+export type { AdminUserItem } from './api/users';

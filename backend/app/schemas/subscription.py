@@ -4,7 +4,9 @@ from app.models.subscription import SubscriptionStatus
 
 
 class SubscriptionCreate(BaseModel):
-    customer_name: str = Field(..., min_length=1, max_length=100)
+    customer_name: str | None = Field(default=None, max_length=100)
+    user_id: int | None = None
+    create_order: bool = False
     quota_gb: float | None = Field(default=None, gt=0)
     days_valid: int | None = Field(default=None, gt=0)
     plan_id: int | None = None
@@ -45,6 +47,8 @@ class SubscriptionResponse(BaseModel):
     region_flag: str | None = None
     billing_cycle: str = "MONTHLY"
     is_renewable: bool = True
+    user_id: int | None = None
+    username: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

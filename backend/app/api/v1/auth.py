@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_admin, get_current_user, get_db
 from app.core.security import create_access_token
 from app.models.user import User
 from app.schemas.auth import (
@@ -15,12 +15,37 @@ from app.services.user_service import (
     authenticate_or_create_google_user,
     authenticate_user,
     create_customer_user,
+    get_all_users,
     get_user_by_email,
     get_user_by_username,
 )
 
 
 router: APIRouter = APIRouter(prefix="/auth", tags=["auth"])
+admin_router: APIRouter = APIRouter(
+    prefix="/admin/users",
+    tags=["admin-users"],
+    dependencies=[Depends(get_current_admin)],
+)
+
+
+@admin_router.get("", response_model=list[UserResponse])
+async def list_admin_users(
+    db: AsyncSession = Depends(get_db),
+) -> list[UserResponse]:
+    """List all registered users for administration."""
+    users = await get_all_users(db)
+    return [
+        UserResponse(
+            id=u.id,
+            username=u.username,
+            email=u.email,
+            role=u.role.value,
+            is_active=u.is_active,
+            oauth_provider=u.oauth_provider,
+        )
+        for u in users
+    ]
 
 
 @router.post("/token", response_model=Token)

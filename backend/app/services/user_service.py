@@ -16,6 +16,18 @@ async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
     return result.scalar_one_or_none()
 
 
+async def get_user_by_id(db: AsyncSession, user_id: int) -> User | None:
+    """Find user by primary key ID."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
+
+
+async def get_all_users(db: AsyncSession) -> list[User]:
+    """Retrieve all users ordered by username."""
+    result = await db.execute(select(User).order_by(User.username.asc()))
+    return list(result.scalars().all())
+
+
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """Find user by email."""
     result = await db.execute(select(User).where(User.email == email))

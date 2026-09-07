@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.auth import router as auth_router
+from app.api.v1.auth import admin_router as users_admin_router, router as auth_router
 from app.api.v1.health import router as health_router
 from app.api.v1.nodes import router as nodes_router
 from app.api.v1.orders import admin_router as orders_admin_router, router as orders_router
@@ -19,6 +19,7 @@ from app.api.v1.sync import router as sync_router
 api_router: APIRouter = APIRouter()
 api_router.include_router(health_router, prefix="", tags=["health"])
 api_router.include_router(auth_router)
+api_router.include_router(users_admin_router)
 api_router.include_router(portal_router)
 api_router.include_router(orders_router)
 api_router.include_router(orders_admin_router)

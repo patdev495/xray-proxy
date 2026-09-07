@@ -17,6 +17,7 @@ from app.schemas.subscription import SubscriptionCreate, SubscriptionUpdate
 from app.services.node_service import allocate_node_for_region
 from app.services.plan_service import get_plan_by_id
 from app.services.region_service import get_region_by_id
+from app.services.user_service import get_user_by_id
 from app.services.xray_grpc_service import (
     add_user_to_node,
     remove_user_from_all_nodes,
@@ -138,8 +139,16 @@ async def create_subscription(db: AsyncSession, sub_in: SubscriptionCreate) -> S
         nodes_res = await db.execute(node_query)
         assigned_nodes = list(nodes_res.scalars().all())
 
+    user = None
+    if sub_in.user_id is not None:
+        user = await get_user_by_id(db, sub_in.user_id)
+        if not user:
+            raise ValueError(f"User with ID {sub_in.user_id} not found")
+
+    cust_name = sub_in.customer_name.strip() if (sub_in.customer_name and sub_in.customer_name.strip()) else (user.username if user else "Anonymous")
+
     db_sub = Subscription(
-        customer_name=sub_in.customer_name,
+        customer_name=cust_name,
         token=token,
         uuid=client_uuid,
         traffic_quota_bytes=quota_bytes,
@@ -148,11 +157,35 @@ async def create_subscription(db: AsyncSession, sub_in: SubscriptionCreate) -> S
         status=SubscriptionStatus.ACTIVE,
         plan_id=sub_in.plan_id,
         region_id=assigned_region_id,
+        user_id=user.id if user else None,
         nodes=assigned_nodes,
     )
     db.add(db_sub)
     await db.commit()
     await db.refresh(db_sub)
+
+    # Optional: Record as completed order if user and plan exist
+    if sub_in.create_order and user and plan:
+        from app.models.order import Order, OrderStatus
+        from app.services.order_service import generate_order_code
+        order_code = generate_order_code()
+        reg_code = region.code if (sub_in.region_id and region) else "GLOBAL"
+        now_dt = datetime.now(timezone.utc)
+        order = Order(
+            code=order_code,
+            user_id=user.id,
+            plan_id=plan.id,
+            region=reg_code,
+            billing_cycle="MONTHLY",
+            duration_days=days,
+            amount_vnd=plan.price_vnd,
+            status=OrderStatus.PAID,
+            subscription_id=db_sub.id,
+            created_at=now_dt,
+            expires_at=now_dt + timedelta(days=days),
+        )
+        db.add(order)
+        await db.commit()
 
     # Eager load relationships for response serialization
     reloaded_sub = await get_subscription_by_id(db, db_sub.id)

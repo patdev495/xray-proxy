@@ -41,6 +41,8 @@ export interface SubscriptionCreate {
   plan_id?: number;
   region_id?: number;
   node_ids?: number[];
+  user_id?: number | null;
+  create_order?: boolean;
 }
 
 export interface SubscriptionUpdate {

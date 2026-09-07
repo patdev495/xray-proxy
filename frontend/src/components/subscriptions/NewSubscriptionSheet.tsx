@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Sparkles, Layers } from 'lucide-react';
+import { Plus, Sparkles, Layers, UserCircle } from 'lucide-react';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useToast } from '../../context/ToastContext';
-import { createSubscription, fetchAdminPlans, fetchAdminRegions } from '../../services/apiClient';
+import {
+  createSubscription,
+  fetchAdminPlans,
+  fetchAdminRegions,
+  fetchAdminUsers,
+} from '../../services/apiClient';
+import type { AdminUserItem } from '../../services/apiClient';
 import type { NodeItem } from '../../types/node';
 import type { PlanItem } from '../../types/plan';
 import type { RegionItem } from '../../types/region';
@@ -28,8 +34,11 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
   const [customerName, setCustomerName] = useState<string>('');
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [regions, setRegions] = useState<RegionItem[]>([]);
+  const [users, setUsers] = useState<AdminUserItem[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<number | undefined>(undefined);
   const [selectedRegionId, setSelectedRegionId] = useState<number | undefined>(undefined);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [createOrder, setCreateOrder] = useState<boolean>(false);
   const [useManualConfig, setUseManualConfig] = useState<boolean>(false);
   const [quotaGb, setQuotaGb] = useState<string>('50');
   const [daysValid, setDaysValid] = useState<string>('30');
@@ -38,12 +47,17 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
 
   useEffect(() => {
     if (isOpen && token) {
-      Promise.all([fetchAdminPlans(token), fetchAdminRegions(token)])
-        .then(([fetchedPlans, fetchedRegions]) => {
+      Promise.all([
+        fetchAdminPlans(token),
+        fetchAdminRegions(token),
+        fetchAdminUsers(token),
+      ])
+        .then(([fetchedPlans, fetchedRegions, fetchedUsers]) => {
           const activeP = fetchedPlans.filter((p) => p.is_active);
           setPlans(activeP);
           const activeR = fetchedRegions.filter((r) => r.is_active);
           setRegions(activeR);
+          setUsers(fetchedUsers);
 
           if (activeP.length > 0 && !selectedPlanId) {
             const firstPlan = activeP[0];
@@ -51,10 +65,10 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
             setQuotaGb(firstPlan.quota_gb.toString());
             setDaysValid(firstPlan.days_valid.toString());
 
-            // Determine allowed regions for first plan
-            const allowed = (firstPlan.allowed_regions && firstPlan.allowed_regions.length > 0)
-              ? activeR.filter((r) => firstPlan.allowed_regions.includes(r.code))
-              : activeR;
+            const allowed =
+              firstPlan.allowed_regions && firstPlan.allowed_regions.length > 0
+                ? activeR.filter((r) => firstPlan.allowed_regions.includes(r.code))
+                : activeR;
             if (allowed.length > 0) {
               setSelectedRegionId(allowed[0].id);
             }
@@ -66,7 +80,6 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
 
-  // Available regions filtered by plan's allowed_regions
   const eligibleRegions = regions.filter((r) => {
     if (!selectedPlan || !selectedPlan.allowed_regions || selectedPlan.allowed_regions.length === 0) {
       return true;
@@ -83,13 +96,24 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
       setQuotaGb(plan.quota_gb.toString());
       setDaysValid(plan.days_valid.toString());
 
-      // Validate or pick eligible region
-      const allowed = (plan.allowed_regions && plan.allowed_regions.length > 0)
-        ? regions.filter((r) => plan.allowed_regions.includes(r.code))
-        : regions;
+      const allowed =
+        plan.allowed_regions && plan.allowed_regions.length > 0
+          ? regions.filter((r) => plan.allowed_regions.includes(r.code))
+          : regions;
 
       if (!allowed.some((r) => r.id === selectedRegionId) && allowed.length > 0) {
         setSelectedRegionId(allowed[0].id);
+      }
+    }
+  };
+
+  // When a registered user is selected, auto-fill customerName from their email
+  const handleUserChange = (userId: number | null) => {
+    setSelectedUserId(userId);
+    if (userId) {
+      const user = users.find((u) => u.id === userId);
+      if (user) {
+        setCustomerName(user.full_name || user.email);
       }
     }
   };
@@ -111,23 +135,21 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
       const quota = parseFloat(quotaGb) || 50;
       const days = parseInt(daysValid, 10) || 30;
 
+      const basePayload = {
+        customer_name: customerName.trim(),
+        plan_id: selectedPlanId,
+        region_id: selectedRegionId,
+        quota_gb: quota,
+        days_valid: days,
+        user_id: selectedUserId ?? undefined,
+        create_order: selectedUserId ? createOrder : false,
+      };
+
       if (!useManualConfig && selectedRegionId) {
-        // Mode 1: Plan + Single Selected Region with auto-load-balanced Node allocation
-        await createSubscription(token, {
-          customer_name: customerName.trim(),
-          plan_id: selectedPlanId,
-          region_id: selectedRegionId,
-          quota_gb: quota,
-          days_valid: days,
-        });
+        await createSubscription(token, basePayload);
       } else {
-        // Mode 2: Manual custom node assignment
         await createSubscription(token, {
-          customer_name: customerName.trim(),
-          plan_id: selectedPlanId,
-          region_id: selectedRegionId,
-          quota_gb: quota,
-          days_valid: days,
+          ...basePayload,
           node_ids: selectedNodeIds.length > 0 ? selectedNodeIds : undefined,
         });
       }
@@ -138,7 +160,10 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
         message: `Issued subscription for ${customerName}`,
       });
 
+      // Reset form
       setCustomerName('');
+      setSelectedUserId(null);
+      setCreateOrder(false);
       onClose();
       onSuccess();
     } catch (err) {
@@ -176,13 +201,50 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Link to registered user (optional) */}
+        <div>
+          <div className="flex items-center gap-1.5 mb-1">
+            <UserCircle className="w-3.5 h-3.5 text-slate-500" />
+            <label className="block text-xs font-semibold text-slate-700">
+              Link to Registered User <span className="text-slate-400 font-normal">(optional)</span>
+            </label>
+          </div>
+          <select
+            value={selectedUserId ?? ''}
+            onChange={(e) =>
+              handleUserChange(e.target.value ? parseInt(e.target.value, 10) : null)
+            }
+            className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md shadow-xs focus:border-slate-900 focus:outline-none transition-colors"
+          >
+            <option value="">-- No account link (manual issue) --</option>
+            {users.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.full_name ? `${u.full_name} (${u.email})` : u.email}
+              </option>
+            ))}
+          </select>
+          {selectedUserId && (
+            <label className="flex items-center gap-2 mt-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={createOrder}
+                onChange={(e) => setCreateOrder(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-slate-300 text-slate-900"
+              />
+              <span className="text-xs text-slate-600">
+                Record as a paid order in the user's order history
+              </span>
+            </label>
+          )}
+        </div>
+
         <Input
           label="Customer Identifier"
           placeholder="e.g. Customer #1092 or customer@example.com"
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
           required
-          hint="Name or email reference for this subscriber"
+          hint="Auto-filled when a registered user is selected"
         />
 
         {/* Plan Selection */}
@@ -195,19 +257,22 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
           </div>
           <select
             value={selectedPlanId || ''}
-            onChange={(e) => handlePlanChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+            onChange={(e) =>
+              handlePlanChange(e.target.value ? parseInt(e.target.value, 10) : undefined)
+            }
             className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md shadow-xs focus:border-slate-900 focus:outline-none transition-colors"
           >
             <option value="">-- Custom / Manual Quota --</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} ({plan.quota_gb} GB / {plan.days_valid}d - {plan.price_vnd.toLocaleString()} VND)
+                {plan.name} ({plan.quota_gb} GB / {plan.days_valid}d -{' '}
+                {plan.price_vnd.toLocaleString()} VND)
               </option>
             ))}
           </select>
         </div>
 
-        {/* Region Selection: Exactly 1 single region */}
+        {/* Region Selection */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="block text-xs font-semibold text-slate-700">
@@ -231,7 +296,9 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
                   <span className="text-lg">{region.flag}</span>
                   <div>
                     <div className="text-xs font-semibold">{region.name}</div>
-                    <div className={`text-[10px] font-mono ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}>
+                    <div
+                      className={`text-[10px] font-mono ${isSelected ? 'text-slate-300' : 'text-slate-400'}`}
+                    >
                       {region.code}
                     </div>
                   </div>
@@ -273,7 +340,9 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
             className="text-[11px] text-slate-500 hover:text-slate-800 flex items-center gap-1 underline"
           >
             <Layers className="w-3 h-3" />
-            {useManualConfig ? 'Hide manual node override' : 'Override with manual node selection (Advanced)'}
+            {useManualConfig
+              ? 'Hide manual node override'
+              : 'Override with manual node selection (Advanced)'}
           </button>
 
           {useManualConfig && (
@@ -284,7 +353,9 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
                   <label
                     key={node.id}
                     className={`flex items-center justify-between p-2 rounded-md border cursor-pointer text-xs ${
-                      isChecked ? 'bg-white border-slate-300 text-slate-900' : 'text-slate-600 hover:bg-slate-100'
+                      isChecked
+                        ? 'bg-white border-slate-300 text-slate-900'
+                        : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -317,7 +388,8 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
             Intelligent Server Load Balancing
           </p>
           <p className="text-[11px] text-slate-500 leading-relaxed">
-            The proxy backend will automatically choose the least-loaded node in the selected region to ensure best connection stability.
+            The proxy backend will automatically choose the least-loaded node in the selected region
+            to ensure best connection stability.
           </p>
         </div>
       </form>

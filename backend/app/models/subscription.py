@@ -101,3 +101,7 @@ class Subscription(Base):
     def region_flag(self) -> str | None:
         return self.region.flag if self.region else None
 
+    @property
+    def username(self) -> str | None:
+        return self.user.username if self.user else None
+
