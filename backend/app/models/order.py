@@ -22,6 +22,7 @@ class Order(Base):
     plan_id: Mapped[int] = mapped_column(Integer, ForeignKey("plans.id"), nullable=False, index=True)
     region: Mapped[str] = mapped_column(String(10), nullable=False)
     billing_cycle: Mapped[str] = mapped_column(String(10), default="MONTHLY", nullable=False)
+    duration_days: Mapped[int] = mapped_column(Integer, default=30, nullable=False)
     amount_vnd: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[OrderStatus] = mapped_column(
         SQLEnum(OrderStatus, native_enum=False),

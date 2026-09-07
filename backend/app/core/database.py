@@ -92,6 +92,15 @@ async def init_db() -> None:
                 if "quota_daily_bytes" not in plan_cols:
                     connection.execute(text("ALTER TABLE plans ADD COLUMN quota_daily_bytes BIGINT"))
 
+                # Auto-enable 3k/6GB test option for existing plans that don't have daily pricing yet
+                connection.execute(text("""
+                    UPDATE plans
+                    SET enable_daily = 1,
+                        price_daily_vnd = 3000,
+                        quota_daily_bytes = 6442450944
+                    WHERE enable_daily = 0 AND (price_daily_vnd IS NULL OR price_daily_vnd = 0)
+                """))
+
             # 4. Subscriptions migrations
             if "subscriptions" in table_names:
                 sub_cols = [c["name"] for c in insp.get_columns("subscriptions")]
@@ -111,6 +120,8 @@ async def init_db() -> None:
                     connection.execute(text("ALTER TABLE orders ADD COLUMN subscription_id INTEGER REFERENCES subscriptions(id)"))
                 if "billing_cycle" not in order_cols:
                     connection.execute(text("ALTER TABLE orders ADD COLUMN billing_cycle VARCHAR(10) NOT NULL DEFAULT 'MONTHLY'"))
+                if "duration_days" not in order_cols:
+                    connection.execute(text("ALTER TABLE orders ADD COLUMN duration_days INTEGER NOT NULL DEFAULT 30"))
 
             # 6. SNI profiles migrations
             if "sni_profiles" in table_names:

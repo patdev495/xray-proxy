@@ -308,3 +308,63 @@ async def test_daily_subscription_renewal_blocked(
     )
     assert resp.status_code == 400
     assert "Daily test subscriptions cannot be renewed in-place" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_daily_subscription_multi_day_selection(
+    db_session: AsyncSession,
+    customer_user: User,
+    composite_plan: Plan,
+):
+    """Users can select custom number of days (e.g. 3 days), multiplying price and daily quota."""
+    now = datetime.now(timezone.utc)
+    region = await get_region_by_code(db_session, "VN")
+    assert region is not None
+
+    await create_node(
+        db_session,
+        NodeCreate(name="Multi Day Node", host="10.20.1.5", region_id=region.id, flag="🇻🇳"),
+    )
+
+    # Order with 3 days
+    order = await create_order(
+        db_session,
+        user_id=customer_user.id,
+        plan_id=composite_plan.id,
+        region="VN",
+        billing_cycle="DAILY",
+        duration_days=3,
+    )
+    # Price = 3 * 3,000 = 9,000 VND
+    assert order.amount_vnd == 9000
+    assert order.duration_days == 3
+
+    # Process payment
+    with patch("app.services.xray_grpc_service.add_user_to_node", return_value=True):
+        payload = SepayWebhookPayload(
+            id=3001,
+            gateway="MBBank",
+            transactionDate=now.strftime("%Y-%m-%d %H:%M:%S"),
+            accountNumber="0987654321",
+            content=f"Thanh toan {order.code}",
+            transferType="in",
+            description=f"Thanh toan {order.code}",
+            transferAmount=order.amount_vnd,
+            referenceCode="REF3001",
+            accumulated=1000000,
+        )
+        resp = await process_sepay_webhook(db_session, payload, auth_header=None)
+        assert resp.success is True
+
+    await db_session.refresh(order)
+    sub = order.subscription
+    assert sub is not None
+    assert sub.billing_cycle == "DAILY"
+    # Quota = 3 * 6GB = 18GB
+    assert sub.traffic_quota_bytes == 3 * (composite_plan.quota_daily_bytes or 0)
+    # Expiry ~ 72 hours
+    sub_exp = sub.expires_at.replace(tzinfo=timezone.utc) if sub.expires_at.tzinfo is None else sub.expires_at
+    expected_exp = now + timedelta(days=3)
+    diff = abs((sub_exp - expected_exp).total_seconds())
+    assert diff < 10
+

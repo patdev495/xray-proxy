@@ -7,6 +7,7 @@ export interface Order {
   plan_name: string;
   region: string;
   billing_cycle?: 'MONTHLY' | 'DAILY';
+  duration_days?: number;
   amount_vnd: number;
   status: 'PENDING' | 'PAID' | 'CANCELLED' | 'EXPIRED';
   subscription_id?: number;
@@ -25,4 +26,5 @@ export interface OrderCreateRequest {
   plan_id: number;
   region: string;
   billing_cycle?: 'MONTHLY' | 'DAILY';
+  duration_days?: number;
 }

@@ -83,14 +83,12 @@ async def create_order(
     plan_id: int,
     region: str,
     billing_cycle: str = "MONTHLY",
+    duration_days: int | None = None,
     subscription_id: int | None = None,
 ) -> Order:
     """Validate capacity, auto-cancel older pending orders, and create a new pending order."""
     # 0. Cancel any existing pending orders for this user (Max 1 pending order rule)
-    existing_pending_stmt = select(Order).where(
-        Order.user_id == user_id,
-        Order.status == OrderStatus.PENDING,
-    )
+    existing_pending_stmt = select(Order).where(Order.user_id == user_id, Order.status == OrderStatus.PENDING)
     existing_pending_res = await db.execute(existing_pending_stmt)
     for old_order in existing_pending_res.scalars().all():
         old_order.status = OrderStatus.CANCELLED
@@ -98,12 +96,9 @@ async def create_order(
     # 1. Validate Plan
     plan = await get_plan_by_id(db, plan_id)
     if not plan or not plan.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Plan is not available",
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Plan is not available")
 
-    # Validate Billing Cycle and Price
+    # Validate Billing Cycle, duration, and price
     cycle = billing_cycle.upper() if billing_cycle else "MONTHLY"
     if cycle == "DAILY":
         if not plan.enable_daily or plan.price_daily_vnd is None:
@@ -111,9 +106,11 @@ async def create_order(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Daily test billing is not available for this plan",
             )
-        amount_vnd = plan.price_daily_vnd
+        days = duration_days if (duration_days and duration_days > 0) else 1
+        amount_vnd = plan.price_daily_vnd * days
     else:
         cycle = "MONTHLY"
+        days = duration_days if (duration_days and duration_days > 0) else plan.days_valid
         amount_vnd = plan.price_vnd
 
     # 2. Validate Allowed Regions
@@ -123,31 +120,21 @@ async def create_order(
             detail=f"Region {region} is not permitted for this plan",
         )
 
-    # 3. Validate Region Capacity (skip check if renewing an existing subscription that already holds a node slot)
+    # 3. Validate Region Capacity
     if subscription_id is not None:
         existing = await get_subscription_by_id(db, subscription_id)
         if not existing or existing.user_id != user_id:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Subscription not found or not owned by user",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscription not found")
     else:
         region_statuses = await region_service.get_regions_status(db)
-        matched_status = next(
-            (s for s in region_statuses if s.get("code") == region),
-            None,
-        )
-        if not matched_status or matched_status.get("is_sold_out", False):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Region is currently sold out",
-            )
+        matched = next((s for s in region_statuses if s.get("code") == region), None)
+        if not matched or matched.get("is_sold_out", False):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Region is currently sold out")
 
     # 4. Generate unique code
     code = generate_order_code()
     for _ in range(5):
-        existing_order = await get_order_by_code(db, code)
-        if not existing_order:
+        if not await get_order_by_code(db, code):
             break
         code = generate_order_code()
 
@@ -161,6 +148,7 @@ async def create_order(
         plan_id=plan.id,
         region=region,
         billing_cycle=cycle,
+        duration_days=days,
         amount_vnd=amount_vnd,
         status=OrderStatus.PENDING,
         subscription_id=subscription_id,
@@ -171,7 +159,6 @@ async def create_order(
     await db.commit()
     await db.refresh(order)
 
-    # Reload with relations
     reloaded = await get_order_by_code(db, order.code)
     return reloaded or order
 
@@ -242,11 +229,13 @@ async def provision_order_subscription(db: AsyncSession, order: Order) -> Subscr
 
     now = datetime.now(timezone.utc)
     is_daily = order.billing_cycle == "DAILY"
+    days = order.duration_days if (order.duration_days and order.duration_days > 0) else (1 if is_daily else plan.days_valid)
     if is_daily:
-        expires_at = now + timedelta(hours=24)
-        quota_bytes = plan.quota_daily_bytes if plan.quota_daily_bytes is not None else plan.traffic_quota_bytes
+        expires_at = now + timedelta(days=days)
+        daily_unit_bytes = plan.quota_daily_bytes if plan.quota_daily_bytes is not None else 6 * 1024 * 1024 * 1024
+        quota_bytes = daily_unit_bytes * days
     else:
-        expires_at = now + timedelta(days=plan.days_valid)
+        expires_at = now + timedelta(days=days)
         quota_bytes = plan.traffic_quota_bytes
 
     # 3. Create Subscription
@@ -469,6 +458,7 @@ async def to_order_response(order: Order, db: AsyncSession) -> OrderResponse:
         plan_name=plan_name,
         region=order.region,
         billing_cycle=order.billing_cycle or "MONTHLY",
+        duration_days=order.duration_days or 30,
         amount_vnd=order.amount_vnd,
         status=order.status.value,
         subscription_id=order.subscription_id,

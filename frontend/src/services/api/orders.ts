@@ -5,7 +5,8 @@ export async function createOrder(
   token: string,
   planId: number,
   region: string,
-  billingCycle: 'MONTHLY' | 'DAILY' = 'MONTHLY'
+  billingCycle: 'MONTHLY' | 'DAILY' = 'MONTHLY',
+  durationDays?: number
 ): Promise<Order> {
   const response = await fetch(`${API_BASE_URL}/api/v1/orders/create`, {
     method: 'POST',
@@ -14,7 +15,12 @@ export async function createOrder(
       'Accept': 'application/json',
       'Authorization': `Bearer ${token}`,
     },
-    body: JSON.stringify({ plan_id: planId, region, billing_cycle: billingCycle }),
+    body: JSON.stringify({
+      plan_id: planId,
+      region,
+      billing_cycle: billingCycle,
+      duration_days: durationDays,
+    }),
   });
 
   if (!response.ok) {
