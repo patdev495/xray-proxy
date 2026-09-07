@@ -85,21 +85,21 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
 
   const handleCancelOrder = async (orderId: number) => {
     if (!token) return;
-    if (!window.confirm('Bạn có chắc muốn hủy đơn hàng này không?')) return;
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
     try {
       setCancellingOrderId(orderId);
       await cancelMyOrder(token, orderId);
       showToast({
         type: 'success',
-        title: 'Đã hủy đơn hàng',
-        message: 'Đơn hàng đã được hủy thành công.',
+        title: 'Order Cancelled',
+        message: 'The order has been successfully cancelled.',
       });
       await loadOrders();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Lỗi hủy đơn',
-        message: err instanceof Error ? err.message : 'Không thể hủy đơn hàng',
+        title: 'Cancellation Failed',
+        message: err instanceof Error ? err.message : 'Unable to cancel the order',
       });
     } finally {
       setCancellingOrderId(null);
@@ -150,7 +150,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               onClick={() => onNavigate('/')}
               className="text-xs"
             >
-              Cửa hàng gói cước
+              Plan Store
             </Button>
           )}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-700">
@@ -180,15 +180,15 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               </div>
               <div className="text-xs space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-amber-900 text-sm">Đơn hàng đang chờ thanh toán</span>
+                  <span className="font-bold text-amber-900 text-sm">Pending Payment</span>
                   <span className="font-mono font-bold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded text-xs">
                     {pendingOrder.code}
                   </span>
                 </div>
                 <p className="text-amber-800">
-                  Gói <strong className="font-semibold">{pendingOrder.plan_name}</strong> ({pendingOrder.region}) •{' '}
+                  Plan <strong className="font-semibold">{pendingOrder.plan_name}</strong> ({pendingOrder.region}) •{' '}
                   <strong className="font-mono text-emerald-700 font-bold">{formatVND(pendingOrder.amount_vnd)}</strong> •{' '}
-                  Hạn thanh toán: <span className="font-mono font-bold text-amber-900 bg-amber-200/60 px-1.5 py-0.5 rounded">{getPendingRemainingTime(pendingOrder)}</span>
+                  Payment deadline: <span className="font-mono font-bold text-amber-900 bg-amber-200/60 px-1.5 py-0.5 rounded">{getPendingRemainingTime(pendingOrder)}</span>
                 </p>
               </div>
             </div>
@@ -201,7 +201,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 disabled={cancellingOrderId === pendingOrder.id}
                 className="text-xs text-amber-800 hover:bg-amber-100 hover:text-amber-900"
               >
-                {cancellingOrderId === pendingOrder.id ? 'Đang hủy...' : 'Hủy đơn'}
+                {cancellingOrderId === pendingOrder.id ? 'Cancelling...' : 'Cancel Order'}
               </Button>
               <Button
                 variant="primary"
@@ -213,7 +213,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 leftIcon={<QrCode className="w-3.5 h-3.5" />}
                 className="text-xs bg-amber-600 hover:bg-amber-700 text-white shadow-xs font-semibold"
               >
-                Thanh toán ngay
+                Pay Now
               </Button>
             </div>
           </div>
@@ -230,7 +230,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               Welcome back, {user?.username}
             </h1>
             <p className="text-sm text-slate-500 leading-relaxed">
-              Quản lý gói cước VLESS-Reality tốc độ cao, sao chép cấu hình app, đổi server linh hoạt và gia hạn tức thời.
+              Manage high-speed VLESS-Reality plans, copy subscription configs, switch servers, and renew instantly.
             </p>
           </div>
         </div>
@@ -266,12 +266,12 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               </div>
               <div className="flex items-center justify-between text-slate-600">
                 <span className="text-slate-400">Email:</span>
-                <span className="font-medium text-slate-800">{user?.email || 'Chưa thiết lập'}</span>
+                <span className="font-medium text-slate-800">{user?.email || 'Not configured'}</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
-                <span className="text-slate-400">Đăng nhập:</span>
+                <span className="text-slate-400">Login Method:</span>
                 <span className="capitalize font-medium text-slate-800">
-                  {user?.oauth_provider ? `${user.oauth_provider} OAuth` : 'Mật khẩu'}
+                  {user?.oauth_provider ? `${user.oauth_provider} OAuth` : 'Password'}
                 </span>
               </div>
             </div>
@@ -282,12 +282,12 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-amber-600" />
-                <h2 className="text-sm font-semibold text-slate-800">Dịch vụ Proxy</h2>
+                <h2 className="text-sm font-semibold text-slate-800">Proxy Service</h2>
               </div>
               <Badge variant="amber" size="sm">Self-Service</Badge>
             </div>
             <div className="space-y-2 text-xs text-slate-500">
-              <p>Hệ thống tự động cấp phát gói cước và đồng bộ máy chủ ngay khi thanh toán thành công.</p>
+              <p>Subscriptions are automatically provisioned and synced across nodes upon successful payment.</p>
               {onNavigate && (
                 <Button
                   variant="primary"
@@ -295,7 +295,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   onClick={() => onNavigate('/')}
                   className="w-full mt-2 text-xs font-medium"
                 >
-                  Mua thêm gói cước
+                  Purchase Plan
                 </Button>
               )}
             </div>
@@ -306,17 +306,17 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <KeyRound className="w-4 h-4 text-indigo-600" />
-                <h2 className="text-sm font-semibold text-slate-800">Bảo mật &amp; Token</h2>
+                <h2 className="text-sm font-semibold text-slate-800">Security &amp; Tokens</h2>
               </div>
-              <Badge variant="emerald" size="sm" dot>An toàn</Badge>
+              <Badge variant="emerald" size="sm" dot>Secure</Badge>
             </div>
             <div className="space-y-2 text-xs text-slate-500">
               <div className="flex items-center gap-1.5 text-emerald-700">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span className="font-medium">Mã hóa phiên JWT &amp; VLESS Reality</span>
+                <span className="font-medium">Encrypted JWT &amp; VLESS Reality</span>
               </div>
               <p className="text-[11px] text-slate-400">
-                Mỗi kết nối được phân bổ độc lập trên các Node máy chủ chất lượng cao.
+                Each connection is independently routed through high-performance dedicated nodes.
               </p>
             </div>
           </Card>

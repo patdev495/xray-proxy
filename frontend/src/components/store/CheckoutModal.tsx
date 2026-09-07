@@ -96,8 +96,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Thanh toán đơn hàng"
-      description={`Mã đơn: ${currentOrder.code} • Gói ${currentOrder.plan_name}`}
+      title="Order Payment"
+      description={`Order: ${currentOrder.code} • Plan: ${currentOrder.plan_name}`}
       maxWidth="md"
     >
       <div className="space-y-4">
@@ -106,9 +106,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-3 animate-in zoom-in-95">
             <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
             <div className="space-y-1">
-              <h4 className="text-sm font-bold text-emerald-800">Thanh toán thành công!</h4>
+              <h4 className="text-sm font-bold text-emerald-800">Payment successful!</h4>
               <p className="text-xs text-emerald-600">
-                Gói cước đã được kích hoạt. Bạn có thể sao chép link hoặc quét mã QR bên dưới vào Shadowrocket / v2rayNG:
+                Your plan is now active. Copy the subscription link or scan the QR code below to import into Shadowrocket / v2rayNG:
               </p>
             </div>
 
@@ -145,7 +145,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     className="shrink-0 text-xs"
                     leftIcon={copiedField === 'sub_url' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   >
-                    {copiedField === 'sub_url' ? 'Đã chép' : 'Sao chép'}
+                    {copiedField === 'sub_url' ? 'Copied!' : 'Copy'}
                   </Button>
                 </div>
               </div>
@@ -160,18 +160,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               }}
               className="w-full mt-2"
             >
-              Vào Customer Portal
+              Go to Customer Portal
             </Button>
           </div>
         ) : isExpired ? (
           <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-center space-y-2">
             <AlertCircle className="w-8 h-8 text-rose-600 mx-auto" />
-            <h4 className="text-sm font-bold text-rose-800">Đơn hàng đã hết hạn</h4>
+            <h4 className="text-sm font-bold text-rose-800">Order expired</h4>
             <p className="text-xs text-rose-600">
-              Thời gian thanh toán 15 phút đã kết thúc. Vui lòng tạo đơn hàng mới.
+              The 15-minute payment window has closed. Please create a new order.
             </p>
             <Button variant="secondary" size="sm" onClick={onClose} className="mt-2">
-              Đóng
+              Close
             </Button>
           </div>
         ) : (
@@ -180,12 +180,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-100/80 border border-slate-200 text-xs">
               <div className="flex items-center gap-1.5 text-slate-700 font-medium">
                 <Clock className="w-3.5 h-3.5 text-slate-500" />
-                <span>Thời gian thanh toán:</span>
+                <span>Payment window:</span>
                 <span className="font-mono font-bold text-amber-600">{timeFormatted}</span>
               </div>
               <div className="flex items-center gap-1.5 text-slate-500">
                 <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
-                <span className="text-[11px]">Chờ quét mã...</span>
+                <span className="text-[11px]">Waiting for scan...</span>
               </div>
             </div>
 
@@ -201,7 +201,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
               <p className="text-[11px] text-slate-400 flex items-center gap-1">
                 <QrCode className="w-3.5 h-3.5" />
-                <span>Mở App ngân hàng bất kỳ để quét mã QR</span>
+                <span>Open any banking app to scan the QR code</span>
               </p>
             </div>
 
@@ -209,13 +209,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <div className="rounded-xl border border-slate-200/90 divide-y divide-slate-100 bg-white text-xs">
               {/* Row 1: Bank Name */}
               <div className="flex items-center justify-between p-2.5">
-                <span className="text-slate-400">Ngân hàng:</span>
+                <span className="text-slate-400">Bank:</span>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-slate-800">{currentOrder.bank_id}</span>
                   <button
                     onClick={() => copyToClipboard(currentOrder.bank_id, 'bank')}
                     className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                    title="Sao chép"
+                    title="Copy"
                   >
                     {copiedField === 'bank' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
@@ -224,13 +224,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Row 2: Account Number */}
               <div className="flex items-center justify-between p-2.5">
-                <span className="text-slate-400">Số tài khoản:</span>
+                <span className="text-slate-400">Account number:</span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-bold text-slate-900">{currentOrder.bank_account_number}</span>
                   <button
                     onClick={() => copyToClipboard(currentOrder.bank_account_number, 'account')}
                     className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                    title="Sao chép"
+                    title="Copy"
                   >
                     {copiedField === 'account' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
@@ -239,21 +239,21 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
               {/* Row 3: Account Name */}
               <div className="flex items-center justify-between p-2.5">
-                <span className="text-slate-400">Chủ tài khoản:</span>
+                <span className="text-slate-400">Account name:</span>
                 <span className="font-medium text-slate-800 uppercase">{currentOrder.bank_account_name}</span>
               </div>
 
               {/* Row 4: Amount */}
               <div className="flex items-center justify-between p-2.5">
-                <span className="text-slate-400">Số tiền:</span>
+                <span className="text-slate-400">Amount:</span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-bold text-emerald-600 text-sm">
-                    {currentOrder.amount_vnd.toLocaleString('vi-VN')} đ
+                    {currentOrder.amount_vnd.toLocaleString('vi-VN')} ₫
                   </span>
                   <button
                     onClick={() => copyToClipboard(currentOrder.amount_vnd.toString(), 'amount')}
                     className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                    title="Sao chép số tiền"
+                    title="Copy amount"
                   >
                     {copiedField === 'amount' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
@@ -263,7 +263,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               {/* Row 5: Transfer Content (Crucial) */}
               <div className="flex items-center justify-between p-2.5 bg-amber-50/50">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-amber-800 font-medium">Nội dung chuyển khoản:</span>
+                  <span className="text-amber-800 font-medium">Transfer memo:</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-bold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded text-xs">
@@ -272,7 +272,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <button
                     onClick={() => copyToClipboard(memoContent, 'code')}
                     className="p-1 rounded text-amber-700 hover:bg-amber-100"
-                    title="Sao chép mã"
+                    title="Copy memo"
                   >
                     {copiedField === 'code' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
@@ -284,8 +284,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-500 flex items-start gap-2">
               <ShieldAlert className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <span>
-                <strong>Lưu ý:</strong> Vui lòng giữ chính xác nội dung chuyển tiền{' '}
-                <code className="bg-slate-200/70 text-slate-800 px-1 py-0.5 rounded font-mono">{memoContent}</code> để hệ thống tự động nhận diện và kích hoạt trong vòng 3-5 giây.
+                <strong>Important:</strong> Keep the exact transfer memo{' '}
+                <code className="bg-slate-200/70 text-slate-800 px-1 py-0.5 rounded font-mono">{memoContent}</code> so the system can automatically detect and activate your plan within 3–5 seconds.
               </span>
             </div>
           </>

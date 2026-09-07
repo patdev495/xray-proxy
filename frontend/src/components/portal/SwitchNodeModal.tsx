@@ -38,8 +38,8 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
         .catch((err) => {
           showToast({
             type: 'error',
-            title: 'Lỗi tải danh sách server',
-            message: err instanceof Error ? err.message : 'Không thể tải danh sách server',
+            title: 'Failed to load server list',
+            message: err instanceof Error ? err.message : 'Unable to load server list',
           });
         })
         .finally(() => setIsLoading(false));
@@ -54,16 +54,16 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
       await switchSubscriptionNode(token, sub.id, selectedNodeId);
       showToast({
         type: 'success',
-        title: 'Chuyển server thành công',
-        message: 'Đã cập nhật máy chủ. Vui lòng cập nhật gói trên app Shadowrocket/v2rayNG.',
+        title: 'Server switched successfully',
+        message: 'Server updated. Please refresh subscription in Shadowrocket/v2rayNG.',
       });
       onSuccess();
       onClose();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Chuyển server thất bại',
-        message: err instanceof Error ? err.message : 'Lỗi không xác định',
+        title: 'Server switch failed',
+        message: err instanceof Error ? err.message : 'Unknown error',
       });
     } finally {
       setIsSubmitting(false);
@@ -74,14 +74,14 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
 
   const currentNodesText = sub.node_names?.length
     ? sub.node_names.join(', ')
-    : 'Chưa gán máy chủ';
+    : 'Not assigned';
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Đổi Server Proxy"
-      description={`Chuyển gói cước sang máy chủ khác trong vùng ${sub.region_flag || '🌐'} ${sub.region_name || sub.region_code || ''}`}
+      title="Switch Proxy Server"
+      description={`Switch your subscription to another server in region ${sub.region_flag || '🌐'} ${sub.region_name || sub.region_code || ''}`}
       maxWidth="md"
     >
       <div className="space-y-4">
@@ -89,27 +89,27 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
         <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 text-slate-600">
             <Server className="w-4 h-4 text-slate-400 shrink-0" />
-            <span>Máy chủ hiện tại:</span>
+            <span>Current server:</span>
             <span className="font-semibold text-slate-800">{currentNodesText}</span>
           </div>
-          <Badge variant="slate" size="sm">Hiện tại</Badge>
+          <Badge variant="slate" size="sm">Current</Badge>
         </div>
 
         {/* List of Eligible Nodes */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-2">
-            Chọn máy chủ mới có sẵn:
+            Select an available server:
           </label>
 
           {isLoading ? (
             <div className="py-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
-              <span>Đang tìm các máy chủ còn chỗ...</span>
+              <span>Searching for available servers...</span>
             </div>
           ) : nodes.length === 0 ? (
             <div className="py-6 px-4 bg-amber-50/70 border border-amber-200/80 rounded-xl text-center text-xs text-amber-900 space-y-1">
-              <p className="font-semibold">Không tìm thấy máy chủ thay thế</p>
-              <p className="text-amber-700">Tất cả các máy chủ khác trong vùng đã đầy tải hoặc chưa kích hoạt.</p>
+              <p className="font-semibold">No replacement servers found</p>
+              <p className="text-amber-700">All other servers in this region are fully loaded or inactive.</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -136,7 +136,7 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
                         </div>
                         <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
                           <HardDrive className="w-3 h-3 text-slate-400" />
-                          <span>Còn trống: <strong className="font-mono text-emerald-600">{node.available_slots}</strong>/{node.max_subscriptions} chỗ</span>
+                          <span>Available: <strong className="font-mono text-emerald-600">{node.available_slots}</strong>/{node.max_subscriptions} slots</span>
                         </div>
                       </div>
                     </div>
@@ -154,13 +154,13 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
         </div>
 
         <p className="text-[11px] text-slate-400 italic">
-          * Sau khi đổi server, mã bảo mật UUID và liên kết cấu hình của bạn không thay đổi. Bạn chỉ cần mở app và nhấn Cập nhật gói cước.
+          * After switching servers, your UUID and subscription URL remain unchanged. Simply open your app and tap Update Subscription.
         </p>
 
         {/* Footer Actions */}
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
           <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
-            Hủy
+            Cancel
           </Button>
           <Button
             variant="primary"
@@ -175,7 +175,7 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
               )
             }
           >
-            {isSubmitting ? 'Đang chuyển...' : 'Xác nhận chuyển'}
+            {isSubmitting ? 'Switching...' : 'Confirm Switch'}
           </Button>
         </div>
       </div>

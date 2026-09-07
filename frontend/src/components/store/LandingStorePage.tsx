@@ -74,8 +74,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     } catch {
       showToast({
         type: 'error',
-        title: 'Lỗi tải dữ liệu',
-        message: 'Không thể tải danh sách gói cước. Vui lòng thử lại!',
+        title: 'Failed to load data',
+        message: 'Unable to load plans. Please try again.',
       });
     } finally {
       setLoading(false);
@@ -94,8 +94,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     if (!token || !user) {
       showToast({
         type: 'info',
-        title: 'Yêu cầu đăng nhập',
-        message: 'Vui lòng đăng nhập hoặc tạo tài khoản để mua gói.',
+        title: 'Login required',
+        message: 'Please log in or create an account to purchase a plan.',
       });
       onNavigate('/login');
       return;
@@ -105,8 +105,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     if (!region) {
       showToast({
         type: 'error',
-        title: 'Chưa chọn khu vực',
-        message: 'Vui lòng chọn khu vực máy chủ trước khi thanh toán.',
+        title: 'No region selected',
+        message: 'Please select a server region before proceeding to payment.',
       });
       return;
     }
@@ -116,8 +116,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     if (regStatus && regStatus.is_sold_out) {
       showToast({
         type: 'error',
-        title: 'Khu vực hết chỗ',
-        message: `Khu vực ${region} hiện đã hết chỗ (Sold out). Vui lòng chọn khu vực khác.`,
+        title: 'Region sold out',
+        message: `Region ${region} is currently sold out. Please choose another region.`,
       });
       return;
     }
@@ -128,10 +128,10 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
       setActiveOrder(order);
       setIsCheckoutOpen(true);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Tạo đơn hàng thất bại';
+      const msg = err instanceof Error ? err.message : 'Failed to create order';
       showToast({
         type: 'error',
-        title: 'Tạo đơn hàng thất bại',
+        title: 'Order creation failed',
         message: msg,
       });
     } finally {
@@ -196,7 +196,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                title="Đăng xuất"
+                title="Sign out"
                 leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-500" />}
               />
             </div>
@@ -208,7 +208,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 onClick={() => onNavigate('/login')}
                 className="text-xs"
               >
-                Đăng nhập
+                Sign In
               </Button>
               <Button
                 variant="primary"
@@ -216,7 +216,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 onClick={() => onNavigate('/register')}
                 className="text-xs"
               >
-                Đăng ký
+                Sign Up
               </Button>
             </div>
           )}
@@ -232,25 +232,25 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight">
-            Proxy Vượt Tường Lửa Tốc Độ Cao
+            High-Speed Anti-Throttle Proxy
           </h1>
 
           <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-500 leading-relaxed">
-            Hạ tầng máy chủ chuyên dụng tối ưu độ trễ thấp, vượt qua bóp băng thông viễn thông (Viettel, VinaPhone, MobiFone). Kích hoạt ngay lập tức qua mã thanh toán VietQR tự động.
+            Dedicated low-latency infrastructure that bypasses ISP bandwidth throttling (Viettel, VinaPhone, MobiFone). Activated instantly via automatic VietQR payment.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-600 font-medium">
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Băng thông Gigabit 1Gbps</span>
+              <span>1 Gbps Gigabit Bandwidth</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Bypass 4G Viettel / Vina / Mobi</span>
+              <span>4G Bypass — Viettel / Vina / Mobi</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Tự động kích hoạt sau 3 giây</span>
+              <span>Auto-activated within 3 seconds</span>
             </div>
           </div>
         </div>
@@ -259,20 +259,20 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
       {/* Main Pricing Store Section */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8 space-y-8">
         <div className="text-center space-y-1">
-          <h2 className="text-xl font-bold tracking-tight text-slate-900">Bảng Giá Gói Dịch Vụ</h2>
-          <p className="text-xs text-slate-500">Lựa chọn gói cước phù hợp và khu vực máy chủ để kết nối</p>
+          <h2 className="text-xl font-bold tracking-tight text-slate-900">Service Plans</h2>
+          <p className="text-xs text-slate-500">Choose a plan and server region to get connected</p>
         </div>
 
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3 text-slate-400">
             <Loader2 className="w-8 h-8 animate-spin text-slate-700" />
-            <span className="text-xs font-medium uppercase tracking-wider">Đang tải gói dịch vụ...</span>
+            <span className="text-xs font-medium uppercase tracking-wider">Loading plans...</span>
           </div>
         ) : plans.length === 0 ? (
           <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-xs max-w-md mx-auto space-y-3">
             <Layers className="w-10 h-10 text-slate-300 mx-auto" />
-            <h3 className="text-sm font-semibold text-slate-800">Chưa có gói cước mở bán</h3>
-            <p className="text-xs text-slate-500">Hệ thống đang cập nhật các gói dịch vụ mới. Vui lòng quay lại sau.</p>
+            <h3 className="text-sm font-semibold text-slate-800">No plans available yet</h3>
+            <p className="text-xs text-slate-500">New service plans are being configured. Please check back shortly.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -296,8 +296,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
       <section className="border-t border-slate-200/80 bg-white py-8 px-4 sm:px-8 mt-12">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left space-y-1">
-            <h4 className="text-sm font-bold text-slate-900">Cần hỗ trợ kỹ thuật hoặc cài đặt?</h4>
-            <p className="text-xs text-slate-500">Đội ngũ kỹ thuật hỗ trợ 24/7 qua các kênh trực tuyến chính thức.</p>
+            <h4 className="text-sm font-bold text-slate-900">Need technical support or setup help?</h4>
+            <p className="text-xs text-slate-500">Our technical team is available 24/7 through official online channels.</p>
           </div>
           <div className="flex items-center gap-3">
             {settings?.support_telegram_url && (
@@ -308,7 +308,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold hover:bg-sky-100 transition-colors"
               >
                 <Send className="w-3.5 h-3.5 text-sky-600" />
-                <span>Kênh Telegram</span>
+                <span>Telegram Channel</span>
               </a>
             )}
             {settings?.support_zalo_url && (
@@ -319,7 +319,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition-colors"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-blue-600" />
-                <span>Nhóm Zalo</span>
+                <span>Zalo Group</span>
               </a>
             )}
           </div>
@@ -339,8 +339,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
         onPaymentSuccess={() => {
           showToast({
             type: 'success',
-            title: 'Thanh toán thành công',
-            message: 'Gói cước đã được kích hoạt thành công!',
+            title: 'Payment successful',
+            message: 'Your plan has been activated successfully!',
           });
           setIsCheckoutOpen(false);
           onNavigate('/portal');

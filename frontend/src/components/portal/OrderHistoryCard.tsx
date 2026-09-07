@@ -32,7 +32,7 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
   };
 
   const formatDate = (iso: string) => {
-    return parseUtcDate(iso).toLocaleString('vi-VN', {
+    return parseUtcDate(iso).toLocaleString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
       day: '2-digit',
@@ -59,13 +59,13 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PAID':
-        return <Badge variant="emerald" size="sm" dot>Đã thanh toán</Badge>;
+        return <Badge variant="emerald" size="sm" dot>Paid</Badge>;
       case 'PENDING':
-        return <Badge variant="amber" size="sm" dot pulseDot>Chờ thanh toán</Badge>;
+        return <Badge variant="amber" size="sm" dot pulseDot>Pending</Badge>;
       case 'CANCELLED':
-        return <Badge variant="slate" size="sm">Đã hủy</Badge>;
+        return <Badge variant="slate" size="sm">Cancelled</Badge>;
       case 'EXPIRED':
-        return <Badge variant="rose" size="sm">Đã hết hạn</Badge>;
+        return <Badge variant="rose" size="sm">Expired</Badge>;
       default:
         return <Badge variant="slate" size="sm">{status}</Badge>;
     }
@@ -77,7 +77,7 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
         <div className="flex items-center gap-2">
           <Receipt className="w-4 h-4 text-slate-700" />
           <h2 className="text-sm font-bold text-slate-900">
-            Lịch sử đơn hàng ({orders.length})
+            Order History ({orders.length})
           </h2>
         </div>
         <Button
@@ -87,26 +87,26 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
           leftIcon={<RotateCw className={`w-3.5 h-3.5 ${isLoadingOrders ? 'animate-spin' : ''}`} />}
           className="text-xs text-slate-500 hover:text-slate-800"
         >
-          Làm mới
+          Refresh
         </Button>
       </div>
 
       <div className="overflow-x-auto">
         {orders.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-400">
-            Bạn chưa có đơn hàng nào. Hãy ghé cửa hàng để chọn gói cước phù hợp!
+            No orders yet. Visit the store to find a plan that suits you!
           </div>
         ) : (
           <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-100">
             <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               <tr>
-                <th className="py-3 px-4">Mã đơn</th>
-                <th className="py-3 px-4">Gói cước</th>
-                <th className="py-3 px-4">Khu vực</th>
-                <th className="py-3 px-4">Số tiền</th>
-                <th className="py-3 px-4">Thời gian</th>
-                <th className="py-3 px-4">Trạng thái</th>
-                <th className="py-3 px-4 text-right">Thao tác</th>
+                <th className="py-3 px-4">Order ID</th>
+                <th className="py-3 px-4">Plan</th>
+                <th className="py-3 px-4">Region</th>
+                <th className="py-3 px-4">Amount</th>
+                <th className="py-3 px-4">Date</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
@@ -136,13 +136,13 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
                             onClick={() => onSelectCheckoutOrder(o)}
                             className="text-xs py-1 px-2.5 h-auto bg-amber-600 hover:bg-amber-700 text-white"
                           >
-                            Thanh toán ({getPendingRemainingTime(o)})
+                            Pay ({getPendingRemainingTime(o)})
                           </Button>
                           <button
                             onClick={() => onCancelOrder(o.id)}
                             disabled={cancellingOrderId === o.id}
                             className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                            title="Hủy đơn"
+                            title="Cancel order"
                           >
                             <XCircle className="w-3.5 h-3.5" />
                           </button>
@@ -157,7 +157,7 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
                           }}
                           className="text-xs py-1 px-2.5 h-auto text-slate-600 hover:text-slate-900 border-slate-200"
                         >
-                          Đặt lại đơn
+                          Reorder
                         </Button>
                       ) : o.status === 'PAID' ? (
                         <Button
@@ -167,7 +167,7 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
                           leftIcon={<ExternalLink className="w-3 h-3" />}
                           className="text-xs py-1 px-2.5 h-auto text-emerald-700 hover:bg-emerald-50 border-emerald-200"
                         >
-                          Lấy link gói
+                          View Link
                         </Button>
                       ) : (
                         <span className="text-[11px] text-slate-300">---</span>

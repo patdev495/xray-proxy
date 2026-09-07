@@ -201,7 +201,7 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
             <option value="">-- Custom / Manual Quota --</option>
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
-                {plan.name} ({plan.quota_gb} GB / {plan.days_valid}d - {plan.price_vnd.toLocaleString()} đ)
+                {plan.name} ({plan.quota_gb} GB / {plan.days_valid}d - {plan.price_vnd.toLocaleString()} VND)
               </option>
             ))}
           </select>

@@ -128,7 +128,7 @@ export const RegionModal: React.FC<RegionModalProps> = ({
 
         <Input
           label="Region Name"
-          placeholder="e.g. Việt Nam, Singapore"
+          placeholder="e.g. Vietnam, Singapore"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required

@@ -46,8 +46,8 @@ export const RenewModal: React.FC<RenewModalProps> = ({
         .catch((err) => {
           showToast({
             type: 'error',
-            title: 'Lỗi tải gói cước',
-            message: err instanceof Error ? err.message : 'Không thể tải gói cước',
+            title: 'Failed to load plans',
+            message: err instanceof Error ? err.message : 'Unable to load plans',
           });
         })
         .finally(() => setIsLoading(false));
@@ -62,16 +62,16 @@ export const RenewModal: React.FC<RenewModalProps> = ({
       const order = await renewSubscription(token, sub.id, selectedPlanId || undefined);
       showToast({
         type: 'success',
-        title: 'Đã tạo đơn gia hạn',
-        message: `Mã đơn hàng: ${order.code}. Vui lòng thanh toán để hoàn tất.`,
+        title: 'Renewal Order Created',
+        message: `Order code: ${order.code}. Please complete payment to finalize.`,
       });
       onRenewalCreated(order);
       onClose();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Lỗi tạo đơn gia hạn',
-        message: err instanceof Error ? err.message : 'Không thể tạo đơn gia hạn',
+        title: 'Failed to create renewal order',
+        message: err instanceof Error ? err.message : 'Unable to create renewal order',
       });
     } finally {
       setIsSubmitting(false);
@@ -88,19 +88,19 @@ export const RenewModal: React.FC<RenewModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Gia hạn gói cước tại chỗ"
-      description="Gia hạn giữ nguyên UUID và Link cấu hình kết nối, tự động cộng thêm ngày và làm mới lưu lượng."
+      title="In-Place Renewal"
+      description="Keep your existing UUID and subscription URL while adding days and resetting bandwidth quota."
       maxWidth="md"
     >
       <div className="space-y-4">
         {/* Subscription Info Banner */}
         <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Đang gia hạn cho:</span>
+            <span className="text-slate-500">Renewing for:</span>
             <span className="font-semibold text-slate-900">{sub.customer_name}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Vùng máy chủ:</span>
+            <span className="text-slate-500">Server Region:</span>
             <span className="font-medium text-slate-700">{sub.region_flag || '🌐'} {sub.region_name || sub.region_code}</span>
           </div>
         </div>
@@ -108,13 +108,13 @@ export const RenewModal: React.FC<RenewModalProps> = ({
         {/* Plan Selection */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-2">
-            Chọn gói cước gia hạn:
+            Select renewal plan:
           </label>
 
           {isLoading ? (
             <div className="py-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
-              <span>Đang tải bảng giá...</span>
+              <span>Loading plans...</span>
             </div>
           ) : (
             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -135,7 +135,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-900">{p.name}</span>
                         {p.id === sub.plan_id && (
-                          <Badge variant="emerald" size="sm">Gói hiện tại</Badge>
+                          <Badge variant="emerald" size="sm">Current Plan</Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-slate-500 text-[11px]">
@@ -145,7 +145,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3 text-slate-400" />
-                          +{p.days_valid} ngày
+                          +{p.days_valid} days
                         </span>
                       </div>
                     </div>
@@ -165,7 +165,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
           <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
-            Hủy
+            Cancel
           </Button>
           <Button
             variant="primary"
@@ -180,7 +180,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
               )
             }
           >
-            {isSubmitting ? 'Đang tạo đơn...' : 'Tiến hành thanh toán'}
+            {isSubmitting ? 'Creating order...' : 'Proceed to Payment'}
           </Button>
         </div>
       </div>

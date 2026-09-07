@@ -34,7 +34,7 @@ export const OrdersTab: React.FC = () => {
       setOrders(data);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to load orders';
-      showToast({ type: 'error', title: 'Lỗi tải đơn hàng', message: msg });
+      showToast({ type: 'error', title: 'Failed to load orders', message: msg });
     } finally {
       setIsLoading(false);
     }
@@ -47,7 +47,7 @@ export const OrdersTab: React.FC = () => {
   const handleManualConfirm = async (order: Order) => {
     if (!token) return;
     const confirmed = window.confirm(
-      `Xác nhận thanh toán thủ công cho đơn hàng "${order.code}" (Số tiền: ${order.amount_vnd.toLocaleString('vi-VN')} đ)?\nHệ thống sẽ cấp phát node và kích hoạt Subscription ngay lập tức.`
+      `Manually confirm payment for order "${order.code}" (Amount: ${order.amount_vnd.toLocaleString('vi-VN')} VND)?\nThe system will allocate a node and activate the Subscription immediately.`
     );
     if (!confirmed) return;
 
@@ -56,13 +56,13 @@ export const OrdersTab: React.FC = () => {
       const updated = await confirmAdminOrder(token, order.id);
       showToast({
         type: 'success',
-        title: 'Đã kích hoạt đơn hàng',
-        message: `Đơn ${updated.code} đã được kích hoạt thành công (Subscription ID: ${updated.subscription_id}).`,
+        title: 'Order Activated',
+        message: `Order ${updated.code} has been successfully activated (Subscription ID: ${updated.subscription_id}).`,
       });
       await loadOrders();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Xác nhận thất bại';
-      showToast({ type: 'error', title: 'Lỗi xác nhận', message: msg });
+      const msg = err instanceof Error ? err.message : 'Confirmation failed';
+      showToast({ type: 'error', title: 'Confirmation error', message: msg });
     } finally {
       setConfirmingId(null);
     }
@@ -85,11 +85,11 @@ export const OrdersTab: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Quản lý Đơn hàng (Orders &amp; Billing)</h2>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Order Management (Orders &amp; Billing)</h2>
             <Badge variant="indigo" size="sm">SePay Webhook</Badge>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Theo dõi đối soát thanh toán VietQR, trạng thái kích hoạt và hỗ trợ duyệt thủ công đơn hàng.
+            Track VietQR payment reconciliation, activation status, and manual order approval.
           </p>
         </div>
 
@@ -101,7 +101,7 @@ export const OrdersTab: React.FC = () => {
             onClick={loadOrders}
             disabled={isLoading}
           >
-            Làm mới
+            Refresh
           </Button>
         </div>
       </div>
@@ -122,12 +122,12 @@ export const OrdersTab: React.FC = () => {
               }`}
             >
               {f === 'ALL'
-                ? 'Tất cả'
+                ? 'All'
                 : f === 'PENDING'
-                ? 'Chờ thanh toán'
+                ? 'Pending'
                 : f === 'PAID'
-                ? 'Đã thanh toán'
-                : 'Hết hạn'}
+                ? 'Paid'
+                : 'Expired'}
             </button>
           ))}
         </div>
@@ -137,7 +137,7 @@ export const OrdersTab: React.FC = () => {
           <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Tìm theo mã, user, gói..."
+            placeholder="Search by code, user, plan..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full text-xs pl-8 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-800"
@@ -151,14 +151,14 @@ export const OrdersTab: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider">
-                <th className="py-3 px-4">Mã đơn hàng</th>
-                <th className="py-3 px-4">Khách hàng</th>
-                <th className="py-3 px-4">Gói cước</th>
-                <th className="py-3 px-4">Số tiền</th>
-                <th className="py-3 px-4">Khu vực</th>
-                <th className="py-3 px-4">Trạng thái</th>
-                <th className="py-3 px-4">Thời gian tạo</th>
-                <th className="py-3 px-4 text-right">Thao tác</th>
+                <th className="py-3 px-4">Order Code</th>
+                <th className="py-3 px-4">Customer</th>
+                <th className="py-3 px-4">Plan</th>
+                <th className="py-3 px-4">Amount</th>
+                <th className="py-3 px-4">Region</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Created At</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -166,13 +166,13 @@ export const OrdersTab: React.FC = () => {
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-slate-400">
                     <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-slate-500" />
-                    <span>Đang tải danh sách đơn hàng...</span>
+                    <span>Loading orders...</span>
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-slate-400">
-                    Không có đơn hàng nào phù hợp với bộ lọc.
+                    No orders match the filter criteria.
                   </td>
                 </tr>
               ) : (
@@ -205,7 +205,7 @@ export const OrdersTab: React.FC = () => {
 
                       {/* Amount */}
                       <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
-                        {order.amount_vnd.toLocaleString('vi-VN')} đ
+                        {order.amount_vnd.toLocaleString('vi-VN')} VND
                       </td>
 
                       {/* Region */}
@@ -222,18 +222,18 @@ export const OrdersTab: React.FC = () => {
                           pulseDot={isPending}
                         >
                           {isPaid
-                            ? 'Đã thanh toán'
+                            ? 'Paid'
                             : isPending
-                            ? 'Chờ quét mã'
+                            ? 'Pending'
                             : order.status === 'EXPIRED'
-                            ? 'Hết hạn'
-                            : 'Đã hủy'}
+                            ? 'Expired'
+                            : 'Cancelled'}
                         </Badge>
                       </td>
 
                       {/* Date */}
                       <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
-                        {new Date(order.created_at).toLocaleString('vi-VN')}
+                        {new Date(order.created_at).toLocaleString('en-GB')}
                       </td>
 
                       {/* Actions */}
@@ -253,7 +253,7 @@ export const OrdersTab: React.FC = () => {
                             className="text-xs font-semibold"
                             leftIcon={<Check className="w-3 h-3 text-emerald-600" />}
                           >
-                            Xác nhận duyệt
+                            Approve Order
                           </Button>
                         )}
                       </td>

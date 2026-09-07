@@ -53,8 +53,8 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
     setCopiedToken(sub.token);
     showToast({
       type: 'success',
-      title: 'Đã sao chép liên kết gói cước',
-      message: 'Dán vào Shadowrocket hoặc v2rayNG để cập nhật.',
+      title: 'Subscription link copied',
+      message: 'Paste into Shadowrocket or v2rayNG to update.',
     });
     setTimeout(() => setCopiedToken(null), 2500);
   };
@@ -69,8 +69,8 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
       const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
       if (isDaily) {
         return {
-          label: `Còn ${diffHours} giờ`,
-          badge: <Badge variant="amber" size="sm" dot>Dùng thử ({diffHours}h)</Badge>,
+          label: `${diffHours}h left`,
+          badge: <Badge variant="amber" size="sm" dot>Trial ({diffHours}h)</Badge>,
           isExpired: false,
           inGrace: false,
         };
@@ -78,15 +78,15 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       if (diffDays === 1) {
         return {
-          label: `Còn ${diffHours} giờ`,
-          badge: <Badge variant="amber" size="sm" dot>Sắp hết hạn ({diffHours}h)</Badge>,
+          label: `${diffHours}h left`,
+          badge: <Badge variant="amber" size="sm" dot>Expiring soon ({diffHours}h)</Badge>,
           isExpired: false,
           inGrace: false,
         };
       }
       return {
-        label: `Còn ${diffDays} ngày`,
-        badge: <Badge variant="emerald" size="sm" dot>Còn {diffDays} ngày</Badge>,
+        label: `${diffDays}d left`,
+        badge: <Badge variant="emerald" size="sm" dot>{diffDays}d left</Badge>,
         isExpired: false,
         inGrace: false,
       };
@@ -99,8 +99,8 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
       if (graceDiffMs > 0) {
         const graceDays = Math.ceil(graceDiffMs / (1000 * 60 * 60 * 24));
         return {
-          label: `Ân hạn còn ${graceDays} ngày`,
-          badge: <Badge variant="rose" size="sm" dot pulseDot>Ân hạn ({graceDays} ngày)</Badge>,
+          label: `Grace (${graceDays}d left)`,
+          badge: <Badge variant="rose" size="sm" dot pulseDot>Grace ({graceDays}d)</Badge>,
           isExpired: true,
           inGrace: true,
         };
@@ -108,8 +108,8 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
     }
 
     return {
-      label: 'Đã hết hạn',
-      badge: <Badge variant="slate" size="sm">Đã hết hạn</Badge>,
+      label: 'Expired',
+      badge: <Badge variant="slate" size="sm">Expired</Badge>,
       isExpired: true,
       inGrace: false,
     };
@@ -119,7 +119,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
     return (
       <Card className="p-8 text-center border border-slate-200/80 shadow-xs space-y-3">
         <div className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin mx-auto" />
-        <p className="text-xs text-slate-500">Đang tải danh sách gói cước của bạn...</p>
+        <p className="text-xs text-slate-500">Loading your subscriptions...</p>
       </Card>
     );
   }
@@ -131,9 +131,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
           <Zap className="w-6 h-6" />
         </div>
         <div className="max-w-md mx-auto space-y-1">
-          <h3 className="text-sm font-bold text-slate-900">Bạn chưa có gói cước nào</h3>
+          <h3 className="text-sm font-bold text-slate-900">No active subscriptions</h3>
           <p className="text-xs text-slate-500 leading-relaxed">
-            Chọn gói cước phù hợp tại Cửa hàng để trải nghiệm đường truyền 4G vượt bóp băng thông tốc độ cao.
+            Choose a suitable plan in the store to experience high-speed bypass proxy.
           </p>
         </div>
         {onNavigateStore && (
@@ -143,7 +143,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
             onClick={onNavigateStore}
             className="text-xs"
           >
-            Khám phá gói cước
+            Explore Plans
           </Button>
         )}
       </Card>
@@ -156,7 +156,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
         <div className="flex items-center gap-2">
           <Zap className="w-4 h-4 text-indigo-600" />
           <h2 className="text-sm font-bold text-slate-900">
-            Gói cước của tôi ({subscriptions.length})
+            My Subscriptions ({subscriptions.length})
           </h2>
         </div>
         <Button
@@ -166,7 +166,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
           className="text-xs text-slate-500 hover:text-slate-800"
           leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
         >
-          Làm mới
+          Refresh
         </Button>
       </div>
 
@@ -193,11 +193,11 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-base">{sub.region_flag || '🌐'}</span>
                     <span className="font-bold text-slate-900 text-sm">
-                      {sub.plan_name || 'Gói cước Proxy'}
+                      {sub.plan_name || 'Proxy Plan'}
                     </span>
                     {sub.billing_cycle === 'DAILY' && (
                       <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
-                        Gói ngày (Dùng thử)
+                        Daily Plan (Trial)
                       </span>
                     )}
                     <span className="text-[11px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
@@ -207,7 +207,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     <Server className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span className="font-medium text-slate-700">
-                      {sub.node_names?.length ? sub.node_names.join(', ') : 'Tự động phân bổ'}
+                      {sub.node_names?.length ? sub.node_names.join(', ') : 'Auto-assigned'}
                     </span>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                 <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
                   <span>
-                    Gói cước đã hết hạn! Vị trí máy chủ của bạn được giữ thêm trong thời gian ân hạn. Vui lòng gia hạn để tiếp tục kết nối.
+                    Subscription expired! Your server slot is temporarily held during the grace period. Please renew to keep your connection.
                   </span>
                 </div>
               )}
@@ -230,7 +230,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                 <div className="flex items-center justify-between text-xs text-slate-600">
                   <span className="flex items-center gap-1.5 font-medium">
                     <HardDrive className="w-3.5 h-3.5 text-slate-400" />
-                    Lưu lượng đã dùng
+                    Traffic used
                   </span>
                   <span className="font-mono font-semibold tabular-nums text-slate-800">
                     {usedGb.toFixed(1)} GB / {totalGb.toFixed(0)} GB ({percent.toFixed(0)}%)
@@ -247,10 +247,10 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
               <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-3">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  Hết hạn:
+                  Expires:
                 </span>
                 <span className="font-medium text-slate-700">
-                  {parseUtcDate(sub.expires_at).toLocaleDateString('vi-VN')} ({expStatus.label})
+                  {parseUtcDate(sub.expires_at).toLocaleDateString('en-GB')} ({expStatus.label})
                 </span>
               </div>
 
@@ -263,9 +263,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   onClick={() => handleCopyLink(sub)}
                   className="text-xs justify-center"
                   leftIcon={isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  title="Sao chép link cập nhật Shadowrocket / v2rayNG"
+                  title="Copy subscription URL for Shadowrocket / v2rayNG"
                 >
-                  {isCopied ? 'Đã chép' : 'Sao chép'}
+                  {isCopied ? 'Copied' : 'Copy'}
                 </Button>
 
                 {/* QR Code Modal */}
@@ -275,9 +275,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   onClick={() => setQrSub(sub)}
                   className="text-xs justify-center"
                   leftIcon={<QrCode className="w-3.5 h-3.5" />}
-                  title="Mở mã QR quét app điện thoại"
+                  title="Open QR code to scan with mobile app"
                 >
-                  Mã QR
+                  QR Code
                 </Button>
 
                 {/* Node Switching */}
@@ -287,9 +287,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   onClick={() => setSwitchSub(sub)}
                   className="text-xs justify-center"
                   leftIcon={<ArrowRightLeft className="w-3.5 h-3.5 text-indigo-600" />}
-                  title="Đổi sang server khác cùng vùng"
+                  title="Switch to another server in this region"
                 >
-                  Đổi Server
+                  Switch Server
                 </Button>
 
                 {/* In-place Renewal or Upgrade */}
@@ -300,9 +300,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                     onClick={onNavigateStore}
                     className="text-xs justify-center font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-xs"
                     leftIcon={<Sparkles className="w-3.5 h-3.5 text-amber-400" />}
-                    title="Nâng cấp lên gói tháng tại cửa hàng"
+                    title="Upgrade to monthly plan in the store"
                   >
-                    Lên gói tháng
+                    Upgrade to Monthly
                   </Button>
                 ) : (
                   <Button
@@ -311,9 +311,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                     onClick={() => setRenewSub(sub)}
                     className="text-xs justify-center font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                     leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-                    title="Gia hạn gói cước tại chỗ"
+                    title="Renew subscription in place"
                   >
-                    Gia hạn
+                    Renew
                   </Button>
                 )}
               </div>

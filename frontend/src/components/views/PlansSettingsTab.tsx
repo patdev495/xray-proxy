@@ -95,14 +95,14 @@ export const PlansSettingsTab: React.FC = () => {
       setSettings(updated);
       showToast({
         type: 'success',
-        title: 'Cài đặt đã lưu',
-        message: 'Thông tin tài khoản VietQR và kênh hỗ trợ đã được cập nhật thành công.',
+        title: 'Settings Saved',
+        message: 'VietQR bank account and support channels have been updated successfully.',
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Lưu thất bại',
-        message: err instanceof Error ? err.message : 'Không thể lưu cài đặt',
+        title: 'Save Failed',
+        message: err instanceof Error ? err.message : 'Unable to save settings',
       });
     } finally {
       setIsSavingSettings(false);
@@ -125,35 +125,35 @@ export const PlansSettingsTab: React.FC = () => {
       await updateAdminPlan(token, plan.id, { is_active: !plan.is_active });
       showToast({
         type: 'info',
-        title: 'Trạng thái gói đã đổi',
-        message: `${plan.name} hiện là ${!plan.is_active ? 'Hoạt động' : 'Tạm tắt'}.`,
+        title: 'Plan Status Updated',
+        message: `${plan.name} is now ${!plan.is_active ? 'Active' : 'Disabled'}.`,
       });
       await loadData();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Lỗi cập nhật',
-        message: err instanceof Error ? err.message : 'Không thể cập nhật gói',
+        title: 'Update Error',
+        message: err instanceof Error ? err.message : 'Unable to update plan',
       });
     }
   };
 
   const handleDeletePlan = async (plan: PlanItem) => {
     if (!token) return;
-    if (!window.confirm(`Bạn có chắc muốn xóa gói "${plan.name}"?`)) return;
+    if (!window.confirm(`Are you sure you want to delete plan "${plan.name}"?`)) return;
     try {
       await deleteAdminPlan(token, plan.id);
       showToast({
         type: 'success',
-        title: 'Đã xóa gói',
-        message: `Gói ${plan.name} đã được xóa thành công.`,
+        title: 'Plan Deleted',
+        message: `Plan ${plan.name} was successfully deleted.`,
       });
       await loadData();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Lỗi xóa gói',
-        message: err instanceof Error ? err.message : 'Không thể xóa gói cước',
+        title: 'Delete Error',
+        message: err instanceof Error ? err.message : 'Unable to delete plan',
       });
     }
   };
@@ -167,9 +167,9 @@ export const PlansSettingsTab: React.FC = () => {
       {/* Top Header with Compact Subtabs */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Cấu hình Gói cước &amp; Hệ thống</h2>
+          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Plans &amp; System Configuration</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Quản lý gói dịch vụ, phân bổ khu vực máy chủ và cài đặt thanh toán VietQR.
+            Manage plans, server region allocations, and VietQR payment gateway settings.
           </p>
         </div>
 
@@ -184,7 +184,7 @@ export const PlansSettingsTab: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Gói cước ({plans.length})
+            Plans ({plans.length})
           </button>
           <button
             type="button"
@@ -195,7 +195,7 @@ export const PlansSettingsTab: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Khu vực máy chủ
+            Server Regions
           </button>
           <button
             type="button"
@@ -206,7 +206,7 @@ export const PlansSettingsTab: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Cài đặt VietQR &amp; SePay
+            VietQR &amp; SePay Settings
           </button>
         </div>
       </div>
@@ -217,7 +217,7 @@ export const PlansSettingsTab: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Package className="w-4 h-4 text-slate-700" />
-              <h3 className="text-sm font-bold text-slate-900">Danh mục Gói cước</h3>
+              <h3 className="text-sm font-bold text-slate-900">Plans Catalog</h3>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -227,7 +227,7 @@ export const PlansSettingsTab: React.FC = () => {
                 onClick={loadData}
                 disabled={isLoadingPlans}
               >
-                Làm mới
+                Refresh
               </Button>
               <Button
                 variant="primary"
@@ -235,7 +235,7 @@ export const PlansSettingsTab: React.FC = () => {
                 leftIcon={<Plus className="w-4 h-4" />}
                 onClick={handleOpenCreatePlan}
               >
-                Tạo gói mới
+                Create Plan
               </Button>
             </div>
           </div>
@@ -245,20 +245,20 @@ export const PlansSettingsTab: React.FC = () => {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider">
-                    <th className="py-3 px-5">Tên gói</th>
-                    <th className="py-3 px-5">Giá</th>
-                    <th className="py-3 px-5">Lưu lượng</th>
-                    <th className="py-3 px-5">Thời hạn</th>
-                    <th className="py-3 px-5">Khu vực áp dụng</th>
-                    <th className="py-3 px-5">Trạng thái</th>
-                    <th className="py-3 px-5 text-right">Thao tác</th>
+                    <th className="py-3 px-5">Plan Name</th>
+                    <th className="py-3 px-5">Price</th>
+                    <th className="py-3 px-5">Quota</th>
+                    <th className="py-3 px-5">Validity</th>
+                    <th className="py-3 px-5">Allowed Regions</th>
+                    <th className="py-3 px-5">Status</th>
+                    <th className="py-3 px-5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {plans.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-slate-400">
-                        Chưa có gói cước nào. Hãy tạo gói đầu tiên!
+                        No plans found. Create the first plan!
                       </td>
                     </tr>
                   ) : (
@@ -267,7 +267,7 @@ export const PlansSettingsTab: React.FC = () => {
                         <td className="py-4 px-5">
                           <span className="font-bold text-slate-900">{plan.name}</span>
                           <span className="text-slate-400 text-[11px] block font-mono">
-                            Thứ tự: {plan.sort_order}
+                            Sort Order: {plan.sort_order}
                           </span>
                         </td>
                         <td className="py-4 px-5 font-mono font-bold text-slate-900">
@@ -275,11 +275,11 @@ export const PlansSettingsTab: React.FC = () => {
                         </td>
                         <td className="py-4 px-5 font-mono text-slate-700">
                           <span className="font-bold text-slate-900">
-                            {plan.quota_gb > 0 ? `${plan.quota_gb} GB` : 'Không giới hạn'}
+                            {plan.quota_gb > 0 ? `${plan.quota_gb} GB` : 'Unlimited'}
                           </span>
                         </td>
                         <td className="py-4 px-5 font-mono text-slate-700">
-                          {plan.days_valid} ngày
+                          {plan.days_valid} days
                         </td>
                         <td className="py-4 px-5">
                           <div className="flex flex-wrap items-center gap-1">
@@ -293,7 +293,7 @@ export const PlansSettingsTab: React.FC = () => {
                                 </span>
                               ))
                             ) : (
-                              <span className="text-slate-400 italic">Tất cả khu vực</span>
+                              <span className="text-slate-400 italic">All regions</span>
                             )}
                           </div>
                         </td>
@@ -304,7 +304,7 @@ export const PlansSettingsTab: React.FC = () => {
                             dot={true}
                             pulseDot={plan.is_active}
                           >
-                            {plan.is_active ? 'Đang bán' : 'Tạm dừng'}
+                            {plan.is_active ? 'Active' : 'Disabled'}
                           </Badge>
                         </td>
                         <td className="py-4 px-5 text-right">
@@ -313,7 +313,7 @@ export const PlansSettingsTab: React.FC = () => {
                               variant="secondary"
                               size="sm"
                               onClick={() => handleTogglePlanActive(plan)}
-                              title={plan.is_active ? 'Tạm tắt' : 'Kích hoạt'}
+                              title={plan.is_active ? 'Disable' : 'Enable'}
                             >
                               <Power className={`w-3.5 h-3.5 ${plan.is_active ? 'text-emerald-600' : 'text-slate-400'}`} />
                             </Button>
@@ -321,7 +321,7 @@ export const PlansSettingsTab: React.FC = () => {
                               variant="secondary"
                               size="sm"
                               onClick={() => handleOpenEditPlan(plan)}
-                              title="Chỉnh sửa"
+                              title="Edit"
                             >
                               <Edit2 className="w-3.5 h-3.5 text-slate-600" />
                             </Button>
@@ -329,7 +329,7 @@ export const PlansSettingsTab: React.FC = () => {
                               variant="secondary"
                               size="sm"
                               onClick={() => handleDeletePlan(plan)}
-                              title="Xóa gói"
+                              title="Delete"
                             >
                               <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                             </Button>
@@ -359,15 +359,15 @@ export const PlansSettingsTab: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <CreditCard className="w-4 h-4 text-slate-700" />
-                  <h3 className="text-sm font-bold text-slate-900">Cấu hình tài khoản nhận tiền VietQR</h3>
+                  <h3 className="text-sm font-bold text-slate-900">VietQR Receiving Bank Account</h3>
                 </div>
                 <p className="text-xs text-slate-500 mb-4">
-                  Chọn ngân hàng từ danh sách chuẩn VietQR và nhập thông tin tài khoản thụ hưởng.
+                  Select a bank from the VietQR standard list and enter account details.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-700">Ngân hàng</label>
+                    <label className="text-xs font-semibold text-slate-700">Bank</label>
                     <select
                       value={settings.bank_id || 'MB'}
                       onChange={(e) => {
@@ -385,25 +385,25 @@ export const PlansSettingsTab: React.FC = () => {
                     </select>
                   </div>
                   <Input
-                    label="Số tài khoản"
-                    placeholder="VD: 0987654321"
+                    label="Account Number"
+                    placeholder="e.g. 0987654321"
                     value={settings.bank_account_number || ''}
                     onChange={(e) => setSettings({ ...settings, bank_account_number: e.target.value })}
                     required
                   />
                   <Input
-                    label="Tên chủ tài khoản"
-                    placeholder="VD: NGUYEN VAN A"
+                    label="Account Holder Name"
+                    placeholder="e.g. JOHN DOE"
                     value={settings.bank_account_name || ''}
                     onChange={(e) => setSettings({ ...settings, bank_account_name: e.target.value.toUpperCase() })}
                     required
                   />
                   <Input
-                    label="Tiền tố (Prefix)"
-                    placeholder="VD: SEVQR"
+                    label="Transfer Prefix"
+                    placeholder="e.g. SEVQR"
                     value={settings.bank_transfer_prefix || ''}
                     onChange={(e) => setSettings({ ...settings, bank_transfer_prefix: e.target.value })}
-                    hint="Bắt buộc 'SEVQR' cho VietinBank"
+                    hint="Required 'SEVQR' for VietinBank (ICB)"
                   />
                 </div>
 
@@ -411,7 +411,7 @@ export const PlansSettingsTab: React.FC = () => {
                   <Input
                     label="SePay API Key (Webhook)"
                     type="password"
-                    placeholder="Nhập SePay API Token..."
+                    placeholder="Enter SePay API Token..."
                     value={settings.sepay_api_key || ''}
                     onChange={(e) => setSettings({ ...settings, sepay_api_key: e.target.value })}
                     hint="Webhook URL: https://xray.peebot.shop/api/v1/payments/sepay-webhook"
@@ -421,7 +421,7 @@ export const PlansSettingsTab: React.FC = () => {
                 <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <QrCode className="w-4 h-4 text-slate-500" />
-                    <span className="text-slate-500">Mẫu nhận:</span>
+                    <span className="text-slate-500">Preview:</span>
                     <span className="font-semibold text-slate-800">
                       {settings.bank_id || 'MB'} • {settings.bank_account_number || '---'} • {settings.bank_account_name || '---'}
                     </span>
@@ -436,10 +436,10 @@ export const PlansSettingsTab: React.FC = () => {
               <div className="border-t border-slate-100 pt-4">
                 <div className="flex items-center gap-2 mb-1">
                   <MessageCircle className="w-4 h-4 text-slate-700" />
-                  <h3 className="text-sm font-bold text-slate-900">Kênh hỗ trợ khách hàng</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Customer Support Channels</h3>
                 </div>
                 <p className="text-xs text-slate-500 mb-3">
-                  Liên kết hỗ trợ hiển thị trên trang chủ công khai và portal khách hàng.
+                  Support links displayed on the public storefront and customer portal.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -467,7 +467,7 @@ export const PlansSettingsTab: React.FC = () => {
                   onClick={handleSaveSettings}
                   disabled={isSavingSettings}
                 >
-                  {isSavingSettings ? 'Đang lưu...' : 'Lưu toàn bộ cài đặt'}
+                  {isSavingSettings ? 'Saving...' : 'Save All Settings'}
                 </Button>
               </div>
             </div>

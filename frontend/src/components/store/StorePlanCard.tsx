@@ -54,11 +54,11 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
 
   const displayQuota = isDaily
     ? `${quotaDailyGb * selectedDays} GB`
-    : (plan.quota_gb > 0 ? `${plan.quota_gb} GB` : 'Không giới hạn');
+    : (plan.quota_gb > 0 ? `${plan.quota_gb} GB` : 'Unlimited');
 
   const displayDays = isDaily
-    ? `${selectedDays} Ngày (${selectedDays * 24} Giờ)`
-    : `${plan.days_valid} Ngày`;
+    ? `${selectedDays} Day${selectedDays > 1 ? 's' : ''} (${selectedDays * 24} Hours)`
+    : `${plan.days_valid} Days`;
 
   const handlePresetClick = (days: number) => {
     setSelectedDays(days);
@@ -109,9 +109,9 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <span>Theo Tháng</span>
+              <span>Monthly</span>
               <span className="text-[10px] text-slate-400 font-mono font-normal">
-                {plan.price_vnd.toLocaleString('vi-VN')}đ
+                {plan.price_vnd.toLocaleString('vi-VN')}₫
               </span>
             </button>
             <button
@@ -124,7 +124,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
               }`}
             >
               <Sparkles className="w-3 h-3 text-amber-500" />
-              <span>Theo Ngày</span>
+              <span>Daily</span>
             </button>
           </div>
         )}
@@ -136,10 +136,10 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
             {isDaily ? (
               <Badge variant="amber" size="sm" className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                <span>{selectedDays}N / {selectedDays * 24}H</span>
+                <span>{selectedDays}D / {selectedDays * 24}H</span>
               </Badge>
             ) : (
-              <Badge variant="indigo" size="sm">{plan.days_valid} Ngày</Badge>
+              <Badge variant="indigo" size="sm">{plan.days_valid} Days</Badge>
             )}
           </div>
 
@@ -150,19 +150,19 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
             <span className="text-xs font-semibold text-slate-400 uppercase">VND</span>
             {isDaily && (
               <span className="text-[11px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-medium ml-2">
-                {priceDaily.toLocaleString('vi-VN')}đ/ngày
+                {priceDaily.toLocaleString('vi-VN')}₫/day
               </span>
             )}
           </div>
 
           <p className="text-xs text-slate-500 font-mono">
-            Lưu lượng: <strong className="text-slate-800">{displayQuota}</strong>
-            {isDaily && ` (${quotaDailyGb} GB/ngày)`}
+            Data quota: <strong className="text-slate-800">{displayQuota}</strong>
+            {isDaily && ` (${quotaDailyGb} GB/day)`}
           </p>
 
           {isDaily && (
             <p className="text-[11px] text-slate-400 italic">
-              * Thu hồi slot máy chủ ngay sau khi hết hạn. Không hỗ trợ gia hạn in-place.
+              * Server slot released immediately upon expiry. In-place renewal not supported.
             </p>
           )}
         </div>
@@ -170,7 +170,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
         {/* Day Selector — only shown when DAILY cycle */}
         {isDaily && (
           <div className="space-y-2 border border-slate-100 rounded-xl p-3 bg-slate-50">
-            <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Chọn số ngày</p>
+            <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wide">Select duration</p>
 
             {/* Preset chips */}
             <div className="flex gap-2 flex-wrap">
@@ -185,7 +185,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
                       : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
                   }`}
                 >
-                  {d} Ngày
+                  {d} Day{d > 1 ? 's' : ''}
                 </button>
               ))}
               <button
@@ -197,7 +197,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
                     : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400'
                 }`}
               >
-                Tuỳ chỉnh
+                Custom
               </button>
             </div>
 
@@ -237,7 +237,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
               </button>
 
               <span className="text-xs text-slate-500 font-mono">
-                = <strong className="text-slate-800">{displayPrice.toLocaleString('vi-VN')}đ</strong>
+                = <strong className="text-slate-800">{displayPrice.toLocaleString('vi-VN')}₫</strong>
                 {' / '}<strong className="text-slate-800">{displayQuota}</strong>
               </span>
             </div>
@@ -248,28 +248,28 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
         <div className="border-t border-slate-100 pt-4 space-y-2 text-xs text-slate-600">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Mã hóa TLS 1.3 chống chặn phát hiện</span>
+            <span>TLS 1.3 encryption, detection-resistant</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Bypass SNI không tốn 4G tốc độ cao</span>
+            <span>SNI bypass — zero-rated on 4G</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Thời hạn sử dụng: {displayDays}</span>
+            <span>Validity: {displayDays}</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Hỗ trợ Streisand, Shadowrocket, V2rayNG, v2rayN</span>
+            <span>Supports Streisand, Shadowrocket, V2rayNG, v2rayN</span>
           </div>
         </div>
 
         {/* Region Selector */}
         <div className="border-t border-slate-100 pt-4 space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <label className="font-semibold text-slate-700">Chọn khu vực máy chủ:</label>
+            <label className="font-semibold text-slate-700">Select server region:</label>
             {isRegionSoldOut && (
-              <span className="text-rose-600 font-semibold text-[11px]">Đã hết slot</span>
+              <span className="text-rose-600 font-semibold text-[11px]">Sold out</span>
             )}
           </div>
 
@@ -308,7 +308,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
 
                   {soldOut ? (
                     <span className="shrink-0 px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold">
-                      Hết chỗ
+                      Sold out
                     </span>
                   ) : (
                     <span
@@ -318,7 +318,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
                           : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       }`}
                     >
-                      Còn {r?.available_slots ?? 0} slots
+                      {r?.available_slots ?? 0} slots left
                     </span>
                   )}
                 </button>
@@ -340,12 +340,12 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
           rightIcon={!isRegionSoldOut && !isBuying ? <ArrowRight className="w-3.5 h-3.5" /> : undefined}
         >
           {isRegionSoldOut
-            ? 'Hết chỗ (Sold out)'
+            ? 'Sold Out'
             : isLoggedIn
             ? isDaily
-              ? `Đăng Ký ${selectedDays} Ngày — ${displayPrice.toLocaleString('vi-VN')}đ`
-              : 'Mua Gói Tháng'
-            : 'Đăng nhập để Mua'}
+              ? `Subscribe ${selectedDays} Day${selectedDays > 1 ? 's' : ''} — ${displayPrice.toLocaleString('vi-VN')}₫`
+              : 'Subscribe Monthly'
+            : 'Sign in to Purchase'}
         </Button>
       </div>
     </Card>

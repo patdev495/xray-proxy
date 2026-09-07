@@ -121,15 +121,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     if (mode === 'register') {
       if (username.trim().length < 3) {
-        setError('Tên đăng nhập phải có ít nhất 3 ký tự');
+        setError('Username must be at least 3 characters');
         return;
       }
       if (password !== confirmPassword) {
-        setError('Mật khẩu xác nhận không trùng khớp');
+        setError('Passwords do not match');
         return;
       }
       if (password.length < 6) {
-        setError('Mật khẩu phải có ít nhất 6 ký tự');
+        setError('Password must be at least 6 characters');
         return;
       }
     }
@@ -147,13 +147,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         login(tokenData.access_token, userData);
       }
     } catch (err: unknown) {
-      const rawMsg = err instanceof Error ? err.message : 'Xác thực thất bại';
+      const rawMsg = err instanceof Error ? err.message : 'Authentication failed';
       if (rawMsg.includes('Username already taken')) {
-        setError('Tên đăng nhập đã tồn tại trên hệ thống. Vui lòng chọn tên khác.');
+        setError('Username is already taken. Please choose a different username.');
       } else if (rawMsg.includes('Email already registered')) {
-        setError('Địa chỉ email này đã được đăng ký tài khoản.');
+        setError('This email address is already registered.');
       } else if (rawMsg.includes('Incorrect username or password')) {
-        setError('Tên đăng nhập hoặc mật khẩu không chính xác.');
+        setError('Incorrect username or password.');
       } else {
         setError(rawMsg);
       }
@@ -277,12 +277,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     {confirmPassword === password ? (
                       <>
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Mật khẩu trùng khớp</span>
+                        <span>Passwords match</span>
                       </>
                     ) : (
                       <>
                         <AlertCircle className="w-3.5 h-3.5" />
-                        <span>Mật khẩu xác nhận không khớp</span>
+                        <span>Passwords do not match</span>
                       </>
                     )}
                   </p>

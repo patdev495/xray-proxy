@@ -162,7 +162,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Plan Name"
-          placeholder="e.g. Gói 4G Viettel Tháng"
+          placeholder="e.g. 4G Monthly High-Speed"
           value={planName}
           onChange={(e) => setPlanName(e.target.value)}
           required
@@ -171,7 +171,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
 
         <div>
           <span className="block text-xs font-semibold text-slate-700 mb-1.5">
-            Cấu hình gói chính (Mặc định theo tháng)
+            Main Plan Settings (Default Monthly)
           </span>
           <div className="grid grid-cols-3 gap-3">
             <Input
@@ -216,10 +216,10 @@ export const PlanModal: React.FC<PlanModalProps> = ({
                   onChange={(e) => setEnableDaily(e.target.checked)}
                   className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 h-4 w-4"
                 />
-                Kích hoạt gói ngày dùng thử (24 Giờ)
+                Enable Daily Trial Option (24 Hours)
               </label>
               <p className="text-[11px] text-slate-500 mt-0.5 ml-5.5">
-                Cho phép khách mua trải nghiệm 1 ngày. Hết 24h thu hồi node ngay (0 grace period).
+                Allow customers to purchase a 1-day trial. Node access is revoked immediately after 24 hours (0 grace period).
               </p>
             </div>
           </div>
@@ -227,7 +227,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
           {enableDaily && (
             <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-200/60">
               <Input
-                label="Giá 1 ngày (VNĐ)"
+                label="1-Day Price (VND)"
                 type="number"
                 min="0"
                 step="500"
@@ -235,10 +235,10 @@ export const PlanModal: React.FC<PlanModalProps> = ({
                 value={priceDailyVnd}
                 onChange={(e) => setPriceDailyVnd(e.target.value)}
                 required={enableDaily}
-                hint="Ví dụ: 3000"
+                hint="e.g. 3000"
               />
               <Input
-                label="Dung lượng 1 ngày (GB)"
+                label="1-Day Data Quota (GB)"
                 type="number"
                 min="0.1"
                 step="0.5"
@@ -246,7 +246,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
                 value={quotaDailyGb}
                 onChange={(e) => setQuotaDailyGb(e.target.value)}
                 required={enableDaily}
-                hint="Ví dụ: 6 GB / 24h"
+                hint="e.g. 6 GB / 24h"
               />
             </div>
           )}
