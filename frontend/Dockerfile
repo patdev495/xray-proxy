@@ -6,8 +6,12 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 COPY . .
 RUN npm run build
+
 
 # Stage 2: Serve with Nginx Alpine
 FROM nginx:alpine

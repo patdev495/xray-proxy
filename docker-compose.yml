@@ -9,6 +9,7 @@ services:
       - DATABASE_URL=sqlite+aiosqlite:////data/xray_proxy.db
       - SECRET_KEY=xray-proxy-super-secret-key-prod-2026-vps
       - CORS_ORIGINS=["*"]
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
     volumes:
       - /var/lib/xray-proxy:/data
     networks:
@@ -18,7 +19,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID:-}
     container_name: xray-proxy-frontend
+
     restart: unless-stopped
     ports:
       - "127.0.0.1:8040:80"

@@ -175,22 +175,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <button
               type="button"
               onClick={() => handleTabChange('login')}
-              className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                mode === 'login'
+              className={`py-2 text-xs font-semibold rounded-lg transition-all ${mode === 'login'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
-              }`}
+                }`}
             >
               Sign In
             </button>
             <button
               type="button"
               onClick={() => handleTabChange('register')}
-              className={`py-2 text-xs font-semibold rounded-lg transition-all ${
-                mode === 'register'
+              className={`py-2 text-xs font-semibold rounded-lg transition-all ${mode === 'register'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
-              }`}
+                }`}
             >
               Create Account
             </button>
@@ -313,7 +311,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           {mode === 'login' && (
             <div className="pt-3 border-t border-slate-100 text-center">
               <p className="text-[11px] text-slate-400">
-                Default dev admin credentials: <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono">admin</code> / <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono">adminpassword</code>
+                <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono">admin</code> / <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono"></code>
               </p>
             </div>
           )}
