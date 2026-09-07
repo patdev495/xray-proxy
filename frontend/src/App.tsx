@@ -12,6 +12,7 @@ import { NodesTab } from './components/views/NodesTab';
 import { SubscriptionsTab } from './components/views/SubscriptionsTab';
 import { NodeSyncTab } from './components/views/NodeSyncTab';
 import { PlansSettingsTab } from './components/views/PlansSettingsTab';
+import { OrdersTab } from './components/views/OrdersTab';
 import { CustomerPortal } from './components/portal/CustomerPortal';
 import { LandingStorePage } from './components/store/LandingStorePage';
 
@@ -61,6 +62,7 @@ const AuthenticatedDashboard: React.FC = () => {
       )}
       {activeTab === 'nodes' && <NodesTab />}
       {activeTab === 'subscriptions' && <SubscriptionsTab />}
+      {activeTab === 'orders' && <OrdersTab />}
       {activeTab === 'plans' && <PlansSettingsTab />}
       {activeTab === 'sync' && <NodeSyncTab />}
     </DashboardLayout>

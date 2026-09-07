@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from app.models.node import Node
     from app.models.plan import Plan
     from app.models.region import Region
+    from app.models.user import User
 
 
 subscription_nodes = Table(
@@ -51,6 +52,11 @@ class Subscription(Base):
         nullable=True,
         index=True,
     )
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -66,6 +72,7 @@ class Subscription(Base):
 
     plan: Mapped["Plan | None"] = relationship("Plan", lazy="selectin")
     region: Mapped["Region | None"] = relationship("Region", lazy="selectin")
+    user: Mapped["User | None"] = relationship("User", lazy="selectin")
 
     nodes: Mapped[list["Node"]] = relationship(
         "Node",

@@ -27,8 +27,14 @@ class Order(Base):
         default=OrderStatus.PENDING,
         nullable=False,
     )
+    subscription_id: Mapped[int | None] = mapped_column(
+        ForeignKey("subscriptions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     user: Mapped["User"] = relationship("User", lazy="selectin")  # type: ignore[name-defined] # noqa: F821
     plan: Mapped["Plan"] = relationship("Plan", lazy="selectin")  # type: ignore[name-defined] # noqa: F821
+    subscription: Mapped["Subscription | None"] = relationship("Subscription", lazy="selectin")  # type: ignore[name-defined] # noqa: F821

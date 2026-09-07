@@ -11,11 +11,15 @@ class OrderResponse(BaseModel):
     id: int
     code: str
     user_id: int
+    username: str | None = None
     plan_id: int
     plan_name: str
     region: str
     amount_vnd: int
     status: str
+    subscription_id: int | None = None
+    subscription_token: str | None = None
+    subscription_url: str | None = None
     created_at: datetime
     expires_at: datetime
     vietqr_url: str

@@ -8,11 +8,12 @@ import {
   LogOut, 
   User as UserIcon,
   Package,
+  Receipt,
 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../context/AuthContext';
 
-export type NavTabId = 'overview' | 'nodes' | 'subscriptions' | 'sync' | 'plans';
+export type NavTabId = 'overview' | 'nodes' | 'subscriptions' | 'plans' | 'orders' | 'sync';
 
 interface NavItem {
   id: NavTabId;
@@ -61,10 +62,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: 'Issue 02',
     },
     {
+      id: 'orders',
+      label: 'Orders & Billing',
+      icon: <Receipt className="w-4 h-4" />,
+      badge: 'SePay',
+    },
+    {
       id: 'sync',
       label: 'Node Sync & Telemetry',
       icon: <RefreshCw className="w-4 h-4" />,
-      badge: 'Issue 05',
     },
   ];
 

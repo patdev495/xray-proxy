@@ -1,6 +1,6 @@
 # 05-sepay-webhook-auto-provisioning
 
-Status: ready-for-agent
+Status: done
 
 ## Parent
 
@@ -16,10 +16,10 @@ Admin Orders tab in UI: lists all orders with manual "Confirm Payment" button to
 
 ## Acceptance criteria
 
-- [ ] SePay webhook validates token and reconciles order code with pending order.
-- [ ] Successful reconciliation provisions new subscription and syncs to target node via gRPC.
-- [ ] Checkout modal auto-detects paid state and reveals subscription link/QR within seconds.
-- [ ] Admin UI provides manual order confirmation button that executes same provisioning path.
+- [x] SePay webhook validates token and reconciles order code with pending order.
+- [x] Successful reconciliation provisions new subscription and syncs to target node via gRPC.
+- [x] Checkout modal auto-detects paid state and reveals subscription link/QR within seconds.
+- [x] Admin UI provides manual order confirmation button that executes same provisioning path.
 
 ## Blocked by
 

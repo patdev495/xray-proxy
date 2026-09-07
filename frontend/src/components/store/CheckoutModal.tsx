@@ -100,17 +100,62 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       <div className="space-y-4">
         {/* Paid Banner */}
         {currentOrder.status === 'PAID' ? (
-          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-2 animate-in zoom-in-95">
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-3 animate-in zoom-in-95">
             <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-            <h4 className="text-sm font-bold text-emerald-800">Thanh toán thành công!</h4>
-            <p className="text-xs text-emerald-600">
-              Hệ thống đã ghi nhận thanh toán và đang khởi tạo cấu hình proxy của bạn.
-            </p>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-emerald-800">Thanh toán thành công!</h4>
+              <p className="text-xs text-emerald-600">
+                Gói cước đã được kích hoạt. Bạn có thể sao chép link hoặc quét mã QR bên dưới vào Shadowrocket / v2rayNG:
+              </p>
+            </div>
+
+            {currentOrder.subscription_token && (
+              <div className="space-y-3 pt-1">
+                {/* QR Code for Subscription Link */}
+                <div className="w-40 h-40 mx-auto bg-white p-2 rounded-xl border border-emerald-200 shadow-xs flex items-center justify-center">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(
+                      `${window.location.origin}/api/v1/subscriptions/${currentOrder.subscription_token}/sub`
+                    )}`}
+                    alt="Subscription QR"
+                    className="w-full h-full object-contain rounded"
+                  />
+                </div>
+
+                {/* 1-Click Copy Subscription URL */}
+                <div className="flex items-center gap-2 p-2 bg-white rounded-lg border border-emerald-200 text-left">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}/api/v1/subscriptions/${currentOrder.subscription_token}/sub`}
+                    className="flex-1 text-[11px] font-mono text-slate-700 bg-transparent outline-none truncate"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      copyToClipboard(
+                        `${window.location.origin}/api/v1/subscriptions/${currentOrder.subscription_token}/sub`,
+                        'sub_url'
+                      )
+                    }
+                    className="shrink-0 text-xs"
+                    leftIcon={copiedField === 'sub_url' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  >
+                    {copiedField === 'sub_url' ? 'Đã chép' : 'Sao chép'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             <Button
               variant="primary"
               size="sm"
-              onClick={onClose}
-              className="mt-2"
+              onClick={() => {
+                if (onPaymentSuccess) onPaymentSuccess(currentOrder);
+                onClose();
+              }}
+              className="w-full mt-2"
             >
               Vào Customer Portal
             </Button>

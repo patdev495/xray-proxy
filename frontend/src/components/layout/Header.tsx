@@ -44,6 +44,10 @@ export const Header: React.FC<HeaderProps> = ({
       title: 'Plans & Support Settings',
       subtitle: 'Customer package catalog, pricing quotas, regions and support channels',
     },
+    orders: {
+      title: 'Orders & Transactions',
+      subtitle: 'SePay webhook payment reconciliation and automatic subscription provisioning',
+    },
     sync: {
       title: 'Node Sync & Telemetry',
       subtitle: 'Manual gRPC bandwidth query and automatic quota enforcement',

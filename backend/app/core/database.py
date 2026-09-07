@@ -89,14 +89,22 @@ async def init_db() -> None:
                     connection.execute(text("ALTER TABLE subscriptions ADD COLUMN plan_id INTEGER REFERENCES plans(id)"))
                 if "region_id" not in sub_cols:
                     connection.execute(text("ALTER TABLE subscriptions ADD COLUMN region_id INTEGER REFERENCES regions(id)"))
+                if "user_id" not in sub_cols:
+                    connection.execute(text("ALTER TABLE subscriptions ADD COLUMN user_id INTEGER REFERENCES users(id)"))
 
-            # 4. SNI profiles migrations
+            # 4. Orders migrations
+            if "orders" in table_names:
+                order_cols = [c["name"] for c in insp.get_columns("orders")]
+                if "subscription_id" not in order_cols:
+                    connection.execute(text("ALTER TABLE orders ADD COLUMN subscription_id INTEGER REFERENCES subscriptions(id)"))
+
+            # 5. SNI profiles migrations
             if "sni_profiles" in table_names:
                 cols = [c["name"] for c in insp.get_columns("sni_profiles")]
                 if "port" not in cols:
                     connection.execute(text("ALTER TABLE sni_profiles ADD COLUMN port INTEGER NOT NULL DEFAULT 443"))
 
-            # 5. Users table migrations (for OAuth and Customer Onboarding)
+            # 6. Users table migrations (for OAuth and Customer Onboarding)
             if "users" in table_names:
                 user_cols = [c["name"] for c in insp.get_columns("users")]
                 if "email" not in user_cols:
