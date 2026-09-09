@@ -131,9 +131,9 @@ export const SubscriptionsTab: React.FC = () => {
       {/* Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Customer Subscriptions</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Manage traffic quotas, node authorizations, and distribute VLESS-Reality base64 bundles.
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Customer Proxy Subscriptions</h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Manage customer traffic allowances, tokens, client configurations and remote node bindings.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -142,15 +142,17 @@ export const SubscriptionsTab: React.FC = () => {
             size="sm"
             onClick={loadData}
             disabled={isLoading}
-            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 text-indigo-600 ${isLoading ? 'animate-spin' : ''}`} />}
+            className="font-bold text-xs"
           >
-            Refresh
+            Refresh Data
           </Button>
           <Button
-            variant="primary"
+            variant="gradient"
             size="sm"
             onClick={() => setIsNewSubSheetOpen(true)}
-            leftIcon={<Plus className="w-3.5 h-3.5" />}
+            leftIcon={<Plus className="w-4 h-4" />}
+            className="font-bold text-xs shadow-md shadow-indigo-500/20"
           >
             Issue Subscription
           </Button>
@@ -158,20 +160,20 @@ export const SubscriptionsTab: React.FC = () => {
       </div>
 
       {/* Subscriptions Table Card */}
-      <Card className="p-0 overflow-hidden">
+      <Card className="rounded-3xl border border-indigo-100/70 shadow-md shadow-indigo-950/5 bg-white/95 backdrop-blur-xl overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider">
-                <th className="py-3 px-5">Subscriber</th>
-                <th className="py-3 px-5">Traffic Consumption</th>
-                <th className="py-3 px-5">Assigned Nodes</th>
-                <th className="py-3 px-5">Expiration Date</th>
-                <th className="py-3 px-5">Status</th>
-                <th className="py-3 px-5 text-right">Actions</th>
+              <tr className="border-b border-slate-100/90 bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                <th className="py-3.5 px-5">Subscriber</th>
+                <th className="py-3.5 px-5">Traffic Consumption</th>
+                <th className="py-3.5 px-5">Assigned Nodes</th>
+                <th className="py-3.5 px-5">Expiration Date</th>
+                <th className="py-3.5 px-5">Status</th>
+                <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 bg-white/70">
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">

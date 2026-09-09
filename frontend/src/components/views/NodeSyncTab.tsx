@@ -170,11 +170,14 @@ export const NodeSyncTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header & Triggers */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white/70 backdrop-blur-md border border-slate-200/80 shadow-xs">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Node Sync &amp; Telemetry</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Direct gRPC synchronization with <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono">xray-core</code> StatsService and HandlerService.
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Node Sync &amp; Telemetry</h2>
+            <Badge variant="cyan" size="sm" dot={true}>gRPC Live</Badge>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            Direct high-frequency telemetry link with <code className="bg-slate-100 text-indigo-700 font-semibold px-1.5 py-0.5 rounded font-mono text-[11px]">xray-core</code> StatsService and HandlerService.
           </p>
         </div>
         <div className="flex items-center gap-2.5">
@@ -189,10 +192,10 @@ export const NodeSyncTab: React.FC = () => {
           </Button>
 
           <Button
-            variant="primary"
+            variant="gradient"
             size="sm"
             isLoading={isSyncingStats}
-            leftIcon={<Zap className="w-4 h-4" />}
+            leftIcon={<Zap className="w-4 h-4 text-white" />}
             onClick={handleSyncLiveStats}
           >
             Sync Live Stats
@@ -202,10 +205,11 @@ export const NodeSyncTab: React.FC = () => {
 
       {/* Sync Status Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-5 space-y-1">
+        <Card variant="glass" className="hover-lift relative overflow-hidden group">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-500 opacity-80" />
+          <CardContent className="p-5 space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-500">
-              <span className="font-semibold uppercase tracking-wider">Node gRPC Status</span>
+              <span className="font-semibold uppercase tracking-wider text-[11px] text-slate-400">Node gRPC Status</span>
               <Badge 
                 variant={syncStatus && syncStatus.active_nodes_count > 0 ? 'emerald' : 'slate'} 
                 size="sm" 
@@ -214,66 +218,97 @@ export const NodeSyncTab: React.FC = () => {
                 {syncStatus && syncStatus.active_nodes_count > 0 ? 'Connected' : 'No Nodes'}
               </Badge>
             </div>
-            <div className="text-xl font-bold text-slate-900 font-mono">
-              {syncStatus?.active_nodes_count || 0} Active Nodes
+            <div className="text-2xl font-bold text-slate-900 font-mono tracking-tight">
+              {syncStatus?.active_nodes_count || 0} <span className="text-sm font-sans font-medium text-slate-500">Active Nodes</span>
             </div>
-            <p className="text-xs text-slate-400">gRPC ports monitored</p>
+            <p className="text-xs text-slate-400 flex items-center gap-1.5">
+              <Server className="w-3.5 h-3.5 text-cyan-500" />
+              Direct gRPC daemon channels
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-5 space-y-1">
+        <Card variant="glass" className="hover-lift relative overflow-hidden group">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-violet-500 opacity-80" />
+          <CardContent className="p-5 space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-500">
-              <span className="font-semibold uppercase tracking-wider">Last Sync</span>
-              <Clock className="w-4 h-4 text-slate-400" />
+              <span className="font-semibold uppercase tracking-wider text-[11px] text-slate-400">Last Sync Cycle</span>
+              <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <Clock className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-xl font-bold text-slate-900 font-mono">{lastSyncTime}</div>
-            <p className="text-xs text-slate-400">Background Poller: every 300s</p>
+            <div className="text-2xl font-bold text-slate-900 font-mono tracking-tight">{lastSyncTime}</div>
+            <p className="text-xs text-slate-400">Daemon Poller: interval 300s</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-5 space-y-1">
+        <Card variant="glass" className="hover-lift relative overflow-hidden group">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500 opacity-80" />
+          <CardContent className="p-5 space-y-2">
             <div className="flex items-center justify-between text-xs text-slate-500">
-              <span className="font-semibold uppercase tracking-wider">Auto-Enforcement</span>
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span className="font-semibold uppercase tracking-wider text-[11px] text-slate-400">Auto-Enforcement</span>
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
             </div>
-            <div className="text-xl font-bold text-slate-900 font-mono">Active</div>
+            <div className="text-2xl font-bold text-emerald-600 font-mono tracking-tight">Active</div>
             <p className="text-xs text-slate-400">
-              {suspendedTotal > 0 ? `${suspendedTotal} accounts suspended` : 'All accounts within quota'}
+              {suspendedTotal > 0 ? `${suspendedTotal} accounts suspended` : 'All accounts within traffic quota'}
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Active Nodes Connectivity Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Nodes gRPC Telemetry Channels</CardTitle>
-          <CardDescription>Direct reachability to xray-core management port on each managed VPS</CardDescription>
+      <Card variant="glass">
+        <CardHeader className="border-b border-slate-100/80">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base font-bold text-slate-900">Active Nodes gRPC Telemetry Channels</CardTitle>
+              <CardDescription>Direct reachability to xray-core management daemon on each cluster VPS</CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={loadStatus}
+              disabled={isLoadingStatus}
+              leftIcon={<RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isLoadingStatus ? 'animate-spin' : ''}`} />}
+            >
+              Refresh Status
+            </Button>
+          </div>
         </CardHeader>
-        <div className="p-5 pt-0">
+        <div className="p-5">
           {isLoadingStatus ? (
-            <div className="py-6 text-center text-slate-400 text-xs">
-              <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-1 text-slate-400" />
-              Checking node reachability...
+            <div className="py-8 text-center text-slate-400 text-xs">
+              <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-indigo-500" />
+              Polling node reachability via gRPC channels...
             </div>
           ) : !syncStatus?.nodes || syncStatus.nodes.length === 0 ? (
-            <div className="py-6 text-center text-slate-400 text-xs">
-              <Server className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-              No active nodes found. Add a node in the Nodes tab to start syncing.
+            <div className="py-8 text-center text-slate-400 text-xs">
+              <Server className="w-6 h-6 mx-auto mb-2 text-slate-300" />
+              No active nodes found in cluster. Add a node in the Nodes tab to start syncing.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {syncStatus.nodes.map((node: NodeGrpcStatus) => (
                 <div 
                   key={node.id} 
-                  className="flex items-center justify-between p-3.5 rounded-lg border border-slate-200/80 bg-slate-50/50 hover:bg-white transition-colors"
+                  className="flex items-center justify-between p-4 rounded-xl border border-slate-200/80 bg-white/60 hover:bg-white transition-all hover:shadow-xs"
                 >
-                  <div className="space-y-0.5">
-                    <div className="text-sm font-semibold text-slate-900">{node.name}</div>
-                    <div className="text-xs font-mono text-slate-500">
-                      {node.host}:{node.grpc_port}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      node.is_reachable 
+                        ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20' 
+                        : 'bg-rose-50 text-rose-600 ring-1 ring-rose-500/20'
+                    }`}>
+                      <Server className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <div className="text-sm font-semibold text-slate-900">{node.name}</div>
+                      <div className="text-xs font-mono text-slate-500">
+                        {node.host}:{node.grpc_port}
+                      </div>
                     </div>
                   </div>
                   <Badge 
@@ -291,15 +326,15 @@ export const NodeSyncTab: React.FC = () => {
       </Card>
 
       {/* Audit Logs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>gRPC Synchronization Audit Log</CardTitle>
-          <CardDescription>Real-time record of StatsService bandwidth queries and HandlerService user disconnections</CardDescription>
+      <Card variant="glass">
+        <CardHeader className="border-b border-slate-100/80">
+          <CardTitle className="text-base font-bold text-slate-900">gRPC Synchronization Audit Log</CardTitle>
+          <CardDescription>Real-time stream of StatsService bandwidth queries and HandlerService user route modifications</CardDescription>
         </CardHeader>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider">
+              <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider text-[11px]">
                 <th className="py-3 px-5">Timestamp</th>
                 <th className="py-3 px-5">Target Node</th>
                 <th className="py-3 px-5">gRPC Interface</th>
@@ -310,10 +345,14 @@ export const NodeSyncTab: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 font-mono">
               {syncLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-50/60 transition-colors">
+                <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3.5 px-5 text-slate-500">{log.timestamp}</td>
                   <td className="py-3.5 px-5 text-slate-800 font-sans font-medium">{log.node}</td>
-                  <td className="py-3.5 px-5 text-indigo-700 font-medium">{log.service}</td>
+                  <td className="py-3.5 px-5">
+                    <span className="font-sans px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold text-[11px] border border-indigo-100">
+                      {log.service}
+                    </span>
+                  </td>
                   <td className="py-3.5 px-5 text-slate-600 max-w-xs truncate">{log.operation}</td>
                   <td className="py-3.5 px-5 text-slate-700">{log.deltaInfo}</td>
                   <td className="py-3.5 px-5 text-right">

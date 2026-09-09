@@ -88,15 +88,15 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
   };
 
   return (
-    <Card className="p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+    <Card variant="glass" className="p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100/80">
         <div>
           <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5 text-slate-700" />
-            <h2 className="text-base font-semibold text-slate-900">Server Regions</h2>
+            <Globe className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-base font-bold text-slate-900">Server Regions</h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage geographic regions for VPS node assignment and user subscription allocation
+            Manage geographic clusters for VPS node assignment and user subscription allocation
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -110,13 +110,13 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
             Refresh
           </Button>
           <Button
-            variant="primary"
+            variant="gradient"
             size="sm"
             onClick={() => {
               setEditingRegion(null);
               setIsModalOpen(true);
             }}
-            leftIcon={<Plus className="w-3.5 h-3.5" />}
+            leftIcon={<Plus className="w-3.5 h-3.5 text-white" />}
           >
             Add Region
           </Button>

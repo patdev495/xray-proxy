@@ -189,7 +189,7 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
             Cancel
           </Button>
           <Button
-            variant="primary"
+            variant="gradient"
             size="sm"
             onClick={handleSubmit}
             disabled={isSubmitting}

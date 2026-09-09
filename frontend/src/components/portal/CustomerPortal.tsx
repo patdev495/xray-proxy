@@ -9,6 +9,7 @@ import {
   Sparkles,
   User as UserIcon,
   Zap,
+  ShoppingBag,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -126,43 +127,52 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
+    <div className="min-h-screen bg-aurora-mesh text-slate-900 flex flex-col selection:bg-indigo-600 selection:text-white relative">
+      {/* Ambient background glow dots */}
+      <div className="absolute top-10 left-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-60 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      {/* Top Glass Header */}
+      <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-white/60 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-900 text-white shadow-xs">
+          <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-600 text-white shadow-md shadow-indigo-500/25">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold tracking-tight text-slate-900 text-base">xray-proxy</span>
-              <Badge variant="indigo" size="sm">Customer Portal</Badge>
+              <span className="font-extrabold tracking-tight text-slate-900 text-base sm:text-lg">
+                xray<span className="text-indigo-600">-proxy</span>
+              </span>
+              <Badge variant="indigo" size="sm" dot={true}>Customer Portal</Badge>
             </div>
-            <p className="text-[11px] text-slate-400">VLESS-Reality High Speed 4G Proxy</p>
+            <p className="text-[11px] text-slate-400 font-medium">VLESS-Reality 4G Network Command Center</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {onNavigate && (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => onNavigate('/')}
-              className="text-xs"
+              className="text-xs font-bold"
+              leftIcon={<ShoppingBag className="w-3.5 h-3.5 text-indigo-600" />}
             >
               Plan Store
             </Button>
           )}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-700">
-            <UserIcon className="w-3.5 h-3.5 text-slate-500" />
-            <span className="font-medium font-mono">{user?.username}</span>
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs text-xs text-slate-700">
+            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 text-white flex items-center justify-center text-[10px] font-bold">
+              {user?.username?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <span className="font-bold font-mono text-slate-900">{user?.username}</span>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={logout}
-            leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-500" />}
-            className="text-xs"
+            leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-400" />}
+            className="text-xs font-semibold hover:text-rose-600 hover:bg-rose-50"
           >
             Sign Out
           </Button>
@@ -173,64 +183,64 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-8 space-y-6">
         {/* Pending Order Sticky Banner */}
         {pendingOrder && (
-          <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs animate-in fade-in">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
-                <Clock className="w-5 h-5 animate-pulse" />
+          <div className="p-4 sm:p-5 rounded-3xl bg-amber-500/10 border-2 border-amber-500/30 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-amber-500/10 animate-in fade-in backdrop-blur-md">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/30 shrink-0">
+                <Clock className="w-6 h-6 animate-pulse" />
               </div>
               <div className="text-xs space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-amber-900 text-sm">Pending Payment</span>
-                  <span className="font-mono font-bold bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded text-xs">
+                  <span className="font-black text-amber-950 text-sm sm:text-base">Pending Payment</span>
+                  <span className="font-mono font-black bg-amber-200/90 text-amber-950 px-2 py-0.5 rounded-lg text-xs border border-amber-300">
                     {pendingOrder.code}
                   </span>
                 </div>
-                <p className="text-amber-800">
-                  Plan <strong className="font-semibold">{pendingOrder.plan_name}</strong> ({pendingOrder.region}) •{' '}
-                  <strong className="font-mono text-emerald-700 font-bold">{formatVND(pendingOrder.amount_vnd)}</strong> •{' '}
-                  Payment deadline: <span className="font-mono font-bold text-amber-900 bg-amber-200/60 px-1.5 py-0.5 rounded">{getPendingRemainingTime(pendingOrder)}</span>
+                <p className="text-amber-900 font-medium">
+                  Plan <strong className="font-bold text-amber-950">{pendingOrder.plan_name}</strong> ({pendingOrder.region}) •{' '}
+                  <strong className="font-mono text-emerald-700 font-black">{formatVND(pendingOrder.amount_vnd)}</strong> •{' '}
+                  Payment deadline: <span className="font-mono font-black text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded-md">{getPendingRemainingTime(pendingOrder)}</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 pt-2 sm:pt-0">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleCancelOrder(pendingOrder.id)}
                 disabled={cancellingOrderId === pendingOrder.id}
-                className="text-xs text-amber-800 hover:bg-amber-100 hover:text-amber-900"
+                className="text-xs font-bold text-amber-900 hover:bg-amber-200/60"
               >
                 {cancellingOrderId === pendingOrder.id ? 'Cancelling...' : 'Cancel Order'}
               </Button>
               <Button
-                variant="primary"
+                variant="gradient"
                 size="sm"
                 onClick={() => {
                   setActiveCheckoutOrder(pendingOrder);
                   setIsCheckoutModalOpen(true);
                 }}
-                leftIcon={<QrCode className="w-3.5 h-3.5" />}
-                className="text-xs bg-amber-600 hover:bg-amber-700 text-white shadow-xs font-semibold"
+                leftIcon={<QrCode className="w-4 h-4" />}
+                className="text-xs font-bold shadow-md shadow-amber-500/20 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white"
               >
-                Pay Now
+                Scan VietQR
               </Button>
             </div>
           </div>
         )}
 
         {/* Welcome Banner */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs relative overflow-hidden">
+        <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-white/70 p-6 sm:p-8 shadow-md shadow-indigo-950/5 relative overflow-hidden">
           <div className="max-w-2xl space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium mb-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 text-xs font-bold mb-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Account Active
+              Customer Active Session
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Welcome back, {user?.username}
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+              Welcome back, <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{user?.username}</span>
             </h1>
-            <p className="text-sm text-slate-500 leading-relaxed">
-              Manage high-speed VLESS-Reality plans, copy subscription configs, switch servers, and renew instantly.
+            <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-medium">
+              Manage your dedicated VLESS-Reality subscriptions, copy import configurations, switch cluster nodes, and renew instantly.
             </p>
           </div>
         </div>
@@ -251,26 +261,28 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
         {/* Profile and Service Overview Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Card 1: Account Info */}
-          <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <Card className="p-5 space-y-4 rounded-3xl bg-white/80 backdrop-blur-xl border border-slate-200/80 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100/90 pb-3">
               <div className="flex items-center gap-2">
-                <UserIcon className="w-4 h-4 text-slate-600" />
-                <h2 className="text-sm font-semibold text-slate-800">Account Details</h2>
+                <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <UserIcon className="w-3.5 h-3.5" />
+                </div>
+                <h2 className="text-sm font-bold text-slate-900">Account Profile</h2>
               </div>
-              <Badge variant="slate" size="sm">{user?.role}</Badge>
+              <Badge variant="indigo" size="sm">{user?.role}</Badge>
             </div>
             <div className="space-y-2.5 text-xs">
               <div className="flex items-center justify-between text-slate-600">
-                <span className="text-slate-400">Username:</span>
-                <span className="font-mono font-medium text-slate-800">{user?.username}</span>
+                <span className="text-slate-400 font-medium">Username:</span>
+                <span className="font-mono font-bold text-slate-900">{user?.username}</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
-                <span className="text-slate-400">Email:</span>
-                <span className="font-medium text-slate-800">{user?.email || 'Not configured'}</span>
+                <span className="text-slate-400 font-medium">Email:</span>
+                <span className="font-semibold text-slate-800">{user?.email || 'Not configured'}</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
-                <span className="text-slate-400">Login Method:</span>
-                <span className="capitalize font-medium text-slate-800">
+                <span className="text-slate-400 font-medium">Auth Provider:</span>
+                <span className="capitalize font-semibold text-indigo-600">
                   {user?.oauth_provider ? `${user.oauth_provider} OAuth` : 'Password'}
                 </span>
               </div>
@@ -278,45 +290,49 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
           </Card>
 
           {/* Card 2: Active Service */}
-          <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <Card className="p-5 space-y-4 rounded-3xl bg-white/80 backdrop-blur-xl border border-slate-200/80 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100/90 pb-3">
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-600" />
-                <h2 className="text-sm font-semibold text-slate-800">Proxy Service</h2>
+                <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Zap className="w-3.5 h-3.5" />
+                </div>
+                <h2 className="text-sm font-bold text-slate-900">Proxy Fleet</h2>
               </div>
               <Badge variant="amber" size="sm">Self-Service</Badge>
             </div>
             <div className="space-y-2 text-xs text-slate-500">
-              <p>Subscriptions are automatically provisioned and synced across nodes upon successful payment.</p>
+              <p className="leading-relaxed">All subscriptions auto-provision and sync traffic metrics in real-time across regional VPS clusters.</p>
               {onNavigate && (
                 <Button
-                  variant="primary"
+                  variant="gradient"
                   size="sm"
                   onClick={() => onNavigate('/')}
-                  className="w-full mt-2 text-xs font-medium"
+                  className="w-full mt-2 text-xs font-bold"
                 >
-                  Purchase Plan
+                  Buy Another Plan
                 </Button>
               )}
             </div>
           </Card>
 
           {/* Card 3: Security Status */}
-          <Card className="p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <Card className="p-5 space-y-4 rounded-3xl bg-white/80 backdrop-blur-xl border border-slate-200/80 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100/90 pb-3">
               <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-indigo-600" />
-                <h2 className="text-sm font-semibold text-slate-800">Security &amp; Tokens</h2>
+                <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <KeyRound className="w-3.5 h-3.5" />
+                </div>
+                <h2 className="text-sm font-bold text-slate-900">Security &amp; Keys</h2>
               </div>
-              <Badge variant="emerald" size="sm" dot>Secure</Badge>
+              <Badge variant="emerald" size="sm" dot={true}>Guaranteed</Badge>
             </div>
             <div className="space-y-2 text-xs text-slate-500">
-              <div className="flex items-center gap-1.5 text-emerald-700">
+              <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span className="font-medium">Encrypted JWT &amp; VLESS Reality</span>
+                <span>Encrypted TLS 1.3 Reality</span>
               </div>
-              <p className="text-[11px] text-slate-400">
-                Each connection is independently routed through high-performance dedicated nodes.
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Tokens are verified via cryptographically signed hashes to prevent credential sniffing.
               </p>
             </div>
           </Card>

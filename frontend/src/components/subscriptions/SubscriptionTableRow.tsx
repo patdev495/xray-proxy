@@ -8,6 +8,7 @@ import {
   Clock,
   Edit2,
   Globe,
+  RefreshCw,
 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -50,32 +51,32 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
   });
 
   return (
-    <tr className="hover:bg-slate-50/60 transition-colors">
+    <tr className="hover:bg-indigo-50/40 transition-colors">
       {/* Subscriber Info */}
       <td className="py-4 px-5">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-semibold text-slate-900 text-sm">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-bold text-slate-900 text-sm">
             {sub.customer_name}
           </span>
           {sub.plan_name && (
-            <span className="inline-flex items-center text-[10px] font-medium bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+            <span className="inline-flex items-center text-[10px] font-bold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200/80">
               {sub.plan_name}
             </span>
           )}
           {sub.region_code && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200/80">
               <span>{sub.region_flag || '🌐'}</span>
               <span>{sub.region_code}</span>
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 mt-1">
-          <code className="text-[11px] font-mono text-slate-500 bg-slate-100 px-1 py-0.5 rounded">
+        <div className="flex items-center gap-1.5 mt-1.5">
+          <code className="text-[11px] font-mono font-medium text-slate-500 bg-slate-100/90 px-1.5 py-0.5 rounded-md border border-slate-200/60">
             {sub.token.substring(0, 14)}...
           </code>
           <button
             onClick={() => onCopyUrl(sub)}
-            className="p-1 text-slate-400 hover:text-slate-700 rounded transition-colors"
+            className="p-1 text-slate-400 hover:text-indigo-600 rounded-md transition-colors cursor-pointer"
             title="Copy Subscription Link"
           >
             {copiedId === sub.id ? (
@@ -88,13 +89,13 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
       </td>
 
       {/* Traffic Consumption */}
-      <td className="py-4 px-5 min-w-[170px]">
+      <td className="py-4 px-5 min-w-[180px]">
         <div className="space-y-1.5">
           <div className="flex items-center justify-between font-mono text-[11px]">
-            <span className="font-medium text-slate-700">
+            <span className="font-semibold text-slate-700">
               {formatDataSize(sub.traffic_used_bytes)} / {formatDataSize(sub.traffic_quota_bytes)}
             </span>
-            <span className={`font-semibold ${isNearQuota ? 'text-rose-600' : 'text-slate-500'}`}>
+            <span className={`font-bold ${isNearQuota ? 'text-rose-600' : 'text-indigo-600'}`}>
               {sub.traffic_used_bytes > 0 && percentUsed < 1 ? '< 1%' : `${percentUsed}%`}
             </span>
           </div>
@@ -102,15 +103,16 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
             value={usedGb}
             max={quotaGb || 1}
             height="sm"
+            variant="auto"
           />
         </div>
       </td>
 
       {/* Assigned Nodes */}
       <td className="py-4 px-5 min-w-[160px]">
-        <div className="flex flex-wrap gap-1 items-center max-w-[220px]">
+        <div className="flex flex-wrap gap-1.5 items-center max-w-[220px]">
           {(!sub.node_ids || sub.node_ids.length === 0) ? (
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md border border-slate-200/60">
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full border border-slate-200/80">
               <Globe className="w-3 h-3 text-slate-400" />
               All Nodes
             </span>
@@ -120,11 +122,11 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
               return (
                 <span
                   key={nodeId}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium bg-white border border-slate-200 text-slate-700 px-1.5 py-0.5 rounded-md shadow-2xs"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold bg-white border border-indigo-100 text-slate-700 px-2 py-0.5 rounded-md shadow-2xs"
                   title={matchedNode?.host || `Node ID: ${nodeId}`}
                 >
                   <span>{matchedNode?.flag || '🌐'}</span>
-                  <span className="truncate max-w-[90px]">{matchedNode?.name || `Node #${nodeId}`}</span>
+                  <span className="truncate max-w-[95px]">{matchedNode?.name || `Node #${nodeId}`}</span>
                 </span>
               );
             })
@@ -133,9 +135,9 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
       </td>
 
       {/* Expiration Date */}
-      <td className="py-4 px-5 font-mono text-slate-600 whitespace-nowrap">
-        <div className="flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5 text-slate-400" />
+      <td className="py-4 px-5 font-mono text-slate-700 whitespace-nowrap">
+        <div className="flex items-center gap-1.5 text-xs font-semibold">
+          <Clock className="w-3.5 h-3.5 text-indigo-400" />
           <span>{expiryFormatted}</span>
         </div>
       </td>
@@ -167,8 +169,9 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
             size="sm"
             onClick={() => onOpenQr(sub)}
             title="Show QR Code for Shadowrocket"
+            className="font-bold text-xs"
           >
-            <QrCode className="w-3.5 h-3.5" />
+            <QrCode className="w-3.5 h-3.5 text-indigo-600" />
             <span className="hidden sm:inline">QR</span>
           </Button>
 
@@ -178,8 +181,9 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
             size="sm"
             onClick={() => onOpenEdit(sub)}
             title="Edit subscription details & assigned nodes"
+            className="font-bold text-xs"
           >
-            <Edit2 className="w-3.5 h-3.5" />
+            <Edit2 className="w-3.5 h-3.5 text-cyan-600" />
             <span className="hidden sm:inline">Edit</span>
           </Button>
 
@@ -189,14 +193,16 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
             size="sm"
             onClick={() => onOpenRenew(sub)}
             title="Quick extend days or quota"
+            className="font-bold text-xs"
           >
-            Renew
+            <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="hidden sm:inline">Renew</span>
           </Button>
 
           {/* Suspend / Activate Toggle */}
           <button
             onClick={() => onToggleActive(sub)}
-            className={`p-1.5 rounded-lg border transition-colors ${
+            className={`p-2 rounded-xl border transition-colors cursor-pointer ${
               sub.status === 'ACTIVE'
                 ? 'border-amber-200 text-amber-600 hover:bg-amber-50'
                 : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
@@ -209,7 +215,7 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
           {/* Delete Subscription */}
           <button
             onClick={() => onDelete(sub)}
-            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors"
+            className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"
             title="Delete Subscription"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -219,3 +225,5 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
     </tr>
   );
 };
+
+export default SubscriptionTableRow;

@@ -59,9 +59,9 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PAID':
-        return <Badge variant="emerald" size="sm" dot>Paid</Badge>;
+        return <Badge variant="emerald" size="sm" dot={true}>Paid &amp; Active</Badge>;
       case 'PENDING':
-        return <Badge variant="amber" size="sm" dot pulseDot>Pending</Badge>;
+        return <Badge variant="amber" size="sm" dot={true} pulseDot={true}>Awaiting Payment</Badge>;
       case 'CANCELLED':
         return <Badge variant="slate" size="sm">Cancelled</Badge>;
       case 'EXPIRED':
@@ -72,20 +72,25 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
   };
 
   return (
-    <Card className="overflow-hidden border border-slate-200/90 shadow-xs">
-      <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Receipt className="w-4 h-4 text-slate-700" />
-          <h2 className="text-sm font-bold text-slate-900">
-            Order History ({orders.length})
-          </h2>
+    <Card className="overflow-hidden border border-indigo-100/80 shadow-md shadow-indigo-950/5 rounded-3xl bg-white/95 backdrop-blur-xl">
+      <div className="p-5 sm:p-6 border-b border-slate-100/90 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <Receipt className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
+              Order &amp; Invoicing History ({orders.length})
+            </h2>
+            <p className="text-[11px] text-slate-400 font-medium">Automatic VietQR transaction reconciliation</p>
+          </div>
         </div>
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
           onClick={onRefresh}
           leftIcon={<RotateCw className={`w-3.5 h-3.5 ${isLoadingOrders ? 'animate-spin' : ''}`} />}
-          className="text-xs text-slate-500 hover:text-slate-800"
+          className="text-xs font-semibold"
         >
           Refresh
         </Button>
@@ -93,69 +98,69 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
 
       <div className="overflow-x-auto">
         {orders.length === 0 ? (
-          <div className="p-8 text-center text-xs text-slate-400">
-            No orders yet. Visit the store to find a plan that suits you!
+          <div className="p-10 text-center text-xs text-slate-400 font-medium">
+            No order transactions found. Visit the Plan Store to rent bandwidth!
           </div>
         ) : (
           <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-100">
-            <thead className="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <thead className="bg-slate-50/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               <tr>
-                <th className="py-3 px-4">Order ID</th>
-                <th className="py-3 px-4">Plan</th>
-                <th className="py-3 px-4">Region</th>
-                <th className="py-3 px-4">Amount</th>
-                <th className="py-3 px-4">Date</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3 px-5">Order Code</th>
+                <th className="py-3 px-5">Package</th>
+                <th className="py-3 px-5">Region</th>
+                <th className="py-3 px-5">Amount</th>
+                <th className="py-3 px-5">Timestamp</th>
+                <th className="py-3 px-5">Status</th>
+                <th className="py-3 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody className="divide-y divide-slate-100 bg-white/70">
               {orders.map((o) => {
                 const isPendingValid = o.status === 'PENDING' && parseUtcDate(o.expires_at).getTime() > now.getTime();
                 const effectiveStatus = getEffectiveStatus(o);
                 return (
-                  <tr key={o.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3 px-4 font-mono font-bold text-slate-900">{o.code}</td>
-                    <td className="py-3 px-4 font-medium text-slate-800">{o.plan_name}</td>
-                    <td className="py-3 px-4">
-                      <span className="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono font-semibold text-[11px]">
+                  <tr key={o.id} className="hover:bg-indigo-50/30 transition-colors">
+                    <td className="py-3.5 px-5 font-mono font-bold text-slate-900">{o.code}</td>
+                    <td className="py-3.5 px-5 font-bold text-slate-800">{o.plan_name}</td>
+                    <td className="py-3.5 px-5">
+                      <span className="inline-block px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100 font-mono font-bold text-[11px]">
                         {o.region}
                       </span>
                     </td>
-                    <td className="py-3 px-4 font-mono font-semibold text-slate-900">
+                    <td className="py-3.5 px-5 font-mono font-bold text-slate-900">
                       {formatVND(o.amount_vnd)}
                     </td>
-                    <td className="py-3 px-4 text-slate-400 text-[11px]">{formatDate(o.created_at)}</td>
-                    <td className="py-3 px-4">{getStatusBadge(effectiveStatus)}</td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3.5 px-5 text-slate-400 text-[11px] font-medium">{formatDate(o.created_at)}</td>
+                    <td className="py-3.5 px-5">{getStatusBadge(effectiveStatus)}</td>
+                    <td className="py-3.5 px-5 text-right">
                       {isPendingValid ? (
                         <div className="inline-flex items-center gap-1.5">
                           <Button
-                            variant="primary"
+                            variant="gradient"
                             size="sm"
                             onClick={() => onSelectCheckoutOrder(o)}
-                            className="text-xs py-1 px-2.5 h-auto bg-amber-600 hover:bg-amber-700 text-white"
+                            className="text-xs py-1 px-3 h-auto bg-gradient-to-r from-amber-600 to-orange-600 font-bold text-white shadow-xs"
                           >
                             Pay ({getPendingRemainingTime(o)})
                           </Button>
                           <button
                             onClick={() => onCancelOrder(o.id)}
                             disabled={cancellingOrderId === o.id}
-                            className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                             title="Cancel order"
                           >
-                            <XCircle className="w-3.5 h-3.5" />
+                            <XCircle className="w-4 h-4" />
                           </button>
                         </div>
                       ) : effectiveStatus === 'EXPIRED' ? (
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           onClick={() => {
                             if (onNavigate) onNavigate('/');
                             else window.location.href = '/';
                           }}
-                          className="text-xs py-1 px-2.5 h-auto text-slate-600 hover:text-slate-900 border-slate-200"
+                          className="text-xs py-1 px-2.5 h-auto text-slate-600 hover:text-indigo-600 font-semibold"
                         >
                           Reorder
                         </Button>
@@ -164,13 +169,13 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
                           variant="secondary"
                           size="sm"
                           onClick={() => onSelectCheckoutOrder(o)}
-                          leftIcon={<ExternalLink className="w-3 h-3" />}
-                          className="text-xs py-1 px-2.5 h-auto text-emerald-700 hover:bg-emerald-50 border-emerald-200"
+                          leftIcon={<ExternalLink className="w-3.5 h-3.5 text-emerald-600" />}
+                          className="text-xs py-1 px-3 h-auto text-emerald-700 hover:bg-emerald-50 border-emerald-200 font-bold"
                         >
                           View Link
                         </Button>
                       ) : (
-                        <span className="text-[11px] text-slate-300">---</span>
+                        <span className="text-[11px] text-slate-300 font-mono">---</span>
                       )}
                     </td>
                   </tr>
@@ -183,3 +188,5 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
     </Card>
   );
 };
+
+export default OrderHistoryCard;

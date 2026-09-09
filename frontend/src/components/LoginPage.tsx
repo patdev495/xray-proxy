@@ -163,18 +163,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center p-6 relative">
-      <div className="w-full max-w-md space-y-6">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center p-6 relative overflow-hidden">
+      {/* Aurora Ambient Mesh Background */}
+      <div className="absolute inset-0 bg-aurora-mesh opacity-80" />
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md space-y-6 relative z-10">
         {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-900 text-white shadow-xs">
-            <ShieldCheck className="w-6 h-6 text-white" />
+        <div className="text-center space-y-2.5">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/25 ring-4 ring-white/80 transition-transform hover:scale-105 duration-300">
+            <ShieldCheck className="w-7 h-7 text-white" />
           </div>
           <div className="flex items-center justify-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">xray-proxy</h1>
-            <Badge variant="slate" size="sm">VLESS-Reality</Badge>
+            <h1 className="text-2xl font-black tracking-tight text-slate-900">xray-proxy</h1>
+            <Badge variant="violet" size="sm" dot={true}>VLESS-Reality</Badge>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
             {mode === 'login'
               ? 'Sign in to access your proxy dashboard or manage control plane'
               : 'Create a customer account to rent high-speed proxy bandwidth'}
@@ -182,33 +188,37 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         </div>
 
         {/* Auth Card */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-7 space-y-5">
+        <div className="glass-card rounded-3xl border border-white/80 shadow-xl shadow-slate-200/50 p-8 space-y-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-500 opacity-90" />
+
           {/* Mode Switcher Tabs */}
-          <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl">
+          <div className="grid grid-cols-2 p-1 bg-slate-100/90 backdrop-blur-sm rounded-xl border border-slate-200/60">
             <button
               type="button"
               onClick={() => handleTabChange('login')}
-              className={`py-2 text-xs font-semibold rounded-lg transition-all ${mode === 'login'
+              className={`py-2 text-xs font-bold rounded-lg transition-all ${
+                mode === 'login'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
-                }`}
+              }`}
             >
               Sign In
             </button>
             <button
               type="button"
               onClick={() => handleTabChange('register')}
-              className={`py-2 text-xs font-semibold rounded-lg transition-all ${mode === 'register'
+              className={`py-2 text-xs font-bold rounded-lg transition-all ${
+                mode === 'register'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
-                }`}
+              }`}
             >
               Create Account
             </button>
           </div>
 
-          <div className="border-b border-slate-100 pb-2">
-            <h2 className="text-sm font-semibold text-slate-900">
+          <div className="border-b border-slate-100/80 pb-2">
+            <h2 className="text-sm font-bold text-slate-900">
               {mode === 'login' ? 'Account Authentication' : 'New Customer Registration'}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -219,13 +229,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
 
           {error && (
-            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200/80 text-rose-700 text-xs flex items-center gap-2">
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200/80 text-rose-700 text-xs flex items-center gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-              <span>{error}</span>
+              <span className="font-medium">{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Username"
               type="text"
@@ -233,7 +243,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. johndoe"
-              leftIcon={<UserIcon className="w-4 h-4" />}
+              leftIcon={<UserIcon className="w-4 h-4 text-slate-400" />}
             />
 
             {mode === 'register' && (
@@ -243,7 +253,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                leftIcon={<Mail className="w-4 h-4" />}
+                leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
               />
             )}
 
@@ -254,7 +264,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              leftIcon={<Lock className="w-4 h-4" />}
+              leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
             />
 
             {mode === 'register' && (
@@ -266,7 +276,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  leftIcon={<Lock className="w-4 h-4" />}
+                  leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
                 />
                 {confirmPassword.length > 0 && (
                   <p
@@ -292,22 +302,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
             <Button
               type="submit"
-              variant="primary"
+              variant="gradient"
               size="md"
-              className="w-full mt-2"
+              className="w-full mt-3 font-semibold shadow-md shadow-indigo-500/20"
               isLoading={isSubmitting}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              {mode === 'login' ? 'Sign In' : 'Create Account'}
+              {mode === 'login' ? 'Sign In to Account' : 'Complete Registration'}
             </Button>
           </form>
 
-          {/* Conditional Google Sign In Button (Graceful Fallback) */}
+          {/* Conditional Google Sign In Button */}
           {googleClientId && (
             <div className="space-y-3 pt-2">
               <div className="relative flex items-center justify-center">
-                <div className="border-t border-slate-200 w-full" />
-                <span className="bg-white px-2.5 text-[11px] font-medium text-slate-400 uppercase tracking-wider relative">
+                <div className="border-t border-slate-200/80 w-full" />
+                <span className="bg-white/90 backdrop-blur-xs px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider relative">
                   Or continue with
                 </span>
               </div>
@@ -316,7 +326,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 type="button"
                 onClick={handleGoogleClick}
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2.5 py-2 px-4 rounded-lg border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors shadow-xs"
+                className="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all shadow-xs hover:border-slate-300"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path
@@ -345,7 +355,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           {mode === 'login' && (
             <div className="pt-3 border-t border-slate-100 text-center">
               <p className="text-[11px] text-slate-400">
-                <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono">admin</code> / <code className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono"></code>
+                Default credentials: <code className="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-semibold">admin</code> / <code className="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-semibold">admin123</code>
               </p>
             </div>
           )}
@@ -354,15 +364,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="pt-2 text-center">
               <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Instant access upon registration</span>
+                <span>Instant proxy provisioning upon registration</span>
               </p>
             </div>
           )}
         </div>
 
         {/* Security Footer Note */}
-        <div className="text-center text-xs text-slate-400">
-          Protected by JWT token encryption &amp; bcrypt password hashing
+        <div className="text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+          <span>Secured by JWT session tokens &amp; bcrypt cryptographic hashing</span>
         </div>
       </div>
     </div>

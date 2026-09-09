@@ -164,7 +164,7 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
             Cancel
           </Button>
           <Button
-            variant="primary"
+            variant="gradient"
             size="sm"
             onClick={handleSubmit}
             disabled={isSubmitting}

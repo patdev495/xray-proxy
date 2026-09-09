@@ -208,26 +208,28 @@ export const NodesTab: React.FC = () => {
       {/* Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Xray Data Plane Nodes</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Remote VPS running <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono">xray-core</code> controlled via gRPC API.
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Xray Data Plane Fleet</h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">
+            Remote VPS running <code className="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-bold">xray-core</code> monitored &amp; synchronized via gRPC telemetry.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button
             variant="secondary"
             size="sm"
-            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 text-indigo-600 ${isLoading ? 'animate-spin' : ''}`} />}
             onClick={loadNodes}
             disabled={isLoading}
+            className="font-bold text-xs"
           >
-            Refresh
+            Refresh Nodes
           </Button>
           <Button
-            variant="primary"
+            variant="gradient"
             size="sm"
             leftIcon={<Plus className="w-4 h-4" />}
             onClick={() => setIsAddSheetOpen(true)}
+            className="font-bold text-xs shadow-md shadow-indigo-500/20"
           >
             Add New Node
           </Button>
@@ -235,37 +237,39 @@ export const NodesTab: React.FC = () => {
       </div>
 
       {/* Nodes Table Card */}
-      <Card>
+      <Card className="rounded-3xl border border-indigo-100/70 shadow-md shadow-indigo-950/5 bg-white/95 backdrop-blur-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 font-semibold uppercase tracking-wider">
-                <th className="py-3 px-5">Node &amp; Region</th>
-                <th className="py-3 px-5">Host &amp; Inbound</th>
-                <th className="py-3 px-5">Capacity / Subs</th>
-                <th className="py-3 px-5">State &amp; Reality Keys</th>
-                <th className="py-3 px-5">Carrier SNI Profiles</th>
-                <th className="py-3 px-5 text-right">Actions</th>
+              <tr className="border-b border-slate-100/90 bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                <th className="py-3.5 px-5">Node &amp; Region</th>
+                <th className="py-3.5 px-5">Host &amp; Inbound</th>
+                <th className="py-3.5 px-5">Capacity / Subs</th>
+                <th className="py-3.5 px-5">State &amp; Reality Keys</th>
+                <th className="py-3.5 px-5">Carrier SNI Profiles</th>
+                <th className="py-3.5 px-5 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 bg-white/70">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-slate-400">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-400" />
-                    Loading node infrastructure...
+                  <td colSpan={6} className="py-16 text-center text-slate-400">
+                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-500" />
+                    <span className="font-bold text-xs tracking-wide uppercase text-slate-500">Connecting to node infrastructure...</span>
                   </td>
                 </tr>
               ) : nodes.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center">
-                    <Server className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-slate-700">No nodes registered yet</p>
-                    <p className="text-xs text-slate-400 mt-1">Register a remote VPS to start serving VLESS-Reality proxies.</p>
+                  <td colSpan={6} className="py-16 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-3 shadow-xs">
+                      <Server className="w-7 h-7" />
+                    </div>
+                    <p className="text-base font-bold text-slate-800">No nodes registered yet</p>
+                    <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Register a remote VPS instance to begin routing high-speed VLESS-Reality traffic.</p>
                     <Button
-                      variant="primary"
+                      variant="gradient"
                       size="sm"
-                      className="mt-4"
+                      className="mt-4 font-bold text-xs"
                       leftIcon={<Plus className="w-4 h-4" />}
                       onClick={() => setIsAddSheetOpen(true)}
                     >

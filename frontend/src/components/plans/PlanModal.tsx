@@ -282,10 +282,10 @@ export const PlanModal: React.FC<PlanModalProps> = ({
               return (
                 <label
                   key={region.id}
-                  className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition-colors text-xs ${
+                  className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all text-xs ${
                     isChecked
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      ? 'bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-950 border-indigo-300 ring-1 ring-indigo-500/20 shadow-xs'
+                      : 'bg-white border-slate-200/90 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -296,15 +296,15 @@ export const PlanModal: React.FC<PlanModalProps> = ({
                       className="sr-only"
                     />
                     <span className="text-base">{region.flag}</span>
-                    <span className="font-medium">{region.name}</span>
+                    <span className="font-semibold">{region.name}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className={`text-[10px] font-mono px-1 py-0.5 rounded ${
-                      isChecked ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-500'
+                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+                      isChecked ? 'bg-indigo-100/80 text-indigo-700 font-bold' : 'bg-slate-100 text-slate-500'
                     }`}>
                       {region.code}
                     </span>
-                    {isChecked && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                    {isChecked && <Check className="w-3.5 h-3.5 text-indigo-600" />}
                   </div>
                 </label>
               );
@@ -326,7 +326,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
           </Button>
           <Button
             type="submit"
-            variant="primary"
+            variant="gradient"
             size="sm"
             disabled={isSubmitting}
             leftIcon={<Save className="w-3.5 h-3.5" />}

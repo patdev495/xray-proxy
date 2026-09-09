@@ -42,32 +42,32 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      {/* Frosted Deep Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-slate-950/50 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
         onClick={onClose}
       />
 
-      {/* Modal Surface */}
+      {/* Glassmorphic Modal Surface */}
       <div
-        className={`relative bg-white rounded-2xl border border-slate-200/90 shadow-xl w-full ${maxWidthClasses[maxWidth]} z-10 overflow-hidden transform transition-all animate-in zoom-in-95 duration-150`}
+        className={`relative bg-white/95 backdrop-blur-2xl rounded-3xl border border-white/70 shadow-2xl shadow-indigo-950/20 w-full ${maxWidthClasses[maxWidth]} z-10 overflow-hidden transform transition-all animate-in zoom-in-95 duration-200`}
       >
-        <div className="flex items-center justify-between p-5 border-b border-slate-100">
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-slate-100/80">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">{title}</h3>
-            {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
+            <h3 className="text-base font-bold text-slate-900 tracking-tight">{title}</h3>
+            {description && <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{description}</p>}
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 transition-colors cursor-pointer"
             title="Close"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-5">{children}</div>
+        <div className="p-6">{children}</div>
       </div>
     </div>
   );

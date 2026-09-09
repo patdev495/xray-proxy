@@ -25,7 +25,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
+    <div className="min-h-screen bg-aurora-mesh flex font-sans text-slate-900 selection:bg-indigo-600 selection:text-white relative">
+      {/* Ambient decorative glow */}
+      <div className="fixed top-0 left-64 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="fixed bottom-0 right-0 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
+
       {/* Left Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -45,12 +49,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         />
 
-        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto space-y-6">
           {children}
         </main>
 
-        <footer className="border-t border-slate-200/80 py-4 px-6 text-center text-xs text-slate-400 bg-white">
-          xray-proxy Control Plane &bull; Built with FastAPI (Python UV) &amp; React TypeScript Tailwind CSS
+        <footer className="border-t border-slate-200/60 py-4 px-6 text-center text-xs text-slate-400 bg-white/60 backdrop-blur-md">
+          xray-proxy Control Plane &bull; High-Performance VLESS-Reality &amp; gRPC Traffic Management
         </footer>
       </div>
     </div>

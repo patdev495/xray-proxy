@@ -1,19 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @layer base {
   :root {
-    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    
+    /* Core Brand Tokens */
+    --color-primary: #6366f1;
+    --color-primary-hover: #4f46e5;
+    --color-secondary: #8b5cf6;
+    --color-accent-cyan: #06b6d4;
+    --color-accent-emerald: #10b981;
+    --color-accent-amber: #f59e0b;
+    --color-accent-rose: #f43f5e;
   }
 
   body {
-    background-color: #f8fafc; /* bg-slate-50 */
-    color: #0f172a; /* text-slate-900 */
+    background-color: #f8fafc;
+    color: #0f172a;
     font-family: var(--font-sans);
     margin: 0;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 
   /* Smooth custom scrollbars */
@@ -34,4 +45,138 @@
   ::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
   }
+}
+
+/* Ambient Aurora Mesh Backgrounds */
+.bg-aurora-mesh {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(ellipse at 10% 5%, rgba(99, 102, 241, 0.12) 0%, transparent 45%),
+    radial-gradient(ellipse at 90% 15%, rgba(6, 182, 212, 0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 60%, rgba(139, 92, 246, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(244, 63, 94, 0.06) 0%, transparent 45%);
+  background-attachment: fixed;
+}
+
+.bg-aurora-glow-indigo {
+  background: radial-gradient(circle at center, rgba(99, 102, 241, 0.18) 0%, transparent 70%);
+}
+
+.bg-aurora-glow-cyan {
+  background: radial-gradient(circle at center, rgba(6, 182, 212, 0.18) 0%, transparent 70%);
+}
+
+.bg-aurora-glow-amber {
+  background: radial-gradient(circle at center, rgba(245, 158, 11, 0.18) 0%, transparent 70%);
+}
+
+/* Glassmorphic Surfaces */
+.glass-card {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 20px -2px rgba(99, 102, 241, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+}
+
+.glass-card-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(165, 180, 252, 0.6);
+  box-shadow: 0 12px 30px -4px rgba(99, 102, 241, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.06);
+}
+
+.glass-panel {
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+/* Glowing Neon & Gradient Borders */
+.border-gradient-brand {
+  border-image: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899) 1;
+}
+
+.glow-brand-sm {
+  box-shadow: 0 0 15px -2px rgba(99, 102, 241, 0.25);
+}
+
+.glow-brand-md {
+  box-shadow: 0 0 25px -4px rgba(99, 102, 241, 0.35);
+}
+
+.glow-emerald-sm {
+  box-shadow: 0 0 12px -2px rgba(16, 185, 129, 0.3);
+}
+
+.glow-amber-sm {
+  box-shadow: 0 0 12px -2px rgba(245, 158, 11, 0.3);
+}
+
+/* Keyframes & Animations */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: shimmer 2.2s infinite;
+}
+
+@keyframes radar-wave {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.animate-radar {
+  animation: radar-wave 2s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+@keyframes float-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-float {
+  animation: float-subtle 3s ease-in-out infinite;
 }

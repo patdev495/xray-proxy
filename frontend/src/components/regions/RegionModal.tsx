@@ -160,7 +160,7 @@ export const RegionModal: React.FC<RegionModalProps> = ({
             Cancel
           </Button>
           <Button
-            variant="primary"
+            variant="gradient"
             size="sm"
             onClick={handleSubmit}
             disabled={isSubmitting}

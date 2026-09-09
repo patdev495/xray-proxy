@@ -6,7 +6,6 @@ import { useAuth } from '../../context/AuthContext';
 import type { ConnectionStatus } from '../../types/api';
 import type { NavTabId } from './Sidebar';
 
-
 interface HeaderProps {
   activeTab: NavTabId;
   status: ConnectionStatus;
@@ -27,7 +26,6 @@ export const Header: React.FC<HeaderProps> = ({
   const { logout } = useAuth();
 
   const tabTitles: Record<NavTabId, { title: string; subtitle: string }> = {
-
     overview: {
       title: 'System Overview',
       subtitle: 'Real-time telemetry across Control Plane and Data Plane nodes',
@@ -58,23 +56,23 @@ export const Header: React.FC<HeaderProps> = ({
     ConnectionStatus,
     { variant: 'emerald' | 'amber' | 'rose'; label: string; pulse: boolean }
   > = {
-    connected: { variant: 'emerald', label: 'Backend Online', pulse: true },
-    checking: { variant: 'amber', label: 'Checking...', pulse: true },
-    degraded: { variant: 'amber', label: 'Degraded', pulse: false },
+    connected: { variant: 'emerald', label: 'Control Plane Online', pulse: true },
+    checking: { variant: 'amber', label: 'Checking Health...', pulse: true },
+    degraded: { variant: 'amber', label: 'Degraded Nodes', pulse: false },
     offline: { variant: 'rose', label: 'Backend Offline', pulse: false },
   };
 
   const currentStatus = statusVariants[status];
 
   return (
-    <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-200/80 px-6 py-3.5">
+    <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-white/60 px-4 sm:px-8 py-3.5 shadow-xs">
       <div className="flex items-center justify-between gap-4">
         {/* Left: Mobile Toggle & Breadcrumb */}
         <div className="flex items-center gap-3">
           {onToggleMobileMenu && (
             <button
               onClick={onToggleMobileMenu}
-              className="md:hidden p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+              className="md:hidden p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
               title="Open Navigation"
             >
               <Menu className="w-5 h-5" />
@@ -82,12 +80,12 @@ export const Header: React.FC<HeaderProps> = ({
           )}
 
           <div>
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
               <span>Control Plane</span>
               <span>/</span>
-              <span className="font-medium text-slate-700">{tabTitles[activeTab].title}</span>
+              <span className="font-semibold text-indigo-600">{tabTitles[activeTab].title}</span>
             </div>
-            <h2 className="text-base font-bold text-slate-900 tracking-tight mt-0.5">
+            <h2 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight mt-0.5">
               {tabTitles[activeTab].title}
             </h2>
           </div>
@@ -101,7 +99,7 @@ export const Header: React.FC<HeaderProps> = ({
             size="md"
             dot={true}
             pulseDot={currentStatus.pulse}
-            className="shadow-2xs font-medium"
+            className="shadow-xs font-bold"
           >
             {currentStatus.label}
           </Badge>
@@ -112,8 +110,9 @@ export const Header: React.FC<HeaderProps> = ({
             size="sm"
             onClick={onRefresh}
             isLoading={isRefreshing}
-            leftIcon={!isRefreshing && <RefreshCw className="w-3.5 h-3.5" />}
+            leftIcon={!isRefreshing && <RefreshCw className="w-3.5 h-3.5 text-indigo-600" />}
             title={lastChecked ? `Last refreshed: ${lastChecked}` : 'Refresh telemetry'}
+            className="font-semibold text-xs"
           >
             <span className="hidden sm:inline">Refresh</span>
           </Button>
@@ -123,10 +122,10 @@ export const Header: React.FC<HeaderProps> = ({
             href="http://127.0.0.1:8000/docs"
             target="_blank"
             rel="noreferrer"
-            className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition-colors"
+            className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/60 border border-slate-200/90 transition-all hover:-translate-y-0.5 shadow-2xs"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-            <span>API Docs</span>
+            <ExternalLink className="w-3.5 h-3.5 text-indigo-500" />
+            <span>FastAPI Docs</span>
           </a>
 
           {/* Sign Out Button */}
@@ -135,7 +134,7 @@ export const Header: React.FC<HeaderProps> = ({
             size="sm"
             onClick={logout}
             leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-400" />}
-            className="text-xs text-slate-600 hover:text-rose-600 hover:bg-rose-50"
+            className="text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50"
             title="Sign out of Control Plane"
           >
             <span className="hidden sm:inline">Sign Out</span>
@@ -145,6 +144,5 @@ export const Header: React.FC<HeaderProps> = ({
     </header>
   );
 };
-
 
 export default Header;
