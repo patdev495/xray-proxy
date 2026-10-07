@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   RefreshCw,
   CheckCircle2,
@@ -12,12 +13,14 @@ import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
 import { fetchAdminOrders, confirmAdminOrder } from '../../services/apiClient';
 import type { Order } from '../../types/order';
+import { formatDateTime, formatVnd } from '../../utils/date';
 
 type StatusFilter = 'ALL' | 'PENDING' | 'PAID' | 'EXPIRED';
 
 export const OrdersTab: React.FC = () => {
   const { token } = useAuth();
   const { showToast } = useToast();
+  const { i18n, t } = useTranslation();
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -32,12 +35,12 @@ export const OrdersTab: React.FC = () => {
       const data = await fetchAdminOrders(token, statusFilter);
       setOrders(data);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to load orders';
-      showToast({ type: 'error', title: 'Failed to load orders', message: msg });
+      const msg = err instanceof Error ? err.message : t('management.ordersLoadFailed');
+      showToast({ type: 'error', title: t('management.ordersLoadFailed'), message: msg });
     } finally {
       setIsLoading(false);
     }
-  }, [token, statusFilter, showToast]);
+  }, [token, statusFilter, showToast, t]);
 
   useEffect(() => {
     loadOrders();
@@ -46,7 +49,7 @@ export const OrdersTab: React.FC = () => {
   const handleManualConfirm = async (order: Order) => {
     if (!token) return;
     const confirmed = window.confirm(
-      `Manually confirm payment for order "${order.code}" (Amount: ${order.amount_vnd.toLocaleString('vi-VN')} VND)?\nThe system will allocate a node and activate the Subscription immediately.`
+      t('management.orderConfirm', { code: order.code, amount: formatVnd(order.amount_vnd, i18n.language) })
     );
     if (!confirmed) return;
 
@@ -55,13 +58,13 @@ export const OrdersTab: React.FC = () => {
       const updated = await confirmAdminOrder(token, order.id);
       showToast({
         type: 'success',
-        title: 'Order Activated',
-        message: `Order ${updated.code} has been successfully activated (Subscription ID: ${updated.subscription_id}).`,
+        title: t('management.orderActivated'),
+        message: t('management.orderActivatedMessage', { code: updated.code, subscription: updated.subscription_id }),
       });
       await loadOrders();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Confirmation failed';
-      showToast({ type: 'error', title: 'Confirmation error', message: msg });
+      const msg = err instanceof Error ? err.message : t('management.confirmationFailed');
+      showToast({ type: 'error', title: t('management.confirmationError'), message: msg });
     } finally {
       setConfirmingId(null);
     }
@@ -84,11 +87,11 @@ export const OrdersTab: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-100/60 pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Order Management &amp; VietQR Billing</h2>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">{t('management.orderManagement')}</h2>
             <Badge variant="emerald" size="sm" dot={true}>SePay Webhook Active</Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            Track VietQR payment reconciliation, automated webhook provisoning, and manual supervisor approval.
+            {t('management.orderManagementDescription')}
           </p>
         </div>
 
@@ -101,7 +104,7 @@ export const OrdersTab: React.FC = () => {
             disabled={isLoading}
             className="font-bold text-xs"
           >
-            Refresh Orders
+            {t('management.refreshOrders')}
           </Button>
         </div>
       </div>
@@ -122,12 +125,12 @@ export const OrdersTab: React.FC = () => {
               }`}
             >
               {f === 'ALL'
-                ? 'All Orders'
+                ? t('management.allOrders')
                 : f === 'PENDING'
-                ? 'Pending Payment'
+                ? t('portal.awaitingPayment')
                 : f === 'PAID'
-                ? 'Paid & Active'
-                : 'Expired'}
+                ? t('portal.paidActive')
+                : t('portal.expired')}
             </button>
           ))}
         </div>
@@ -137,7 +140,7 @@ export const OrdersTab: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search code, user, plan..."
+            placeholder={t('management.searchOrders')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full text-xs pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200/90 bg-white/90 text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-2xs"
@@ -151,14 +154,7 @@ export const OrdersTab: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-100/90 bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                <th className="py-3.5 px-5">Order Code</th>
-                <th className="py-3.5 px-5">Customer</th>
-                <th className="py-3.5 px-5">Plan</th>
-                <th className="py-3.5 px-5">Amount</th>
-                <th className="py-3.5 px-5">Region</th>
-                <th className="py-3.5 px-5">Status</th>
-                <th className="py-3.5 px-5">Created At</th>
-                <th className="py-3.5 px-5 text-right">Actions</th>
+                <th className="py-3.5 px-5">{t('portal.orderCode')}</th><th className="py-3.5 px-5">{t('management.customer')}</th><th className="py-3.5 px-5">{t('management.plan')}</th><th className="py-3.5 px-5">{t('portal.amount')}</th><th className="py-3.5 px-5">{t('portal.region')}</th><th className="py-3.5 px-5">{t('portal.status')}</th><th className="py-3.5 px-5">{t('management.createdAt')}</th><th className="py-3.5 px-5 text-right">{t('portal.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white/70">
@@ -166,13 +162,13 @@ export const OrdersTab: React.FC = () => {
                 <tr>
                   <td colSpan={8} className="py-16 text-center text-slate-400">
                     <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-500" />
-                    <span className="font-bold text-xs uppercase tracking-wider text-slate-500">Querying transaction ledger...</span>
+                    <span className="font-bold text-xs uppercase tracking-wider text-slate-500">{t('management.loadingOrders')}</span>
                   </td>
                 </tr>
               ) : filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-16 text-center text-slate-400 font-medium">
-                    No orders match the filter criteria.
+                    {t('management.noMatchingOrders')}
                   </td>
                 </tr>
               ) : (
@@ -207,7 +203,7 @@ export const OrdersTab: React.FC = () => {
 
                       {/* Amount */}
                       <td className="py-3.5 px-5 font-mono font-black text-slate-900">
-                        {order.amount_vnd.toLocaleString('vi-VN')} VND
+                        {formatVnd(order.amount_vnd, i18n.language)}
                       </td>
 
                       {/* Region */}
@@ -226,18 +222,18 @@ export const OrdersTab: React.FC = () => {
                           pulseDot={isPending}
                         >
                           {isPaid
-                            ? 'Paid'
+                            ? t('management.paid')
                             : isPending
-                            ? 'Pending'
+                            ? t('management.pending')
                             : order.status === 'EXPIRED'
-                            ? 'Expired'
-                            : 'Cancelled'}
+                            ? t('portal.expired')
+                            : t('portal.cancelled')}
                         </Badge>
                       </td>
 
                       {/* Date */}
                       <td className="py-3.5 px-5 text-slate-400 font-mono text-[11px] font-medium">
-                        {new Date(order.created_at).toLocaleString('en-GB')}
+                        {formatDateTime(order.created_at, i18n.language)}
                       </td>
 
                       {/* Actions */}
@@ -257,7 +253,7 @@ export const OrdersTab: React.FC = () => {
                             className="text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-xs"
                             leftIcon={<Check className="w-3.5 h-3.5 text-white" />}
                           >
-                            Approve Order
+                            {t('management.approveOrder')}
                           </Button>
                         )}
                       </td>

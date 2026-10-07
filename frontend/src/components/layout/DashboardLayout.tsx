@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Sidebar, type NavTabId } from './Sidebar';
 import { Header } from './Header';
 import type { ConnectionStatus } from '../../types/api';
@@ -22,6 +23,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   lastChecked,
   children,
 }) => {
+  const { t } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   return (
@@ -54,7 +56,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </main>
 
         <footer className="border-t border-slate-200/60 py-4 px-6 text-center text-xs text-slate-400 bg-white/60 backdrop-blur-md">
-          xray-proxy Control Plane &bull; High-Performance VLESS-Reality &amp; gRPC Traffic Management
+          {t('admin.footer')}
         </footer>
       </div>
     </div>

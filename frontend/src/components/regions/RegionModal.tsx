@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Save } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -23,6 +24,7 @@ export const RegionModal: React.FC<RegionModalProps> = ({
   token,
 }) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [code, setCode] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [flag, setFlag] = useState<string>('🌐');
@@ -53,8 +55,8 @@ export const RegionModal: React.FC<RegionModalProps> = ({
     if (!code.trim() || !name.trim()) {
       showToast({
         type: 'error',
-        title: 'Validation Error',
-        message: 'Region code and name are required.',
+        title: t('management.validationError'),
+        message: t('management.regionRequired'),
       });
       return;
     }
@@ -71,8 +73,8 @@ export const RegionModal: React.FC<RegionModalProps> = ({
         });
         showToast({
           type: 'success',
-          title: 'Region Updated',
-          message: `Region ${name} updated successfully.`,
+          title: t('management.regionUpdated'),
+          message: t('management.regionUpdatedMessage', { name }),
         });
       } else {
         await createAdminRegion(token, {
@@ -84,8 +86,8 @@ export const RegionModal: React.FC<RegionModalProps> = ({
         });
         showToast({
           type: 'success',
-          title: 'Region Created',
-          message: `Region ${name} added successfully.`,
+          title: t('management.regionCreated'),
+          message: t('management.regionCreatedMessage', { name }),
         });
       }
       onSuccess();
@@ -93,7 +95,7 @@ export const RegionModal: React.FC<RegionModalProps> = ({
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Save Failed',
+        title: t('management.saveFailed'),
         message: err instanceof Error ? err.message : 'Failed to save region',
       });
     } finally {
@@ -105,30 +107,30 @@ export const RegionModal: React.FC<RegionModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialRegion ? `Edit Region: ${initialRegion.name}` : 'Add New Region'}
+      title={initialRegion ? `${t('management.edit')} ${initialRegion.name}` : t('management.addRegion')}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Region Code"
-            placeholder="e.g. VN, SG, JP, US"
+            label={t('management.regionCode')}
+            placeholder={t('management.exampleRegionCode')}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             required
             hint="2-3 letter ISO or short code"
           />
           <Input
-            label="Flag Emoji"
+            label={t('management.flagEmoji')}
             placeholder="🇻🇳"
             value={flag}
             onChange={(e) => setFlag(e.target.value)}
-            hint="Display flag icon"
+            hint={t('management.displayFlagHint')}
           />
         </div>
 
         <Input
-          label="Region Name"
-          placeholder="e.g. Vietnam, Singapore"
+          label={t('management.regionName')}
+          placeholder={t('management.exampleRegionName')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -136,11 +138,11 @@ export const RegionModal: React.FC<RegionModalProps> = ({
 
         <div className="grid grid-cols-2 gap-3 items-center">
           <Input
-            label="Sort Order"
+            label={t('management.sortOrder')}
             type="number"
             value={sortOrder.toString()}
             onChange={(e) => setSortOrder(parseInt(e.target.value, 10) || 0)}
-            hint="Lower numbers appear first"
+            hint={t('management.sortOrderHint')}
           />
           <div className="pt-3">
             <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-700">
@@ -150,14 +152,14 @@ export const RegionModal: React.FC<RegionModalProps> = ({
                 onChange={(e) => setIsActive(e.target.checked)}
                 className="w-4 h-4 rounded border-slate-300 text-slate-900"
               />
-              <span>Region is Active</span>
+              <span>{t('management.regionActive')}</span>
             </label>
           </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
           <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="gradient"
@@ -166,7 +168,7 @@ export const RegionModal: React.FC<RegionModalProps> = ({
             disabled={isSubmitting}
             leftIcon={initialRegion ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
           >
-            {isSubmitting ? 'Saving...' : initialRegion ? 'Save Changes' : 'Create Region'}
+            {isSubmitting ? t('common.saving') : initialRegion ? t('common.save') : t('management.addRegion')}
           </Button>
         </div>
       </form>

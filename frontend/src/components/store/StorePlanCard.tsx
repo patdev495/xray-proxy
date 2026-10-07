@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, ArrowRight, Sparkles, Plus, Minus, Zap } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import type { PlanItem } from '../../types/plan';
 import type { RegionStatus } from '../../types/node';
+import { formatVnd } from '../../utils/date';
 
 interface StorePlanCardProps {
   plan: PlanItem;
@@ -27,6 +29,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
   isBuying,
   isLoggedIn,
 }) => {
+  const { i18n, t } = useTranslation();
   const [cycle, setCycle] = useState<'MONTHLY' | 'DAILY'>('MONTHLY');
   const [selectedDays, setSelectedDays] = useState<number>(1);
   const [customInput, setCustomInput] = useState<string>('');
@@ -54,11 +57,11 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
 
   const displayQuota = isDaily
     ? `${quotaDailyGb * selectedDays} GB`
-    : (plan.quota_gb > 0 ? `${plan.quota_gb} GB` : 'Unlimited');
+    : (plan.quota_gb > 0 ? `${plan.quota_gb} GB` : t('store.unlimited'));
 
   const displayDays = isDaily
-    ? `${selectedDays} Day${selectedDays > 1 ? 's' : ''} (${selectedDays * 24} Hours)`
-    : `${plan.days_valid} Days`;
+    ? t('store.dayHours', { days: selectedDays, hours: selectedDays * 24 })
+    : t('store.days', { count: plan.days_valid });
 
   const handlePresetClick = (days: number) => {
     setSelectedDays(days);
@@ -109,7 +112,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-md shadow-indigo-500/30">
             <Zap className="w-3 h-3 fill-current" />
-            Most Popular
+            {t('store.mostPopular')}
           </span>
         </div>
       )}
@@ -127,9 +130,9 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <span>Monthly</span>
+              <span>{t('store.monthly')}</span>
               <span className="text-[10px] text-slate-400 font-mono font-normal">
-                {plan.price_vnd.toLocaleString('vi-VN')}₫
+                {formatVnd(plan.price_vnd, i18n.language)}
               </span>
             </button>
             <button
@@ -142,7 +145,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Daily Pass</span>
+              <span>{t('store.dailyPass')}</span>
             </button>
           </div>
         )}
@@ -156,33 +159,32 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
                 {selectedDays}D / {selectedDays * 24}H
               </Badge>
             ) : (
-              <Badge variant="indigo" size="sm">{plan.days_valid} Days</Badge>
+              <Badge variant="indigo" size="sm">{t('store.days', { count: plan.days_valid })}</Badge>
             )}
           </div>
 
           <div className="flex items-baseline gap-1.5 pt-1">
             <span className="text-3xl sm:text-4xl font-black text-slate-900 font-mono tracking-tight">
-              {displayPrice.toLocaleString('vi-VN')}
+              {formatVnd(displayPrice, i18n.language)}
             </span>
-            <span className="text-xs font-bold text-slate-400 uppercase font-sans">VND</span>
             {isDaily && (
               <span className="text-[11px] text-amber-700 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/25 font-semibold ml-1">
-                {priceDaily.toLocaleString('vi-VN')}₫/day
+                {formatVnd(priceDaily, i18n.language)}/{t('store.days', { count: 1 })}
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-2 text-xs text-slate-600 font-medium">
-            <span className="text-slate-400">Bandwidth:</span>
+            <span className="text-slate-400">{t('store.bandwidth')}:</span>
             <span className="font-bold text-indigo-700 font-mono bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
               {displayQuota}
             </span>
-            {isDaily && <span className="text-[11px] text-slate-400">({quotaDailyGb} GB/day)</span>}
+            {isDaily && <span className="text-[11px] text-slate-400">({t('store.dailyQuota', { quota: quotaDailyGb })})</span>}
           </div>
 
           {isDaily && (
             <p className="text-[11px] text-slate-400 italic leading-relaxed pt-0.5">
-              * Dedicated slot auto-clears on expiration. Continuous proxy streaming supported.
+              {t('store.expirationNote')}
             </p>
           )}
         </div>
@@ -190,7 +192,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
         {/* Day Selector — only shown when DAILY cycle */}
         {isDaily && (
           <div className="space-y-2.5 border border-amber-200/60 rounded-2xl p-3.5 bg-amber-50/40 backdrop-blur-xs">
-            <p className="text-[11px] font-bold text-amber-900 uppercase tracking-wider">Select duration</p>
+            <p className="text-[11px] font-bold text-amber-900 uppercase tracking-wider">{t('store.selectDuration')}</p>
 
             {/* Preset chips */}
             <div className="flex gap-2 flex-wrap">
@@ -205,7 +207,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
                       : 'bg-white text-slate-700 border-slate-200 hover:border-amber-400'
                   }`}
                 >
-                  {d} Day{d > 1 ? 's' : ''}
+                  {t('store.days', { count: d })}
                 </button>
               ))}
               <button
@@ -217,7 +219,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
                     : 'bg-white text-slate-700 border-slate-200 hover:border-amber-400'
                 }`}
               >
-                Custom
+                {t('store.custom')}
               </button>
             </div>
 
@@ -257,7 +259,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
               </button>
 
               <span className="text-xs text-amber-900 font-mono font-medium ml-1">
-                = <strong>{displayPrice.toLocaleString('vi-VN')}₫</strong>
+                = <strong>{formatVnd(displayPrice, i18n.language)}</strong>
               </span>
             </div>
           </div>
@@ -267,7 +269,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
         <div className="border-t border-slate-100/90 pt-4 space-y-2.5 text-xs text-slate-600">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="font-medium">TLS 1.3 Reality Encryption, ISP bypass</span>
+            <span className="font-medium">{t('store.tlsFeature')}</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -275,7 +277,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="font-medium">Validity: <strong className="text-slate-800">{displayDays}</strong></span>
+            <span className="font-medium">{t('store.validity')}: <strong className="text-slate-800">{displayDays}</strong></span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -286,10 +288,10 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
         {/* Region Selector */}
         <div className="border-t border-slate-100/90 pt-4 space-y-2.5">
           <div className="flex items-center justify-between text-xs">
-            <label className="font-bold text-slate-800">Select server region:</label>
+            <label className="font-bold text-slate-800">{t('store.selectRegion')}:</label>
             {isRegionSoldOut && (
               <span className="text-rose-600 font-bold text-[11px] bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
-                Sold out
+                {t('store.soldOut')}
               </span>
             )}
           </div>
@@ -329,7 +331,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
 
                   {soldOut ? (
                     <span className="shrink-0 px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold">
-                      Sold out
+                      {t('store.soldOut')}
                     </span>
                   ) : (
                     <span
@@ -339,7 +341,7 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
                           : 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
                       }`}
                     >
-                      {r?.available_slots ?? 0} slots left
+                      {t('store.slotsLeft', { count: r?.available_slots ?? 0 })}
                     </span>
                   )}
                 </button>
@@ -361,12 +363,12 @@ export const StorePlanCard: React.FC<StorePlanCardProps> = ({
           rightIcon={!isRegionSoldOut && !isBuying ? <ArrowRight className="w-4 h-4" /> : undefined}
         >
           {isRegionSoldOut
-            ? 'Region Sold Out'
+            ? t('store.regionSoldOutCta')
             : isLoggedIn
             ? isDaily
-              ? `Subscribe ${selectedDays} Day${selectedDays > 1 ? 's' : ''} — ${displayPrice.toLocaleString('vi-VN')}₫`
-              : 'Subscribe Monthly'
-            : 'Sign In to Purchase'}
+              ? t('store.subscribeDaily', { count: selectedDays, price: formatVnd(displayPrice, i18n.language) })
+              : t('store.subscribeMonthly')
+            : t('store.signInPurchase')}
         </Button>
       </div>
     </Card>

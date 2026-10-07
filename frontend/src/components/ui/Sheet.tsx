@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export interface SheetProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const Sheet: React.FC<SheetProps> = ({
   footer,
   width = 'md',
 }) => {
+  const { t } = useTranslation();
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -64,7 +66,7 @@ export const Sheet: React.FC<SheetProps> = ({
             <button
               onClick={onClose}
               className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100/80 transition-colors cursor-pointer"
-              title="Close panel"
+            title={t('common.close')}
             >
               <X className="w-5 h-5" />
             </button>

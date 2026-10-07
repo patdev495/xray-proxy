@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CheckCircle2,
   Clock,
@@ -15,6 +16,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { cancelMyOrder, fetchMyOrders, fetchMySubscriptions } from '../../services/apiClient';
 import { parseUtcDate } from '../../utils/date';
+import { formatVnd } from '../../utils/date';
 import type { Order } from '../../types/order';
 import type { SubscriptionItem } from '../../types/subscription';
 import { Badge } from '../ui/Badge';
@@ -23,6 +25,7 @@ import { Card } from '../ui/Card';
 import { CheckoutModal } from '../store/CheckoutModal';
 import { MySubscriptions } from './MySubscriptions';
 import { OrderHistoryCard } from './OrderHistoryCard';
+import { LanguageSelector } from '../ui/LanguageSelector';
 
 interface CustomerPortalProps {
   onNavigate?: (path: string) => void;
@@ -31,6 +34,7 @@ interface CustomerPortalProps {
 export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) => {
   const { user, token, logout } = useAuth();
   const { showToast } = useToast();
+  const { i18n, t } = useTranslation();
 
   const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>([]);
   const [isLoadingSubs, setIsLoadingSubs] = useState<boolean>(true);
@@ -86,20 +90,20 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
 
   const handleCancelOrder = async (orderId: number) => {
     if (!token) return;
-    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    if (!window.confirm(t('portal.cancelConfirm'))) return;
     try {
       setCancellingOrderId(orderId);
       await cancelMyOrder(token, orderId);
       showToast({
         type: 'success',
-        title: 'Order Cancelled',
-        message: 'The order has been successfully cancelled.',
+        title: t('portal.orderCancelled'),
+        message: t('portal.orderCancelledMessage'),
       });
       await loadOrders();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Cancellation Failed',
+        title: t('portal.cancellationFailed'),
         message: err instanceof Error ? err.message : 'Unable to cancel the order',
       });
     } finally {
@@ -122,10 +126,6 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
-
   return (
     <div className="min-h-screen bg-aurora-mesh text-slate-900 flex flex-col selection:bg-indigo-600 selection:text-white relative">
       {/* Ambient background glow dots */}
@@ -143,13 +143,14 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               <span className="font-extrabold tracking-tight text-slate-900 text-base sm:text-lg">
                 xray<span className="text-indigo-600">-proxy</span>
               </span>
-              <Badge variant="indigo" size="sm" dot={true}>Customer Portal</Badge>
+              <Badge variant="indigo" size="sm" dot={true}>{t('portal.badge')}</Badge>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">VLESS-Reality 4G Network Command Center</p>
+            <p className="text-[11px] text-slate-400 font-medium">{t('portal.subtitle')}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          <LanguageSelector />
           {onNavigate && (
             <Button
               variant="secondary"
@@ -158,7 +159,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               className="text-xs font-bold"
               leftIcon={<ShoppingBag className="w-3.5 h-3.5 text-indigo-600" />}
             >
-              Plan Store
+              {t('portal.planStore')}
             </Button>
           )}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs text-xs text-slate-700">
@@ -174,7 +175,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
             leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-400" />}
             className="text-xs font-semibold hover:text-rose-600 hover:bg-rose-50"
           >
-            Sign Out
+            {t('common.signOut')}
           </Button>
         </div>
       </header>
@@ -190,15 +191,15 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
               </div>
               <div className="text-xs space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-black text-amber-950 text-sm sm:text-base">Pending Payment</span>
+                  <span className="font-black text-amber-950 text-sm sm:text-base">{t('portal.pendingPayment')}</span>
                   <span className="font-mono font-black bg-amber-200/90 text-amber-950 px-2 py-0.5 rounded-lg text-xs border border-amber-300">
                     {pendingOrder.code}
                   </span>
                 </div>
                 <p className="text-amber-900 font-medium">
                   Plan <strong className="font-bold text-amber-950">{pendingOrder.plan_name}</strong> ({pendingOrder.region}) •{' '}
-                  <strong className="font-mono text-emerald-700 font-black">{formatVND(pendingOrder.amount_vnd)}</strong> •{' '}
-                  Payment deadline: <span className="font-mono font-black text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded-md">{getPendingRemainingTime(pendingOrder)}</span>
+                  <strong className="font-mono text-emerald-700 font-black">{formatVnd(pendingOrder.amount_vnd, i18n.language)}</strong> •{' '}
+                  {t('portal.paymentDeadline')}: <span className="font-mono font-black text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded-md">{getPendingRemainingTime(pendingOrder)}</span>
                 </p>
               </div>
             </div>
@@ -211,7 +212,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 disabled={cancellingOrderId === pendingOrder.id}
                 className="text-xs font-bold text-amber-900 hover:bg-amber-200/60"
               >
-                {cancellingOrderId === pendingOrder.id ? 'Cancelling...' : 'Cancel Order'}
+                {cancellingOrderId === pendingOrder.id ? t('portal.cancelling') : t('portal.cancelOrder')}
               </Button>
               <Button
                 variant="gradient"
@@ -223,7 +224,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 leftIcon={<QrCode className="w-4 h-4" />}
                 className="text-xs font-bold shadow-md shadow-amber-500/20 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white"
               >
-                Scan VietQR
+                {t('portal.scanVietQr')}
               </Button>
             </div>
           </div>
@@ -234,13 +235,13 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
           <div className="max-w-2xl space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-500/30 text-xs font-bold mb-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Customer Active Session
+              {t('portal.activeSession')}
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-              Welcome back, <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{user?.username}</span>
+              {t('portal.welcomeBack', { name: user?.username })}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-medium">
-              Manage your dedicated VLESS-Reality subscriptions, copy import configurations, switch cluster nodes, and renew instantly.
+              {t('portal.welcomeDescription')}
             </p>
           </div>
         </div>
@@ -267,21 +268,21 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 <div className="w-7 h-7 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   <UserIcon className="w-3.5 h-3.5" />
                 </div>
-                <h2 className="text-sm font-bold text-slate-900">Account Profile</h2>
+                <h2 className="text-sm font-bold text-slate-900">{t('portal.profile')}</h2>
               </div>
               <Badge variant="indigo" size="sm">{user?.role}</Badge>
             </div>
             <div className="space-y-2.5 text-xs">
               <div className="flex items-center justify-between text-slate-600">
-                <span className="text-slate-400 font-medium">Username:</span>
+                <span className="text-slate-400 font-medium">{t('portal.username')}:</span>
                 <span className="font-mono font-bold text-slate-900">{user?.username}</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
-                <span className="text-slate-400 font-medium">Email:</span>
-                <span className="font-semibold text-slate-800">{user?.email || 'Not configured'}</span>
+                <span className="text-slate-400 font-medium">{t('portal.email')}:</span>
+                <span className="font-semibold text-slate-800">{user?.email || t('common.notConfigured')}</span>
               </div>
               <div className="flex items-center justify-between text-slate-600">
-                <span className="text-slate-400 font-medium">Auth Provider:</span>
+                <span className="text-slate-400 font-medium">{t('portal.authProvider')}:</span>
                 <span className="capitalize font-semibold text-indigo-600">
                   {user?.oauth_provider ? `${user.oauth_provider} OAuth` : 'Password'}
                 </span>
@@ -296,12 +297,12 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
                   <Zap className="w-3.5 h-3.5" />
                 </div>
-                <h2 className="text-sm font-bold text-slate-900">Proxy Fleet</h2>
+                <h2 className="text-sm font-bold text-slate-900">{t('portal.proxyFleet')}</h2>
               </div>
-              <Badge variant="amber" size="sm">Self-Service</Badge>
+              <Badge variant="amber" size="sm">{t('portal.selfService')}</Badge>
             </div>
             <div className="space-y-2 text-xs text-slate-500">
-              <p className="leading-relaxed">All subscriptions auto-provision and sync traffic metrics in real-time across regional VPS clusters.</p>
+              <p className="leading-relaxed">{t('portal.proxyFleetDescription')}</p>
               {onNavigate && (
                 <Button
                   variant="gradient"
@@ -309,7 +310,7 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                   onClick={() => onNavigate('/')}
                   className="w-full mt-2 text-xs font-bold"
                 >
-                  Buy Another Plan
+                  {t('portal.buyAnotherPlan')}
                 </Button>
               )}
             </div>
@@ -322,17 +323,17 @@ export const CustomerPortal: React.FC<CustomerPortalProps> = ({ onNavigate }) =>
                 <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                   <KeyRound className="w-3.5 h-3.5" />
                 </div>
-                <h2 className="text-sm font-bold text-slate-900">Security &amp; Keys</h2>
+                <h2 className="text-sm font-bold text-slate-900">{t('portal.securityKeys')}</h2>
               </div>
-              <Badge variant="emerald" size="sm" dot={true}>Guaranteed</Badge>
+              <Badge variant="emerald" size="sm" dot={true}>{t('portal.guaranteed')}</Badge>
             </div>
             <div className="space-y-2 text-xs text-slate-500">
               <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span>Encrypted TLS 1.3 Reality</span>
+                <span>{t('portal.encryptedReality')}</span>
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Tokens are verified via cryptographically signed hashes to prevent credential sniffing.
+                {t('portal.securityDescription')}
               </p>
             </div>
           </Card>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Database } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -7,6 +8,7 @@ import { useToast } from '../../context/ToastContext';
 import { updateSubscription } from '../../services/apiClient';
 import type { SubscriptionItem } from '../../types/subscription';
 import { formatGb } from './subscriptionUtils';
+import { formatDateTime } from '../../utils/date';
 
 interface SubscriptionRenewModalProps {
   sub: SubscriptionItem | null;
@@ -22,6 +24,7 @@ export const SubscriptionRenewModal: React.FC<SubscriptionRenewModalProps> = ({
   token,
 }) => {
   const { showToast } = useToast();
+  const { i18n, t } = useTranslation();
   const [addQuotaGb, setAddQuotaGb] = useState<string>('0');
   const [addDays, setAddDays] = useState<string>('30');
   const [isRenewing, setIsRenewing] = useState<boolean>(false);
@@ -59,8 +62,8 @@ export const SubscriptionRenewModal: React.FC<SubscriptionRenewModalProps> = ({
 
       showToast({
         type: 'success',
-        title: 'Subscription Renewed',
-        message: `Extended ${sub.customer_name} by ${daysToAdd} days and +${quotaToAdd} GB.`,
+        title: t('portal.renew'),
+        message: `${sub.customer_name}: +${daysToAdd} ${t('store.days', { count: daysToAdd })}, +${quotaToAdd} GB.`,
       });
 
       onClose();
@@ -68,7 +71,7 @@ export const SubscriptionRenewModal: React.FC<SubscriptionRenewModalProps> = ({
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Renewal Failed',
+        title: t('portal.renewalCreateFailed'),
         message: err instanceof Error ? err.message : 'Could not renew subscription',
       });
     } finally {
@@ -80,41 +83,41 @@ export const SubscriptionRenewModal: React.FC<SubscriptionRenewModalProps> = ({
     <Modal
       isOpen={sub !== null}
       onClose={onClose}
-      title={`Renew Subscription - ${sub.customer_name}`}
-      description="Extend validity days or add additional bandwidth quota"
+      title={`${t('portal.renew')} - ${sub.customer_name}`}
+      description={t('portal.renewalDescription')}
     >
       <form onSubmit={handleRenewSubmit} className="space-y-4">
         <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
           <div className="flex justify-between">
-            <span className="text-slate-500">Current Quota:</span>
+            <span className="text-slate-500">{t('management.currentQuota')}:</span>
             <span className="font-mono font-semibold text-slate-800">
               {formatGb(sub.traffic_quota_bytes)} GB
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-500">Current Expiry:</span>
+            <span className="text-slate-500">{t('management.currentExpiry')}:</span>
             <span className="font-mono text-slate-700">
-              {new Date(sub.expires_at).toLocaleDateString()}
+              {formatDateTime(sub.expires_at, i18n.language)}
             </span>
           </div>
         </div>
 
         <Input
-          label="Additional Quota (GB)"
+          label={t('management.additionalQuota')}
           type="number"
           placeholder="0"
           value={addQuotaGb}
           onChange={(e) => setAddQuotaGb(e.target.value)}
-          hint="GB to add to the existing quota"
+          hint={t('management.additionalQuotaHint')}
         />
 
         <Input
-          label="Additional Days"
+          label={t('management.additionalDays')}
           type="number"
           placeholder="30"
           value={addDays}
           onChange={(e) => setAddDays(e.target.value)}
-          hint="Days to extend from current expiry"
+          hint={t('management.additionalDaysHint')}
         />
 
         <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
@@ -125,7 +128,7 @@ export const SubscriptionRenewModal: React.FC<SubscriptionRenewModalProps> = ({
             onClick={onClose}
             disabled={isRenewing}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -134,7 +137,7 @@ export const SubscriptionRenewModal: React.FC<SubscriptionRenewModalProps> = ({
             disabled={isRenewing}
             leftIcon={<Database className="w-3.5 h-3.5" />}
           >
-            {isRenewing ? 'Updating...' : 'Save & Renew'}
+            {isRenewing ? t('common.saving') : t('management.saveRenew')}
           </Button>
         </div>
       </form>

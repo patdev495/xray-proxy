@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Save, Check } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { useToast } from '../../context/ToastContext';
 import { createAdminPlan, updateAdminPlan, fetchAdminRegions } from '../../services/apiClient';
-import type { PlanItem } from '../../types/plan';
+import type { PlanCreate, PlanItem } from '../../types/plan';
 import type { RegionItem } from '../../types/region';
 
 interface PlanModalProps {
@@ -26,6 +27,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
   suggestedSortOrder,
 }) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [planName, setPlanName] = useState<string>('');
   const [planPrice, setPlanPrice] = useState<string>('30000');
@@ -103,15 +105,15 @@ export const PlanModal: React.FC<PlanModalProps> = ({
     if (!planName.trim()) {
       showToast({
         type: 'error',
-        title: 'Validation Error',
-        message: 'Plan name is required.',
+        title: t('management.validationError'),
+        message: t('management.planNameRequired'),
       });
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const payload: any = {
+      const payload: PlanCreate = {
         name: planName.trim(),
         price_vnd: parseInt(planPrice, 10) || 0,
         quota_gb: parseInt(planQuotaGb, 10) || 50,
@@ -119,23 +121,23 @@ export const PlanModal: React.FC<PlanModalProps> = ({
         allowed_regions: selectedRegionCodes,
         sort_order: editingPlan ? editingPlan.sort_order : suggestedSortOrder,
         enable_daily: enableDaily,
-        price_daily_vnd: enableDaily ? (parseInt(priceDailyVnd, 10) || 0) : null,
-        quota_daily_gb: enableDaily ? (parseFloat(quotaDailyGb) || 0) : null,
+        price_daily_vnd: enableDaily ? (parseInt(priceDailyVnd, 10) || 0) : undefined,
+        quota_daily_gb: enableDaily ? (parseFloat(quotaDailyGb) || 0) : undefined,
       };
 
       if (editingPlan) {
         await updateAdminPlan(token, editingPlan.id, payload);
         showToast({
           type: 'success',
-          title: 'Plan Updated',
-          message: `Plan "${planName}" was updated successfully.`,
+          title: t('management.planUpdated'),
+          message: t('management.planUpdatedMessage', { name: planName }),
         });
       } else {
         await createAdminPlan(token, payload);
         showToast({
           type: 'success',
-          title: 'Plan Created',
-          message: `Plan "${planName}" was created successfully.`,
+          title: t('management.planCreated'),
+          message: t('management.planCreatedMessage', { name: planName }),
         });
       }
       onClose();
@@ -143,7 +145,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Action Failed',
+        title: t('management.actionFailed'),
         message: err instanceof Error ? err.message : 'Failed to save plan',
       });
     } finally {
@@ -155,27 +157,27 @@ export const PlanModal: React.FC<PlanModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editingPlan ? `Edit Plan: ${editingPlan.name}` : 'Create New Subscription Plan'}
-      description="Define customer package pricing, traffic limit, validity and available regions."
+      title={editingPlan ? `${t('management.edit')} ${editingPlan.name}` : t('management.createPlan')}
+      description={t('management.plansGatewayDescription')}
       maxWidth="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="Plan Name"
-          placeholder="e.g. 4G Monthly High-Speed"
+          label={t('management.planName')}
+          placeholder={t('management.examplePlanName')}
           value={planName}
           onChange={(e) => setPlanName(e.target.value)}
           required
-          hint="Display name on storefront"
+          hint={t('management.displayNameHint')}
         />
 
         <div>
           <span className="block text-xs font-semibold text-slate-700 mb-1.5">
-            Main Plan Settings (Default Monthly)
+            {t('management.monthlySettings')}
           </span>
           <div className="grid grid-cols-3 gap-3">
             <Input
-              label="Price (VND)"
+              label={t('management.price')}
               type="number"
               min="0"
               step="1000"
@@ -185,7 +187,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
               required
             />
             <Input
-              label="Data Quota (GB)"
+              label={t('management.quota')}
               type="number"
               min="1"
               placeholder="100"
@@ -194,7 +196,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
               required
             />
             <Input
-              label="Validity (Days)"
+              label={t('management.validity')}
               type="number"
               min="1"
               placeholder="30"
@@ -216,10 +218,10 @@ export const PlanModal: React.FC<PlanModalProps> = ({
                   onChange={(e) => setEnableDaily(e.target.checked)}
                   className="rounded border-slate-300 text-slate-900 focus:ring-slate-900 h-4 w-4"
                 />
-                Enable Daily Trial Option (24 Hours)
+                {t('management.dailyTrial')}
               </label>
               <p className="text-[11px] text-slate-500 mt-0.5 ml-5.5">
-                Allow customers to purchase a 1-day trial. Node access is revoked immediately after 24 hours (0 grace period).
+                {t('management.dailyTrialDescription')}
               </p>
             </div>
           </div>
@@ -227,7 +229,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
           {enableDaily && (
             <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-200/60">
               <Input
-                label="1-Day Price (VND)"
+                label={t('management.dailyPrice')}
                 type="number"
                 min="0"
                 step="500"
@@ -235,10 +237,10 @@ export const PlanModal: React.FC<PlanModalProps> = ({
                 value={priceDailyVnd}
                 onChange={(e) => setPriceDailyVnd(e.target.value)}
                 required={enableDaily}
-                hint="e.g. 3000"
+                hint={t('management.exampleDailyPrice')}
               />
               <Input
-                label="1-Day Data Quota (GB)"
+                label={t('management.dailyQuota')}
                 type="number"
                 min="0.1"
                 step="0.5"
@@ -246,7 +248,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
                 value={quotaDailyGb}
                 onChange={(e) => setQuotaDailyGb(e.target.value)}
                 required={enableDaily}
-                hint="e.g. 6 GB / 24h"
+                hint={t('management.exampleDailyQuota')}
               />
             </div>
           )}
@@ -257,12 +259,12 @@ export const PlanModal: React.FC<PlanModalProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <label className="block text-xs font-semibold text-slate-700">
-                Allowed Server Regions
+                {t('management.allowedRegions')}
               </label>
               <p className="text-[11px] text-slate-500">
                 {isAllSelected
-                  ? 'All active regions are available for this plan'
-                  : `Restricted to ${selectedRegionCodes.length} selected region(s)`}
+                  ? t('management.allRegions')
+                  : `${selectedRegionCodes.length}`}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -271,7 +273,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
                 onClick={selectAllRegions}
                 className="text-[11px] text-slate-600 hover:text-slate-900 font-medium underline"
               >
-                Select All
+                {t('management.selectAll')}
               </button>
             </div>
           </div>
@@ -311,7 +313,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
             })}
           </div>
           {availableRegions.length === 0 && (
-            <p className="text-xs text-slate-400 italic">No active regions found.</p>
+            <p className="text-xs text-slate-400 italic">{t('management.noActiveRegions')}</p>
           )}
         </div>
 
@@ -322,7 +324,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
             size="sm"
             onClick={onClose}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
@@ -331,7 +333,7 @@ export const PlanModal: React.FC<PlanModalProps> = ({
             disabled={isSubmitting}
             leftIcon={<Save className="w-3.5 h-3.5" />}
           >
-            {isSubmitting ? 'Saving...' : editingPlan ? 'Update Plan' : 'Create Plan'}
+            {isSubmitting ? t('common.saving') : editingPlan ? t('management.updatePlan') : t('management.createPlan')}
           </Button>
         </div>
       </form>

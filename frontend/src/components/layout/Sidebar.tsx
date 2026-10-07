@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   ShieldCheck, 
   LayoutDashboard, 
@@ -36,45 +37,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
 }) => {
   const { user, logout } = useAuth();
+  const { t } = useTranslation();
 
   const navItems: NavItem[] = [
     {
       id: 'overview',
-      label: 'System Overview',
+      label: t('navigation.overview'),
       icon: <LayoutDashboard className="w-4 h-4" />,
       accentColor: 'text-indigo-500',
     },
     {
       id: 'nodes',
-      label: 'Nodes & SNI Profiles',
+      label: t('navigation.nodes'),
       icon: <Server className="w-4 h-4" />,
       badge: 'Issue 03',
       accentColor: 'text-cyan-500',
     },
     {
       id: 'subscriptions',
-      label: 'Customer Subscriptions',
+      label: t('navigation.subscriptions'),
       icon: <Users className="w-4 h-4" />,
       badge: 'Issue 04',
       accentColor: 'text-blue-500',
     },
     {
       id: 'plans',
-      label: 'Plans & Settings',
+      label: t('navigation.plans'),
       icon: <Package className="w-4 h-4" />,
       badge: 'Issue 02',
       accentColor: 'text-purple-500',
     },
     {
       id: 'orders',
-      label: 'Orders & Billing',
+      label: t('navigation.orders'),
       icon: <Receipt className="w-4 h-4" />,
       badge: 'SePay',
       accentColor: 'text-emerald-500',
     },
     {
       id: 'sync',
-      label: 'Node Sync & Telemetry',
+      label: t('navigation.sync'),
       icon: <RefreshCw className="w-4 h-4" />,
       accentColor: 'text-amber-500',
     },
@@ -94,7 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 xray<span className="text-indigo-600">-proxy</span>
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">Control Plane</p>
+            <p className="text-[11px] text-slate-400 font-medium">{t('navigation.controlPlane')}</p>
           </div>
         </div>
         <Badge variant="cyan" size="sm">v0.1</Badge>
@@ -103,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Navigation List */}
       <div className="flex-1 p-3 space-y-1.5 overflow-y-auto">
         <div className="px-3 py-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-          Management Console
+          {t('navigation.managementConsole')}
         </div>
         {navItems.map((item) => {
           const isActive = activeTab === item.id;
@@ -161,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={logout}
             className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-            title="Sign Out"
+            title={t('common.signOut')}
           >
             <LogOut className="w-4 h-4" />
           </button>

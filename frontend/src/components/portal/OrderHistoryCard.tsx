@@ -1,9 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ExternalLink, Receipt, RotateCw, XCircle } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
-import { parseUtcDate } from '../../utils/date';
+import { formatDateTime, formatVnd, parseUtcDate } from '../../utils/date';
 import type { Order } from '../../types/order';
 
 interface OrderHistoryCardProps {
@@ -27,18 +28,7 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
   onNavigate,
   now,
 }) => {
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-  };
-
-  const formatDate = (iso: string) => {
-    return parseUtcDate(iso).toLocaleString('en-GB', {
-      hour: '2-digit',
-      minute: '2-digit',
-      day: '2-digit',
-      month: '2-digit',
-    });
-  };
+  const { i18n, t } = useTranslation();
 
   const getPendingRemainingTime = (order: Order) => {
     const expiresAt = parseUtcDate(order.expires_at);
@@ -59,13 +49,13 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PAID':
-        return <Badge variant="emerald" size="sm" dot={true}>Paid &amp; Active</Badge>;
+        return <Badge variant="emerald" size="sm" dot={true}>{t('portal.paidActive')}</Badge>;
       case 'PENDING':
-        return <Badge variant="amber" size="sm" dot={true} pulseDot={true}>Awaiting Payment</Badge>;
+        return <Badge variant="amber" size="sm" dot={true} pulseDot={true}>{t('portal.awaitingPayment')}</Badge>;
       case 'CANCELLED':
-        return <Badge variant="slate" size="sm">Cancelled</Badge>;
+        return <Badge variant="slate" size="sm">{t('portal.cancelled')}</Badge>;
       case 'EXPIRED':
-        return <Badge variant="rose" size="sm">Expired</Badge>;
+        return <Badge variant="rose" size="sm">{t('portal.expired')}</Badge>;
       default:
         return <Badge variant="slate" size="sm">{status}</Badge>;
     }
@@ -80,9 +70,9 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
           </div>
           <div>
             <h2 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
-              Order &amp; Invoicing History ({orders.length})
+              {t('portal.orderHistory', { count: orders.length })}
             </h2>
-            <p className="text-[11px] text-slate-400 font-medium">Automatic VietQR transaction reconciliation</p>
+            <p className="text-[11px] text-slate-400 font-medium">{t('portal.orderHistorySubtitle')}</p>
           </div>
         </div>
         <Button
@@ -92,26 +82,20 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
           leftIcon={<RotateCw className={`w-3.5 h-3.5 ${isLoadingOrders ? 'animate-spin' : ''}`} />}
           className="text-xs font-semibold"
         >
-          Refresh
+          {t('common.refresh')}
         </Button>
       </div>
 
       <div className="overflow-x-auto">
         {orders.length === 0 ? (
           <div className="p-10 text-center text-xs text-slate-400 font-medium">
-            No order transactions found. Visit the Plan Store to rent bandwidth!
+            {t('portal.noOrders')}
           </div>
         ) : (
           <table className="w-full text-left text-xs text-slate-700 divide-y divide-slate-100">
             <thead className="bg-slate-50/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               <tr>
-                <th className="py-3 px-5">Order Code</th>
-                <th className="py-3 px-5">Package</th>
-                <th className="py-3 px-5">Region</th>
-                <th className="py-3 px-5">Amount</th>
-                <th className="py-3 px-5">Timestamp</th>
-                <th className="py-3 px-5">Status</th>
-                <th className="py-3 px-5 text-right">Actions</th>
+                <th className="py-3 px-5">{t('portal.orderCode')}</th><th className="py-3 px-5">{t('portal.package')}</th><th className="py-3 px-5">{t('portal.region')}</th><th className="py-3 px-5">{t('portal.amount')}</th><th className="py-3 px-5">{t('portal.timestamp')}</th><th className="py-3 px-5">{t('portal.status')}</th><th className="py-3 px-5 text-right">{t('portal.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white/70">
@@ -128,9 +112,9 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
                       </span>
                     </td>
                     <td className="py-3.5 px-5 font-mono font-bold text-slate-900">
-                      {formatVND(o.amount_vnd)}
+                      {formatVnd(o.amount_vnd, i18n.language)}
                     </td>
-                    <td className="py-3.5 px-5 text-slate-400 text-[11px] font-medium">{formatDate(o.created_at)}</td>
+                    <td className="py-3.5 px-5 text-slate-400 text-[11px] font-medium">{formatDateTime(o.created_at, i18n.language)}</td>
                     <td className="py-3.5 px-5">{getStatusBadge(effectiveStatus)}</td>
                     <td className="py-3.5 px-5 text-right">
                       {isPendingValid ? (
@@ -141,13 +125,13 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
                             onClick={() => onSelectCheckoutOrder(o)}
                             className="text-xs py-1 px-3 h-auto bg-gradient-to-r from-amber-600 to-orange-600 font-bold text-white shadow-xs"
                           >
-                            Pay ({getPendingRemainingTime(o)})
+                            {t('portal.pay')} ({getPendingRemainingTime(o)})
                           </Button>
                           <button
                             onClick={() => onCancelOrder(o.id)}
                             disabled={cancellingOrderId === o.id}
                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                            title="Cancel order"
+                            title={t('portal.cancelOrderTitle')}
                           >
                             <XCircle className="w-4 h-4" />
                           </button>
@@ -162,7 +146,7 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
                           }}
                           className="text-xs py-1 px-2.5 h-auto text-slate-600 hover:text-indigo-600 font-semibold"
                         >
-                          Reorder
+                          {t('portal.reorder')}
                         </Button>
                       ) : o.status === 'PAID' ? (
                         <Button
@@ -172,7 +156,7 @@ export const OrderHistoryCard: React.FC<OrderHistoryCardProps> = ({
                           leftIcon={<ExternalLink className="w-3.5 h-3.5 text-emerald-600" />}
                           className="text-xs py-1 px-3 h-auto text-emerald-700 hover:bg-emerald-50 border-emerald-200 font-bold"
                         >
-                          View Link
+                          {t('portal.viewLink')}
                         </Button>
                       ) : (
                         <span className="text-[11px] text-slate-300 font-mono">---</span>

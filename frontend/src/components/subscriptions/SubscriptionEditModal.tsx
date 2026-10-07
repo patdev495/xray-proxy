@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -24,6 +25,7 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
   token,
 }) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [customerName, setCustomerName] = useState<string>('');
   const [status, setStatus] = useState<SubscriptionStatus>('ACTIVE');
   const [quotaGb, setQuotaGb] = useState<string>('50');
@@ -67,8 +69,8 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
 
       showToast({
         type: 'success',
-        title: 'Subscription Updated',
-        message: `Successfully updated ${customerName.trim()}`,
+        title: t('management.subscriptionUpdated'),
+        message: t('management.subscriptionUpdatedMessage', { name: customerName.trim() }),
       });
 
       onClose();
@@ -76,7 +78,7 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Update Failed',
+        title: t('management.updateError'),
         message: err instanceof Error ? err.message : 'Failed to update subscription',
       });
     } finally {
@@ -88,32 +90,32 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
     <Modal
       isOpen={sub !== null}
       onClose={onClose}
-      title={`Edit Subscription - ${sub.customer_name}`}
-      description="Update subscriber name, bandwidth quota, status, and assigned VPS nodes"
+      title={`${t('management.edit')} - ${sub.customer_name}`}
+      description={t('management.subscriptionsDescription')}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="Customer Name"
+          label={t('management.customer')}
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
           required
-          placeholder="Subscriber name"
+          placeholder={t('management.subscriberName')}
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input
-            label="Total Quota (GB)"
+            label={t('management.quota')}
             type="number"
             step="any"
             value={quotaGb}
             onChange={(e) => setQuotaGb(e.target.value)}
             required
-            hint="Total allowed traffic in GB"
+            hint={t('management.trafficQuotaHint')}
           />
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Status
+              {t('portal.status')}
             </label>
             <select
               value={status}
@@ -128,18 +130,18 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
         </div>
 
         <Input
-          label="Expiration Date"
+          label={t('management.expirationDate')}
           type="date"
           value={expiryDate}
           onChange={(e) => setExpiryDate(e.target.value)}
-          hint="Date when access expires automatically"
+          hint={t('management.expirationHint')}
         />
 
         {/* Node Multi-select */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="block text-xs font-semibold text-slate-700">
-              Assigned VPS Nodes
+              {t('management.assignedNodes')}
             </label>
             <div className="flex items-center gap-2">
               <button
@@ -147,7 +149,7 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
                 onClick={() => setSelectedNodeIds(activeNodes.map((n) => n.id))}
                 className="text-[11px] text-slate-600 hover:text-slate-900 underline"
               >
-                Select All
+                {t('management.selectAll')}
               </button>
               <span className="text-slate-300">|</span>
               <button
@@ -155,7 +157,7 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
                 onClick={() => setSelectedNodeIds([])}
                 className="text-[11px] text-slate-600 hover:text-slate-900 underline"
               >
-                Clear
+                {t('management.clear')}
               </button>
             </div>
           </div>
@@ -165,7 +167,7 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
 
           <div className="max-h-44 overflow-y-auto space-y-1.5 border border-slate-200 rounded-lg p-2 bg-slate-50/50">
             {activeNodes.length === 0 ? (
-              <p className="text-xs text-slate-400 py-2 text-center">No active nodes available.</p>
+              <p className="text-xs text-slate-400 py-2 text-center">{t('management.noActiveNodes')}</p>
             ) : (
               activeNodes.map((node) => {
                 const isChecked = selectedNodeIds.includes(node.id);
@@ -210,7 +212,7 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
             onClick={onClose}
             disabled={isUpdating}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -219,7 +221,7 @@ export const SubscriptionEditModal: React.FC<SubscriptionEditModalProps> = ({
             disabled={isUpdating}
             leftIcon={<Check className="w-3.5 h-3.5" />}
           >
-            {isUpdating ? 'Saving...' : 'Save Changes'}
+            {isUpdating ? t('common.saving') : t('common.save')}
           </Button>
         </div>
       </form>

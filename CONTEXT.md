@@ -28,6 +28,10 @@ _Avoid_: Secret key, access token
 Ứng dụng proxy trên thiết bị người dùng cuối (ví dụ Shadowrocket trên iOS, v2rayNG trên Android, Clash).
 _Avoid_: Phone app, client software
 
+**Interface Language**:
+Ngôn ngữ hiển thị của giao diện Control Plane, gồm tiếng Việt (mặc định) và tiếng Anh, được lưu trên từng trình duyệt; không làm thay đổi dữ liệu kỹ thuật, tên riêng do Admin nhập hoặc lỗi do API trả về.
+_Avoid_: Content translation, API language, account-wide language
+
 **Node**:
 Một máy chủ VPS từ xa đặt tại bất kỳ quốc gia nào (Nhật Bản, Việt Nam, Singapore, Mỹ...) chỉ chạy nhân `xray-core` và mở cổng điều khiển gRPC, không chạy giao diện web.
 _Avoid_: Server, proxy host, worker

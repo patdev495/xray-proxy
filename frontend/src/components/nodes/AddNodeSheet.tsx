@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Key, Sparkles } from 'lucide-react';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
@@ -22,6 +23,7 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
   token,
 }) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [name, setName] = useState<string>('');
   const [host, setHost] = useState<string>('');
@@ -82,13 +84,13 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
       setRealityShortId(keys.short_id);
       showToast({
         type: 'success',
-        title: 'Reality Keys Generated',
-        message: 'New X25519 keypair and short ID generated.',
+        title: t('management.keysGenerated'),
+        message: t('management.keysGeneratedMessage'),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Keygen Error',
+        title: t('management.keygenError'),
         message: err instanceof Error ? err.message : 'Could not generate keys',
       });
     } finally {
@@ -102,8 +104,8 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
     if (!name.trim() || !host.trim()) {
       showToast({
         type: 'error',
-        title: 'Validation Error',
-        message: 'Node name and host address are required.',
+        title: t('management.validationError'),
+        message: t('management.nodeRequired'),
       });
       return;
     }
@@ -129,8 +131,8 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
 
       showToast({
         type: 'success',
-        title: 'Node Created',
-        message: `Node ${name} registered successfully.`,
+        title: t('management.nodeCreated'),
+        message: t('management.nodeCreatedMessage', { name }),
       });
 
       resetForm();
@@ -139,8 +141,8 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Creation Failed',
-        message: err instanceof Error ? err.message : 'Failed to register node',
+        title: t('management.nodeCreateFailed'),
+        message: err instanceof Error ? err.message : t('management.nodeCreateFailed'),
       });
     } finally {
       setIsSubmitting(false);
@@ -151,8 +153,8 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
     <Sheet
       isOpen={isOpen}
       onClose={onClose}
-      title="Register Remote Node"
-      description="Connect a VPS instance running xray-core via gRPC API"
+      title={t('management.registerNode')}
+      description={t('management.registerNodeDescription')}
       footer={
         <>
           <Button
@@ -161,7 +163,7 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
             onClick={onClose}
             disabled={isSubmitting}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="gradient"
@@ -170,33 +172,33 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
             disabled={isSubmitting}
             leftIcon={<Plus className="w-3.5 h-3.5" />}
           >
-            {isSubmitting ? 'Saving...' : 'Register Node'}
+            {isSubmitting ? t('common.saving') : t('management.registerNode')}
           </Button>
         </>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="Node Name"
-          placeholder="e.g. Tokyo Node 01"
+          label={t('management.nodeName')}
+          placeholder={t('management.exampleNodeName')}
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          hint="Human-readable identifier for this proxy server"
+          hint={t('management.nodeIdentifierHint')}
         />
 
         <Input
-          label="Host / IP Address"
-          placeholder="e.g. 159.65.12.88"
+          label={t('management.hostAddress')}
+          placeholder={t('management.exampleHost')}
           value={host}
           onChange={(e) => setHost(e.target.value)}
           required
-          hint="Public IPv4 or IPv6 of the remote VPS"
+          hint={t('management.hostAddressHint')}
         />
 
         <div>
           <label className="block text-xs font-medium text-slate-700 mb-1">
-            Server Region
+            {t('management.serverRegion')}
           </label>
           <select
             value={regionId || ''}
@@ -211,10 +213,10 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
             }}
             className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md shadow-xs focus:border-slate-900 focus:outline-none transition-colors"
           >
-            <option value="">-- Select Region --</option>
+            <option value="">{t('management.selectRegion')}</option>
             {regions.map((r) => (
               <option key={r.id} value={r.id}>
-                {r.flag} {r.name} ({r.code}) {!r.is_active ? '(Inactive)' : ''}
+              {r.flag} {r.name} ({r.code}) {!r.is_active ? `(${t('management.inactive')})` : ''}
               </option>
             ))}
           </select>
@@ -222,13 +224,13 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
 
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Location Label"
-            placeholder="Tokyo, Japan"
+            label={t('management.locationLabel')}
+            placeholder={t('management.exampleLocation')}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />
           <Input
-            label="Country Flag"
+            label={t('management.countryFlag')}
             placeholder="🇯🇵"
             value={flag}
             onChange={(e) => setFlag(e.target.value)}
@@ -237,29 +239,29 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
 
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="gRPC Control Port"
+            label={t('management.grpcPort')}
             placeholder="10085"
             value={grpcPort}
             onChange={(e) => setGrpcPort(e.target.value)}
-            hint="Xray Handler & Stats port"
+            hint={t('management.grpcPortHint')}
           />
           <Input
-            label="Inbound Port"
+            label={t('management.inboundPort')}
             placeholder="443"
             value={inboundPort}
             onChange={(e) => setInboundPort(e.target.value)}
-            hint="VLESS Reality listener"
+            hint={t('management.inboundPortHint')}
           />
         </div>
 
         <Input
-          label="Max Subscriptions (Capacity Limit)"
+          label={t('management.capacity')}
           type="number"
           min="1"
           placeholder="100"
           value={maxSubscriptions}
           onChange={(e) => setMaxSubscriptions(e.target.value)}
-          hint="Maximum client subscriptions allowed on this VPS before auto-routing considers it full"
+          hint={t('management.capacityHint')}
           required
         />
 
@@ -269,9 +271,9 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
             <div>
               <h4 className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                 <Key className="w-3.5 h-3.5 text-slate-500" />
-                Reality X25519 Keys
+                {t('management.realityKeys')}
               </h4>
-              <p className="text-[11px] text-slate-500">Auto-generated if left empty</p>
+              <p className="text-[11px] text-slate-500">{t('management.autoGenerated')}</p>
             </div>
             <Button
               variant="secondary"
@@ -281,25 +283,25 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
               disabled={isGeneratingKeys}
               leftIcon={<Sparkles className="w-3 h-3 text-amber-500" />}
             >
-              {isGeneratingKeys ? 'Generating...' : 'Auto-Generate'}
+              {isGeneratingKeys ? t('management.generatingScript') : t('management.autoGenerate')}
             </Button>
           </div>
 
           <Input
-            label="Private Key (optional)"
-            placeholder="Auto-generated if empty (base64url)"
+            label={t('management.privateKeyOptional')}
+            placeholder={t('management.autoGeneratedBase64')}
             value={realityPrivKey}
             onChange={(e) => setRealityPrivKey(e.target.value)}
           />
           <Input
-            label="Public Key (optional)"
-            placeholder="Auto-generated if empty"
+            label={t('management.publicKeyOptional')}
+            placeholder={t('management.autoGenerated')}
             value={realityPubKey}
             onChange={(e) => setRealityPubKey(e.target.value)}
           />
           <Input
-            label="Short ID (optional)"
-            placeholder="Auto-generated 16 hex characters"
+            label={t('management.shortIdOptional')}
+            placeholder={t('management.autoGeneratedHex')}
             value={realityShortId}
             onChange={(e) => setRealityShortId(e.target.value)}
           />
@@ -307,16 +309,16 @@ export const AddNodeSheet: React.FC<AddNodeSheetProps> = ({
 
         {/* Initial SNI Profile Section */}
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3">
-          <h4 className="text-xs font-semibold text-slate-800">Initial SNI Profile</h4>
+          <h4 className="text-xs font-semibold text-slate-800">{t('management.initialSni')}</h4>
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Carrier Name"
-              placeholder="e.g. Docomo 5G"
+              label={t('management.carrierName')}
+              placeholder={t('management.exampleCarrier')}
               value={carrier}
               onChange={(e) => setCarrier(e.target.value)}
             />
             <Input
-              label="Camouflage Domain (SNI)"
+              label={t('management.sniDomain')}
               placeholder="images.apple.com"
               value={sniDomain}
               onChange={(e) => setSniDomain(e.target.value)}

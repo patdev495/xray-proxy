@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Sparkles, Layers, UserCircle } from 'lucide-react';
 import { Sheet } from '../ui/Sheet';
 import { Button } from '../ui/Button';
@@ -14,6 +15,7 @@ import type { AdminUserItem } from '../../services/apiClient';
 import type { NodeItem } from '../../types/node';
 import type { PlanItem } from '../../types/plan';
 import type { RegionItem } from '../../types/region';
+import { formatVnd } from '../../utils/date';
 
 interface NewSubscriptionSheetProps {
   isOpen: boolean;
@@ -31,6 +33,7 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
   token,
 }) => {
   const { showToast } = useToast();
+  const { i18n, t } = useTranslation();
   const [customerName, setCustomerName] = useState<string>('');
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [regions, setRegions] = useState<RegionItem[]>([]);
@@ -124,8 +127,8 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
     if (!customerName.trim()) {
       showToast({
         type: 'error',
-        title: 'Validation Error',
-        message: 'Customer identifier is required.',
+        title: t('management.validationError'),
+        message: t('management.customerRequired'),
       });
       return;
     }
@@ -156,8 +159,8 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
 
       showToast({
         type: 'success',
-        title: 'Subscription Issued',
-        message: `Issued subscription for ${customerName}`,
+        title: t('management.subscriptionIssued'),
+        message: t('management.subscriptionIssuedMessage', { name: customerName }),
       });
 
       // Reset form
@@ -169,7 +172,7 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Creation Failed',
+        title: t('management.creationFailed'),
         message: err instanceof Error ? err.message : 'Failed to create subscription',
       });
     } finally {
@@ -181,12 +184,12 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
     <Sheet
       isOpen={isOpen}
       onClose={onClose}
-      title="Issue New Subscription"
-      description="Select Plan and assign single server region for optimal speed"
+      title={t('management.issueSubscription')}
+      description={t('management.subscriptionsDescription')}
       footer={
         <>
           <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="gradient"
@@ -195,7 +198,7 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
             disabled={isSubmitting}
             leftIcon={<Plus className="w-3.5 h-3.5" />}
           >
-            {isSubmitting ? 'Issuing...' : 'Generate Token'}
+            {isSubmitting ? t('common.saving') : t('management.generateToken')}
           </Button>
         </>
       }
@@ -239,19 +242,19 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
         </div>
 
         <Input
-          label="Customer Identifier"
-          placeholder="e.g. Customer #1092 or customer@example.com"
+          label={t('management.customer')}
+          placeholder={t('management.exampleCustomer')}
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
           required
-          hint="Auto-filled when a registered user is selected"
+          hint={t('management.autoFilledUserHint')}
         />
 
         {/* Plan Selection */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="block text-xs font-semibold text-slate-700">
-              Subscription Plan
+              {t('management.plan')}
             </label>
             <span className="text-[11px] text-slate-500">Defaults to all regions</span>
           </div>
@@ -266,7 +269,7 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
             {plans.map((plan) => (
               <option key={plan.id} value={plan.id}>
                 {plan.name} ({plan.quota_gb} GB / {plan.days_valid}d -{' '}
-                {plan.price_vnd.toLocaleString()} VND)
+                {formatVnd(plan.price_vnd, i18n.language)})
               </option>
             ))}
           </select>
@@ -276,7 +279,7 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="block text-xs font-semibold text-slate-700">
-              Assigned Region <span className="text-slate-400 font-normal">(Subscriber selects 1 region)</span>
+              {t('management.assignedRegion')}
             </label>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -314,21 +317,21 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
         {/* Quota & Validity */}
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Traffic Quota (GB)"
+            label={t('management.quota')}
             type="number"
             placeholder="50"
             value={quotaGb}
             onChange={(e) => setQuotaGb(e.target.value)}
             required
-            hint="Auto-set from plan"
+            hint={t('management.autoSetPlanHint')}
           />
           <Input
-            label="Validity (Days)"
+            label={t('management.validity')}
             type="number"
             placeholder="30"
             value={daysValid}
             onChange={(e) => setDaysValid(e.target.value)}
-            hint="Auto-set from plan"
+            hint={t('management.autoSetPlanHint')}
           />
         </div>
 
@@ -385,7 +388,7 @@ export const NewSubscriptionSheet: React.FC<NewSubscriptionSheetProps> = ({
         <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1 text-slate-600">
           <p className="font-medium text-slate-800 flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-            Intelligent Server Load Balancing
+            {t('management.loadBalancing')}
           </p>
           <p className="text-[11px] text-slate-500 leading-relaxed">
             The proxy backend will automatically choose the least-loaded node in the selected region

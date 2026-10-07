@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldCheck,
   Lock,
@@ -13,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Badge } from './ui/Badge';
+import { LanguageSelector } from './ui/LanguageSelector';
 
 declare global {
   interface Window {
@@ -44,6 +46,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
   onModeChange,
 }) => {
   const { login } = useAuth();
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'register'>(initialMode);
 
   // Form states
@@ -82,7 +85,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         const userData = await fetchCurrentUser(tokenData.access_token);
         login(tokenData.access_token, userData);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Google authentication failed');
+        setError(err instanceof Error ? err.message : t('auth.googleFailed'));
       } finally {
         setIsSubmitting(false);
       }
@@ -107,7 +110,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       };
       document.head.appendChild(script);
     }
-  }, [googleClientId, login]);
+  }, [googleClientId, login, t]);
 
   const handleGoogleClick = () => {
     if (window.google?.accounts?.id) {
@@ -121,15 +124,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
     if (mode === 'register') {
       if (username.trim().length < 3) {
-        setError('Username must be at least 3 characters');
+        setError(t('auth.usernameShort'));
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match');
+        setError(t('auth.passwordsMismatch'));
         return;
       }
       if (password.length < 6) {
-        setError('Password must be at least 6 characters');
+        setError(t('auth.passwordShort'));
         return;
       }
     }
@@ -147,16 +150,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         login(tokenData.access_token, userData);
       }
     } catch (err: unknown) {
-      const rawMsg = err instanceof Error ? err.message : 'Authentication failed';
-      if (rawMsg.includes('Username already taken')) {
-        setError('Username is already taken. Please choose a different username.');
-      } else if (rawMsg.includes('Email already registered')) {
-        setError('This email address is already registered.');
-      } else if (rawMsg.includes('Incorrect username or password')) {
-        setError('Incorrect username or password.');
-      } else {
-        setError(rawMsg);
-      }
+      setError(err instanceof Error ? err.message : t('auth.authenticationFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -171,6 +165,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="w-full max-w-md space-y-6 relative z-10">
+        <div className="flex justify-end"><LanguageSelector /></div>
         {/* Brand Header */}
         <div className="text-center space-y-2.5">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-500 text-white shadow-lg shadow-indigo-500/25 ring-4 ring-white/80 transition-transform hover:scale-105 duration-300">
@@ -182,8 +177,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           </div>
           <p className="text-xs text-slate-500 max-w-sm mx-auto">
             {mode === 'login'
-              ? 'Sign in to access your proxy dashboard or manage control plane'
-              : 'Create a customer account to rent high-speed proxy bandwidth'}
+              ? t('auth.loginDescription')
+              : t('auth.registerDescription')}
           </p>
         </div>
 
@@ -202,7 +197,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Sign In
+              {t('auth.signIn')}
             </button>
             <button
               type="button"
@@ -213,18 +208,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              Create Account
+              {t('auth.createAccount')}
             </button>
           </div>
 
           <div className="border-b border-slate-100/80 pb-2">
             <h2 className="text-sm font-bold text-slate-900">
-              {mode === 'login' ? 'Account Authentication' : 'New Customer Registration'}
+              {mode === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
               {mode === 'login'
-                ? 'Enter your credentials to continue'
-                : 'Fill in your details to start using proxy services'}
+                ? t('auth.loginHint')
+                : t('auth.registerHint')}
             </p>
           </div>
 
@@ -237,18 +232,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Username"
+              label={t('auth.username')}
               type="text"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. johndoe"
+              placeholder={t('auth.usernamePlaceholder')}
               leftIcon={<UserIcon className="w-4 h-4 text-slate-400" />}
             />
 
             {mode === 'register' && (
               <Input
-                label="Email (Optional)"
+                label={t('auth.emailOptional')}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -258,7 +253,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             )}
 
             <Input
-              label="Password"
+              label={t('auth.password')}
               type="password"
               required
               value={password}
@@ -270,7 +265,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             {mode === 'register' && (
               <div className="space-y-1">
                 <Input
-                  label="Confirm Password"
+                  label={t('auth.confirmPassword')}
                   type="password"
                   required
                   value={confirmPassword}
@@ -287,12 +282,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     {confirmPassword === password ? (
                       <>
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Passwords match</span>
+                        <span>{t('auth.passwordsMatch')}</span>
                       </>
                     ) : (
                       <>
                         <AlertCircle className="w-3.5 h-3.5" />
-                        <span>Passwords do not match</span>
+                        <span>{t('auth.passwordsMismatch')}</span>
                       </>
                     )}
                   </p>
@@ -308,7 +303,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               isLoading={isSubmitting}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              {mode === 'login' ? 'Sign In to Account' : 'Complete Registration'}
+              {mode === 'login' ? t('auth.submitLogin') : t('auth.submitRegister')}
             </Button>
           </form>
 
@@ -318,7 +313,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
               <div className="relative flex items-center justify-center">
                 <div className="border-t border-slate-200/80 w-full" />
                 <span className="bg-white/90 backdrop-blur-xs px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider relative">
-                  Or continue with
+                  {t('auth.orContinue')}
                 </span>
               </div>
 
@@ -346,7 +341,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                   />
                 </svg>
-                <span>Sign in with Google</span>
+                <span>{t('auth.signInGoogle')}</span>
               </button>
             </div>
           )}
@@ -355,7 +350,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
           {mode === 'login' && (
             <div className="pt-3 border-t border-slate-100 text-center">
               <p className="text-[11px] text-slate-400">
-                Default credentials: <code className="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-semibold">admin</code> / <code className="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-semibold">admin123</code>
+                {t('auth.defaultCredentials')}: <code className="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-semibold">admin</code> / <code className="bg-slate-100 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-semibold">admin123</code>
               </p>
             </div>
           )}
@@ -364,7 +359,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
             <div className="pt-2 text-center">
               <p className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Instant proxy provisioning upon registration</span>
+                <span>{t('auth.instantProvisioning')}</span>
               </p>
             </div>
           )}
@@ -373,7 +368,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
         {/* Security Footer Note */}
         <div className="text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-          <span>Secured by JWT session tokens &amp; bcrypt cryptographic hashing</span>
+          <span>{t('auth.securityNote')}</span>
         </div>
       </div>
     </div>
@@ -381,4 +376,3 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 };
 
 export default LoginPage;
-

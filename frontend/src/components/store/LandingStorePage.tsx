@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ShieldCheck,
   Zap,
@@ -26,6 +27,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { CheckoutModal } from './CheckoutModal';
 import { StorePlanCard } from './StorePlanCard';
+import { LanguageSelector } from '../ui/LanguageSelector';
 
 interface LandingStorePageProps {
   onNavigate: (path: string) => void;
@@ -34,6 +36,7 @@ interface LandingStorePageProps {
 export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }) => {
   const { user, token, logout } = useAuth();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [regions, setRegions] = useState<RegionStatus[]>([]);
@@ -76,13 +79,13 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     } catch {
       showToast({
         type: 'error',
-        title: 'Failed to load data',
-        message: 'Unable to load plans. Please try again.',
+        title: t('store.loadFailed'),
+        message: t('store.plansLoadFailed'),
       });
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   useEffect(() => {
     loadStoreData();
@@ -96,8 +99,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     if (!token || !user) {
       showToast({
         type: 'info',
-        title: 'Login required',
-        message: 'Please log in or create an account to purchase a plan.',
+        title: t('store.loginRequired'),
+        message: t('store.loginRequiredMessage'),
       });
       onNavigate('/login');
       return;
@@ -107,8 +110,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     if (!region) {
       showToast({
         type: 'error',
-        title: 'No region selected',
-        message: 'Please select a server region before proceeding to payment.',
+        title: t('store.noRegion'),
+        message: t('store.noRegionMessage'),
       });
       return;
     }
@@ -118,8 +121,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
     if (regStatus && regStatus.is_sold_out) {
       showToast({
         type: 'error',
-        title: 'Region sold out',
-        message: `Region ${region} is currently sold out. Please choose another region.`,
+        title: t('store.regionSoldOut'),
+        message: t('store.regionSoldOutMessage', { region }),
       });
       return;
     }
@@ -130,10 +133,10 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
       setActiveOrder(order);
       setIsCheckoutOpen(true);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to create order';
+      const msg = err instanceof Error ? err.message : t('store.createOrderFailed');
       showToast({
         type: 'error',
-        title: 'Order creation failed',
+        title: t('store.createOrderFailed'),
         message: msg,
       });
     } finally {
@@ -160,11 +163,12 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
               </span>
               <Badge variant="cyan" size="sm" dot={true}>VLESS Reality</Badge>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium">4G Zero-Rating Cyber Infrastructure</p>
+            <p className="text-[11px] text-slate-400 font-medium">{t('store.badge')}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          <LanguageSelector />
           {/* Support Buttons */}
           {settings?.support_telegram_url && (
             <a
@@ -198,13 +202,13 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 onClick={() => onNavigate(user.role === 'ADMIN' ? '/admin' : '/portal')}
                 className="text-xs"
               >
-                {user.role === 'ADMIN' ? 'Admin Dashboard' : 'Customer Portal'}
+                {user.role === 'ADMIN' ? t('store.adminDashboard') : t('store.customerPortal')}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={logout}
-                title="Sign out"
+                title={t('store.signOut')}
                 leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-500" />}
               />
             </div>
@@ -216,7 +220,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 onClick={() => onNavigate('/login')}
                 className="text-xs font-bold"
               >
-                Sign In
+                {t('store.signIn')}
               </Button>
               <Button
                 variant="gradient"
@@ -224,7 +228,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 onClick={() => onNavigate('/register')}
                 className="text-xs font-bold shadow-md shadow-indigo-500/20"
               >
-                Get Started
+                {t('store.getStarted')}
               </Button>
             </div>
           )}
@@ -236,33 +240,33 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
         <div className="max-w-4xl mx-auto text-center space-y-5">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-indigo-200/80 text-xs font-bold text-indigo-900 shadow-sm shadow-indigo-500/10 backdrop-blur-md">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
-            <span>Next-Gen VLESS-Reality TLS 1.3 • Anti-Throttle 4G/5G</span>
+            <span>{t('store.heroBadge')}</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 leading-[1.15]">
-            Ultra-Fast Cloud Proxy with{' '}
+            {t('store.heroTitle')}{' '}
             <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Zero ISP Throttling
+              {t('store.heroAccent')}
             </span>
           </h1>
 
           <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-600 leading-relaxed font-medium">
-            Dedicated low-latency infrastructure optimized for Vietnamese mobile carriers (Viettel, VinaPhone, MobiFone). Instant auto-provisioning via VietQR within 3 seconds.
+            {t('store.heroDescription')}
           </p>
 
           {/* Feature Highlights Bento Badges */}
           <div className="pt-4 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold">
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/80 border border-emerald-200/80 text-emerald-800 shadow-xs backdrop-blur-xs">
               <Zap className="w-4 h-4 text-emerald-600 fill-current" />
-              <span>1 Gbps Dedicated Port</span>
+              <span>{t('store.featurePort')}</span>
             </div>
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/80 border border-indigo-200/80 text-indigo-800 shadow-xs backdrop-blur-xs">
               <Globe className="w-4 h-4 text-indigo-600" />
-              <span>Zero-Rating SNI (TikTok / YouTube / Spotify)</span>
+              <span>{t('store.featureSni')}</span>
             </div>
             <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/80 border border-cyan-200/80 text-cyan-800 shadow-xs backdrop-blur-xs">
               <Lock className="w-4 h-4 text-cyan-600" />
-              <span>TLS 1.3 Reality Stealth Camouflage</span>
+              <span>{t('store.featureTls')}</span>
             </div>
           </div>
         </div>
@@ -271,12 +275,12 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
       {/* Main Pricing Store Section */}
       <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8 space-y-8">
         <div className="text-center space-y-2">
-          <Badge variant="indigo" size="md">Choose Your Bandwidth</Badge>
+          <Badge variant="indigo" size="md">{t('store.chooseBandwidth')}</Badge>
           <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-            Transparent, Scalable Service Plans
+            {t('store.plansTitle')}
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            Select a tailored bandwidth quota and server region. Instant VietQR activation.
+            {t('store.plansDescription')}
           </p>
         </div>
 
@@ -284,14 +288,14 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
           <div className="py-24 flex flex-col items-center justify-center gap-3 text-slate-400">
             <Loader2 className="w-9 h-9 animate-spin text-indigo-600" />
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Loading service infrastructure...
+              {t('store.loadingInfrastructure')}
             </span>
           </div>
         ) : plans.length === 0 ? (
           <div className="p-12 text-center bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200 shadow-md max-w-md mx-auto space-y-3">
             <Layers className="w-10 h-10 text-indigo-300 mx-auto" />
-            <h3 className="text-base font-bold text-slate-800">No active plans available</h3>
-            <p className="text-xs text-slate-500">New high-speed nodes are being configured. Please check back shortly.</p>
+            <h3 className="text-base font-bold text-slate-800">{t('store.noActivePlans')}</h3>
+            <p className="text-xs text-slate-500">{t('store.noActivePlansDescription')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -315,8 +319,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
       <section className="border-t border-indigo-100/60 bg-white/70 backdrop-blur-md py-10 px-4 sm:px-8 mt-16">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="text-center sm:text-left space-y-1">
-            <h4 className="text-base font-extrabold text-slate-900">Need immediate technical setup assistance?</h4>
-            <p className="text-xs text-slate-500">Our engineering team is active 24/7 on Telegram and Zalo support groups.</p>
+            <h4 className="text-base font-extrabold text-slate-900">{t('store.supportTitle')}</h4>
+            <p className="text-xs text-slate-500">{t('store.supportDescription')}</p>
           </div>
           <div className="flex items-center gap-3">
             {settings?.support_telegram_url && (
@@ -327,7 +331,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-500 text-white text-xs font-bold shadow-md shadow-sky-500/20 hover:bg-sky-600 transition-all hover:-translate-y-0.5"
               >
                 <Send className="w-3.5 h-3.5" />
-                <span>Join Telegram</span>
+                <span>{t('store.joinTelegram')}</span>
               </a>
             )}
             {settings?.support_zalo_url && (
@@ -338,7 +342,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-600/20 hover:bg-blue-700 transition-all hover:-translate-y-0.5"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span>Join Zalo</span>
+                <span>{t('store.joinZalo')}</span>
               </a>
             )}
           </div>
@@ -352,7 +356,7 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
             <ShieldCheck className="w-4 h-4 text-indigo-400" />
             <span>xray-proxy Control Plane</span>
           </div>
-          <p>© 2026 xray-proxy. Enterprise VLESS-Reality &amp; Carrier SNI Proxy System.</p>
+          <p>{t('store.footer')}</p>
         </div>
       </footer>
 
@@ -364,8 +368,8 @@ export const LandingStorePage: React.FC<LandingStorePageProps> = ({ onNavigate }
         onPaymentSuccess={() => {
           showToast({
             type: 'success',
-            title: 'Payment successful',
-            message: 'Your plan has been activated successfully!',
+            title: t('store.paymentSuccess'),
+            message: t('store.paymentSuccessMessage'),
           });
           setIsCheckoutOpen(false);
           onNavigate('/portal');

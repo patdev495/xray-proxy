@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Copy,
   Check,
@@ -16,6 +17,7 @@ import { ProgressBar } from '../ui/ProgressBar';
 import type { SubscriptionItem } from '../../types/subscription';
 import type { NodeItem } from '../../types/node';
 import { formatDataSize } from './subscriptionUtils';
+import { formatDateTime } from '../../utils/date';
 
 interface SubscriptionTableRowProps {
   sub: SubscriptionItem;
@@ -40,15 +42,12 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
   onToggleActive,
   onDelete,
 }) => {
+  const { t, i18n } = useTranslation();
   const usedGb = sub.traffic_used_bytes / (1024 * 1024 * 1024);
   const quotaGb = sub.traffic_quota_bytes / (1024 * 1024 * 1024);
   const percentUsed = Math.min(Math.round((usedGb / (quotaGb || 1)) * 100), 100);
   const isNearQuota = percentUsed >= 85;
-  const expiryFormatted = new Date(sub.expires_at).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  const expiryFormatted = formatDateTime(sub.expires_at, i18n.language);
 
   return (
     <tr className="hover:bg-indigo-50/40 transition-colors">
@@ -77,7 +76,7 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
           <button
             onClick={() => onCopyUrl(sub)}
             className="p-1 text-slate-400 hover:text-indigo-600 rounded-md transition-colors cursor-pointer"
-            title="Copy Subscription Link"
+            title={t('management.copySubscriptionLink')}
           >
             {copiedId === sub.id ? (
               <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -114,7 +113,7 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
           {(!sub.node_ids || sub.node_ids.length === 0) ? (
             <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full border border-slate-200/80">
               <Globe className="w-3 h-3 text-slate-400" />
-              All Nodes
+              {t('management.allNodes')}
             </span>
           ) : (
             sub.node_ids.map((nodeId) => {
@@ -156,7 +155,7 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
           dot={true}
           pulseDot={sub.status === 'ACTIVE'}
         >
-          {sub.status}
+          {sub.status === 'ACTIVE' ? t('management.active') : sub.status === 'SUSPENDED' ? t('management.suspended') : sub.status}
         </Badge>
       </td>
 
@@ -168,11 +167,11 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
             variant="secondary"
             size="sm"
             onClick={() => onOpenQr(sub)}
-            title="Show QR Code for Shadowrocket"
+            title={t('management.showQr')}
             className="font-bold text-xs"
           >
             <QrCode className="w-3.5 h-3.5 text-indigo-600" />
-            <span className="hidden sm:inline">QR</span>
+            <span className="hidden sm:inline">{t('management.qr')}</span>
           </Button>
 
           {/* Edit Full Profile Button */}
@@ -180,11 +179,11 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
             variant="secondary"
             size="sm"
             onClick={() => onOpenEdit(sub)}
-            title="Edit subscription details & assigned nodes"
+            title={t('management.editSubscription')}
             className="font-bold text-xs"
           >
             <Edit2 className="w-3.5 h-3.5 text-cyan-600" />
-            <span className="hidden sm:inline">Edit</span>
+            <span className="hidden sm:inline">{t('management.edit')}</span>
           </Button>
 
           {/* Quick Renew Button */}
@@ -192,11 +191,11 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
             variant="secondary"
             size="sm"
             onClick={() => onOpenRenew(sub)}
-            title="Quick extend days or quota"
+            title={t('management.quickRenew')}
             className="font-bold text-xs"
           >
             <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="hidden sm:inline">Renew</span>
+            <span className="hidden sm:inline">{t('management.renew')}</span>
           </Button>
 
           {/* Suspend / Activate Toggle */}
@@ -207,7 +206,7 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
                 ? 'border-amber-200 text-amber-600 hover:bg-amber-50'
                 : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
             }`}
-            title={sub.status === 'ACTIVE' ? 'Suspend Subscription' : 'Activate Subscription'}
+            title={sub.status === 'ACTIVE' ? t('management.suspendSubscription') : t('management.activateSubscription')}
           >
             <Power className="w-3.5 h-3.5" />
           </button>
@@ -216,7 +215,7 @@ export const SubscriptionTableRow: React.FC<SubscriptionTableRowProps> = ({
           <button
             onClick={() => onDelete(sub)}
             className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"
-            title="Delete Subscription"
+            title={t('management.deleteSubscription')}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

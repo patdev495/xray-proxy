@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Package,
   Plus,
@@ -28,12 +29,14 @@ import type { PlanItem, SystemSettings } from '../../types/plan';
 import { VIETQR_BANKS } from '../../constants/banks';
 import { PlanModal } from '../plans/PlanModal';
 import { RegionsSection } from '../regions/RegionsSection';
+import { formatVnd } from '../../utils/date';
 
 type SettingsSubTab = 'plans' | 'regions' | 'settings';
 
 export const PlansSettingsTab: React.FC = () => {
   const { token } = useAuth();
   const { showToast } = useToast();
+  const { i18n, t } = useTranslation();
 
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>('plans');
   const [plans, setPlans] = useState<PlanItem[]>([]);
@@ -74,13 +77,13 @@ export const PlansSettingsTab: React.FC = () => {
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Load Error',
+        title: t('management.fetchError'),
         message: err instanceof Error ? err.message : 'Failed to load plans & settings',
       });
     } finally {
       setIsLoadingPlans(false);
     }
-  }, [token, showToast]);
+  }, [token, showToast, t]);
 
   useEffect(() => {
     loadData();
@@ -95,13 +98,13 @@ export const PlansSettingsTab: React.FC = () => {
       setSettings(updated);
       showToast({
         type: 'success',
-        title: 'Settings Saved',
-        message: 'VietQR bank account and support channels have been updated successfully.',
+        title: t('management.settingsSaved'),
+        message: t('management.settingsSavedMessage'),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Save Failed',
+        title: t('management.saveFailed'),
         message: err instanceof Error ? err.message : 'Unable to save settings',
       });
     } finally {
@@ -125,14 +128,14 @@ export const PlansSettingsTab: React.FC = () => {
       await updateAdminPlan(token, plan.id, { is_active: !plan.is_active });
       showToast({
         type: 'info',
-        title: 'Plan Status Updated',
-        message: `${plan.name} is now ${!plan.is_active ? 'Active' : 'Disabled'}.`,
+        title: t('management.planStatusUpdated'),
+        message: t('management.planStatusMessage', { name: plan.name, status: !plan.is_active ? t('management.active') : t('management.disabled') }),
       });
       await loadData();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Update Error',
+        title: t('management.updateError'),
         message: err instanceof Error ? err.message : 'Unable to update plan',
       });
     }
@@ -145,14 +148,14 @@ export const PlansSettingsTab: React.FC = () => {
       await deleteAdminPlan(token, plan.id);
       showToast({
         type: 'success',
-        title: 'Plan Deleted',
-        message: `Plan ${plan.name} was successfully deleted.`,
+        title: t('management.planDeleted'),
+        message: t('management.planDeletedMessage', { name: plan.name }),
       });
       await loadData();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Delete Error',
+        title: t('management.deleteFailed'),
         message: err instanceof Error ? err.message : 'Unable to delete plan',
       });
     }
@@ -163,9 +166,9 @@ export const PlansSettingsTab: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-indigo-100/60 pb-5">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Plans &amp; Gateway Configuration</h2>
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">{t('management.plansGatewayTitle')}</h2>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            Manage customer plan packages, server region allocations, and VietQR / SePay payment gateway settings.
+            {t('management.plansGatewayDescription')}
           </p>
         </div>
 
@@ -180,7 +183,7 @@ export const PlansSettingsTab: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Plans ({plans.length})
+            {t('management.plansTab', { count: plans.length })}
           </button>
           <button
             type="button"
@@ -191,7 +194,7 @@ export const PlansSettingsTab: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            Server Regions
+            {t('management.regionsTab')}
           </button>
           <button
             type="button"
@@ -215,7 +218,7 @@ export const PlansSettingsTab: React.FC = () => {
               <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
                 <Package className="w-4 h-4" />
               </div>
-              <h3 className="text-base font-extrabold text-slate-900">Service Plans Catalog</h3>
+              <h3 className="text-base font-extrabold text-slate-900">{t('management.plansCatalog')}</h3>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -226,7 +229,7 @@ export const PlansSettingsTab: React.FC = () => {
                 disabled={isLoadingPlans}
                 className="font-bold text-xs"
               >
-                Refresh
+                {t('common.refresh')}
               </Button>
               <Button
                 variant="gradient"
@@ -235,7 +238,7 @@ export const PlansSettingsTab: React.FC = () => {
                 onClick={handleOpenCreatePlan}
                 className="font-bold text-xs shadow-md shadow-indigo-500/20"
               >
-                Create Plan
+                {t('management.createPlan')}
               </Button>
             </div>
           </div>
@@ -245,20 +248,14 @@ export const PlansSettingsTab: React.FC = () => {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-100/90 bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-3.5 px-5">Plan Name</th>
-                    <th className="py-3.5 px-5">Price</th>
-                    <th className="py-3.5 px-5">Quota</th>
-                    <th className="py-3.5 px-5">Validity</th>
-                    <th className="py-3.5 px-5">Allowed Regions</th>
-                    <th className="py-3.5 px-5">Status</th>
-                    <th className="py-3.5 px-5 text-right">Actions</th>
+                    <th className="py-3.5 px-5">{t('management.planName')}</th><th className="py-3.5 px-5">{t('management.price')}</th><th className="py-3.5 px-5">{t('management.quota')}</th><th className="py-3.5 px-5">{t('management.validity')}</th><th className="py-3.5 px-5">{t('management.allowedRegions')}</th><th className="py-3.5 px-5">{t('portal.status')}</th><th className="py-3.5 px-5 text-right">{t('portal.actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white/70">
                   {plans.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="py-16 text-center text-slate-400 font-medium">
-                        No service plans defined yet. Create your first plan above.
+                        {t('management.noPlans')}
                       </td>
                     </tr>
                   ) : (
@@ -272,14 +269,14 @@ export const PlansSettingsTab: React.FC = () => {
                         </td>
                         <td className="py-3.5 px-5">
                           <span className="font-mono font-bold text-slate-900 text-sm">
-                            {p.price_vnd.toLocaleString('vi-VN')} VND
+                            {formatVnd(p.price_vnd, i18n.language)}
                           </span>
                         </td>
                         <td className="py-3.5 px-5 font-mono font-semibold text-slate-700">
-                          {p.quota_gb > 0 ? `${p.quota_gb} GB` : 'Unlimited'}
+                          {p.quota_gb > 0 ? `${p.quota_gb} GB` : t('store.unlimited')}
                         </td>
                         <td className="py-3.5 px-5 text-slate-700 font-medium">
-                          {p.days_valid} Days
+                          {t('store.days', { count: p.days_valid })}
                         </td>
                         <td className="py-3.5 px-5">
                           {p.allowed_regions && p.allowed_regions.length > 0 ? (
@@ -294,7 +291,7 @@ export const PlansSettingsTab: React.FC = () => {
                               ))}
                             </div>
                           ) : (
-                            <span className="text-slate-400 italic text-[11px]">All Regions</span>
+                            <span className="text-slate-400 italic text-[11px]">{t('management.allRegions')}</span>
                           )}
                         </td>
                         <td className="py-3.5 px-5">
@@ -304,7 +301,7 @@ export const PlansSettingsTab: React.FC = () => {
                             dot={true}
                             pulseDot={p.is_active}
                           >
-                            {p.is_active ? 'Active' : 'Disabled'}
+                            {p.is_active ? t('management.active') : t('management.disabled')}
                           </Badge>
                         </td>
                         <td className="py-3.5 px-5 text-right">
@@ -316,7 +313,7 @@ export const PlansSettingsTab: React.FC = () => {
                               className="font-bold text-xs"
                             >
                               <Edit2 className="w-3.5 h-3.5 text-indigo-600" />
-                              <span className="hidden sm:inline">Edit</span>
+                              <span className="hidden sm:inline">{t('management.edit')}</span>
                             </Button>
                             <button
                               onClick={() => handleTogglePlanActive(p)}
@@ -325,14 +322,14 @@ export const PlansSettingsTab: React.FC = () => {
                                   ? 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'
                                   : 'border-slate-200 text-slate-400 hover:bg-slate-100'
                               }`}
-                              title={p.is_active ? 'Disable Plan' : 'Enable Plan'}
+                              title={p.is_active ? t('management.disablePlan') : t('management.enablePlan')}
                             >
                               <Power className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleDeletePlan(p)}
                               className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 transition-colors cursor-pointer"
-                              title="Delete Plan"
+                              title={t('management.deletePlan')}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -361,15 +358,15 @@ export const PlansSettingsTab: React.FC = () => {
                   <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
                     <CreditCard className="w-4 h-4" />
                   </div>
-                  <h3 className="text-base font-extrabold text-slate-900">VietQR Receiving Bank Account</h3>
+                  <h3 className="text-base font-extrabold text-slate-900">{t('management.settingsBankTitle')}</h3>
                 </div>
                 <p className="text-xs text-slate-500 mb-5 font-medium">
-                  Select a commercial bank from the VietQR standard NAPAS network and configure account parameters.
+                  {t('management.settingsBankDescription')}
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700">Bank Partner</label>
+                    <label className="text-xs font-bold text-slate-700">{t('management.bankPartner')}</label>
                     <select
                       value={settings.bank_id || 'MB'}
                       onChange={(e) => {
@@ -387,41 +384,41 @@ export const PlansSettingsTab: React.FC = () => {
                     </select>
                   </div>
                   <Input
-                    label="Account Number"
-                    placeholder="e.g. 0987654321"
+                    label={t('management.accountNumber')}
+                    placeholder={t('management.exampleAccountNumber')}
                     value={settings.bank_account_number || ''}
                     onChange={(e) => setSettings({ ...settings, bank_account_number: e.target.value })}
                   />
                   <Input
-                    label="Account Holder Name"
-                    placeholder="e.g. JOHN DOE"
+                    label={t('management.accountHolder')}
+                    placeholder={t('management.exampleAccountHolder')}
                     value={settings.bank_account_name || ''}
                     onChange={(e) => setSettings({ ...settings, bank_account_name: e.target.value.toUpperCase() })}
                   />
                   <Input
-                    label="Transfer Prefix"
-                    placeholder="e.g. SEVQR"
+                    label={t('management.transferPrefix')}
+                    placeholder={t('management.exampleTransferPrefix')}
                     value={settings.bank_transfer_prefix || ''}
                     onChange={(e) => setSettings({ ...settings, bank_transfer_prefix: e.target.value })}
-                    hint="Required 'SEVQR' for VietinBank (ICB)"
+                    hint={t('management.transferPrefixHint')}
                   />
                 </div>
 
                 <div className="mt-4">
                   <Input
-                    label="SePay API Key (Webhook)"
+                    label={t('management.sepayApiKey')}
                     type="password"
-                    placeholder="Enter SePay API Token..."
+                    placeholder={t('management.sepayApiKeyPlaceholder')}
                     value={settings.sepay_api_key || ''}
                     onChange={(e) => setSettings({ ...settings, sepay_api_key: e.target.value })}
-                    hint="Webhook URL: https://xray.peebot.shop/api/v1/payments/sepay-webhook"
+                    hint={`${t('management.webhookUrl')}: https://xray.peebot.shop/api/v1/payments/sepay-webhook`}
                   />
                 </div>
 
                 <div className="mt-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     <QrCode className="w-4 h-4 text-indigo-600" />
-                    <span className="text-slate-500 font-medium">QR Profile:</span>
+                    <span className="text-slate-500 font-medium">{t('management.qrProfile')}:</span>
                     <span className="font-bold text-slate-900">
                       {settings.bank_id || 'MB'} • {settings.bank_account_number || '---'} • {settings.bank_account_name || '---'}
                     </span>
@@ -438,21 +435,21 @@ export const PlansSettingsTab: React.FC = () => {
                   <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
                     <MessageCircle className="w-4 h-4" />
                   </div>
-                  <h3 className="text-base font-extrabold text-slate-900">Customer Support Channels</h3>
+                  <h3 className="text-base font-extrabold text-slate-900">{t('management.supportChannels')}</h3>
                 </div>
                 <p className="text-xs text-slate-500 mb-4 font-medium">
-                  Support links displayed on the public storefront and customer portal.
+                  {t('management.supportChannelsDescription')}
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
-                    label="Telegram Support Channel"
+                    label={t('management.telegramSupport')}
                     placeholder="https://t.me/peebot_admin"
                     value={settings.support_telegram_url}
                     onChange={(e) => setSettings({ ...settings, support_telegram_url: e.target.value })}
                   />
                   <Input
-                    label="Zalo Support Group"
+                    label={t('management.zaloSupport')}
                     placeholder="https://zalo.me/0987654321"
                     value={settings.support_zalo_url}
                     onChange={(e) => setSettings({ ...settings, support_zalo_url: e.target.value })}
@@ -470,7 +467,7 @@ export const PlansSettingsTab: React.FC = () => {
                   disabled={isSavingSettings}
                   className="font-bold text-xs shadow-md shadow-indigo-500/20"
                 >
-                  {isSavingSettings ? 'Saving...' : 'Save Configuration'}
+                  {isSavingSettings ? t('common.saving') : t('management.saveConfiguration')}
                 </Button>
               </div>
             </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, RefreshCw } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -23,6 +24,7 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
   token,
 }) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [newCarrier, setNewCarrier] = useState<string>('');
   const [newSniDomain, setNewSniDomain] = useState<string>('');
@@ -47,8 +49,8 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
     if (!newCarrier.trim() || !newSniDomain.trim()) {
       showToast({
         type: 'error',
-        title: 'Validation Error',
-        message: 'Carrier name and SNI domain are required.',
+        title: t('management.validationError'),
+        message: t('management.sniRequired'),
       });
       return;
     }
@@ -63,8 +65,8 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
       });
       showToast({
         type: 'success',
-        title: 'SNI Profile Added',
-        message: `${newCarrier} (${newSniDomain} :${parsedPort || 'auto'}) attached to node.`,
+        title: t('management.sniAdded'),
+        message: t('management.sniAddedMessage', { carrier: newCarrier, domain: newSniDomain, port: parsedPort || t('common.auto') }),
       });
       setNewCarrier('');
       setNewSniDomain('');
@@ -72,7 +74,7 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'SNI Add Error',
+        title: t('management.sniAddError'),
         message: err instanceof Error ? err.message : 'Failed to add SNI profile',
       });
     } finally {
@@ -86,14 +88,14 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
       await deleteSniProfile(token, node.id, sniId);
       showToast({
         type: 'success',
-        title: 'SNI Removed',
-        message: 'SNI profile deleted.',
+        title: t('management.sniRemoved'),
+        message: t('management.sniRemovedMessage'),
       });
       onNodeUpdated();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'SNI Delete Error',
+        title: t('management.sniDeleteError'),
         message: err instanceof Error ? err.message : 'Failed to remove SNI profile',
       });
     }
@@ -103,15 +105,15 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
     <Modal
       isOpen={node !== null}
       onClose={onClose}
-      title={`SNI Profiles - ${node.name}`}
-      description="Configure multiple carrier-tailored SNI camouflage domains for this node"
+      title={t('management.sniProfiles', { name: node.name })}
+      description={t('management.sniDescription')}
       maxWidth="lg"
     >
       <div className="space-y-5">
         {/* Current SNIs List */}
         <div className="space-y-2">
           <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
-            Configured Profiles ({node.sni_profiles?.length || 0})
+            {t('management.configuredProfiles', { count: node.sni_profiles?.length || 0 })}
           </h4>
 
           {node.sni_profiles && node.sni_profiles.length > 0 ? (
@@ -133,7 +135,7 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
                   <button
                     onClick={() => handleDeleteSniProfile(sni.id)}
                     className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                    title="Delete profile"
+                    title={t('management.deleteProfile')}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -141,7 +143,7 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
               ))}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 italic py-2">No SNI profiles attached yet.</p>
+            <p className="text-xs text-slate-400 italic py-2">{t('management.noSniProfiles')}</p>
           )}
         </div>
 
@@ -150,29 +152,29 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
           onSubmit={handleAddSniProfile}
           className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3"
         >
-          <h4 className="text-xs font-semibold text-slate-800">Add New Carrier SNI</h4>
+          <h4 className="text-xs font-semibold text-slate-800">{t('management.addCarrierSni')}</h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Input
-              label="Carrier Name"
-              placeholder="e.g. SoftBank / Linemo"
+              label={t('management.carrierName')}
+              placeholder={t('management.exampleSniCarrier')}
               value={newCarrier}
               onChange={(e) => setNewCarrier(e.target.value)}
               required
             />
             <Input
-              label="SNI Domain"
-              placeholder="e.g. www.linemo.jp"
+              label={t('management.sniDomain')}
+              placeholder={t('management.exampleSniDomain')}
               value={newSniDomain}
               onChange={(e) => setNewSniDomain(e.target.value)}
               required
             />
             <Input
-              label="Port"
-              placeholder="e.g. 8444"
+              label={t('management.port')}
+              placeholder={t('management.examplePort')}
               type="number"
               value={newPort}
               onChange={(e) => setNewPort(e.target.value)}
-              hint="Auto-suggested port"
+              hint={t('management.autoSuggestedPort')}
             />
           </div>
           <div className="flex justify-end">
@@ -183,7 +185,7 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
               disabled={isAddingSni}
               leftIcon={<Plus className="w-3.5 h-3.5" />}
             >
-              {isAddingSni ? 'Adding...' : 'Add Profile'}
+              {isAddingSni ? t('management.adding') : t('management.addProfile')}
             </Button>
           </div>
         </form>
@@ -191,8 +193,8 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
         {/* Quick VPS Sync Helper */}
         <div className="p-3.5 bg-indigo-50/70 border border-indigo-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="text-xs text-indigo-900">
-            <div className="font-semibold text-indigo-950">Apply Changes to VPS</div>
-            <div className="text-[11px] text-indigo-700/90">Reload multi-inbound ports on VPS in 0.5s (with all active users embedded).</div>
+            <div className="font-semibold text-indigo-950">{t('management.applyChanges')}</div>
+            <div className="text-[11px] text-indigo-700/90">{t('management.applyChangesDescription')}</div>
           </div>
           <Button
             variant="secondary"
@@ -200,7 +202,7 @@ export const SniManagementModal: React.FC<SniManagementModalProps> = ({
             leftIcon={<RefreshCw className="w-3.5 h-3.5 text-indigo-600" />}
             onClick={() => onOpenSyncScript(node)}
           >
-            View Sync Script
+            {t('management.viewSyncScript')}
           </Button>
         </div>
       </div>

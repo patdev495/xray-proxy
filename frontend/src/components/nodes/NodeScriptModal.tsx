@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Copy, Check, RefreshCw } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -25,6 +26,7 @@ export const NodeScriptModal: React.FC<NodeScriptModalProps> = ({
   isLoading,
 }) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [copied, setCopied] = useState<boolean>(false);
 
   const handleCopy = () => {
@@ -32,8 +34,8 @@ export const NodeScriptModal: React.FC<NodeScriptModalProps> = ({
     setCopied(true);
     showToast({
       type: 'success',
-      title: 'Copied to Clipboard',
-      message: 'Script copied to clipboard.',
+      title: t('management.copiedToClipboard'),
+      message: t('management.scriptCopied'),
     });
     setTimeout(() => setCopied(false), 2000);
   };
@@ -48,7 +50,7 @@ export const NodeScriptModal: React.FC<NodeScriptModalProps> = ({
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>Target Host: <strong className="font-mono text-slate-800">{node?.host}</strong></span>
+          <span>{t('management.targetHost')} <strong className="font-mono text-slate-800">{node?.host}</strong></span>
           <Button
             variant="primary"
             size="sm"
@@ -56,14 +58,14 @@ export const NodeScriptModal: React.FC<NodeScriptModalProps> = ({
             onClick={handleCopy}
             disabled={isLoading || !content}
           >
-            {copied ? 'Copied!' : 'Copy Script'}
+            {copied ? t('checkout.copied') : t('management.copyScript')}
           </Button>
         </div>
 
         {isLoading ? (
           <div className="py-12 text-center text-slate-400">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
-            Generating script...
+            {t('management.generatingScript')}
           </div>
         ) : (
           <div className="relative">
@@ -74,7 +76,7 @@ export const NodeScriptModal: React.FC<NodeScriptModalProps> = ({
         )}
 
         <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-xl text-xs text-amber-900">
-          <strong>Usage:</strong> SSH into your remote VPS as root and paste the script directly into bash, or run <code className="font-mono bg-white/70 px-1 py-0.5 rounded text-amber-950">bash -c &quot;$(cat &lt;&lt; &apos;EOF&apos; ... EOF)&quot;</code>.
+          <strong>{t('management.scriptUsage')}</strong> {t('management.scriptUsageDescription')}
         </div>
       </div>
     </Modal>

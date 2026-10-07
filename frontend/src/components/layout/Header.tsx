@@ -1,10 +1,12 @@
 import React from 'react';
 import { Menu, RefreshCw, ExternalLink, LogOut } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { useAuth } from '../../context/AuthContext';
 import type { ConnectionStatus } from '../../types/api';
 import type { NavTabId } from './Sidebar';
+import { LanguageSelector } from '../ui/LanguageSelector';
 
 interface HeaderProps {
   activeTab: NavTabId;
@@ -24,31 +26,32 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleMobileMenu,
 }) => {
   const { logout } = useAuth();
+  const { t } = useTranslation();
 
   const tabTitles: Record<NavTabId, { title: string; subtitle: string }> = {
     overview: {
-      title: 'System Overview',
-      subtitle: 'Real-time telemetry across Control Plane and Data Plane nodes',
+      title: t('navigation.overview'),
+      subtitle: t('admin.overviewSubtitle'),
     },
     nodes: {
-      title: 'Nodes & SNI Profiles',
-      subtitle: 'Manage remote VPS instances running xray-core and carrier SNI overrides',
+      title: t('navigation.nodes'),
+      subtitle: t('admin.nodesSubtitle'),
     },
     subscriptions: {
-      title: 'Customer Subscriptions',
-      subtitle: 'Traffic Quotas, token issuance, and Client App bundles (Shadowrocket)',
+      title: t('navigation.subscriptions'),
+      subtitle: t('admin.subscriptionsSubtitle'),
     },
     plans: {
-      title: 'Plans & Support Settings',
-      subtitle: 'Customer package catalog, pricing quotas, regions and support channels',
+      title: t('navigation.plans'),
+      subtitle: t('admin.plansSubtitle'),
     },
     orders: {
-      title: 'Orders & Transactions',
-      subtitle: 'SePay webhook payment reconciliation and automatic subscription provisioning',
+      title: t('navigation.orders'),
+      subtitle: t('admin.ordersSubtitle'),
     },
     sync: {
-      title: 'Node Sync & Telemetry',
-      subtitle: 'Manual gRPC bandwidth query and automatic quota enforcement',
+      title: t('navigation.sync'),
+      subtitle: t('admin.syncSubtitle'),
     },
   };
 
@@ -56,10 +59,10 @@ export const Header: React.FC<HeaderProps> = ({
     ConnectionStatus,
     { variant: 'emerald' | 'amber' | 'rose'; label: string; pulse: boolean }
   > = {
-    connected: { variant: 'emerald', label: 'Control Plane Online', pulse: true },
-    checking: { variant: 'amber', label: 'Checking Health...', pulse: true },
-    degraded: { variant: 'amber', label: 'Degraded Nodes', pulse: false },
-    offline: { variant: 'rose', label: 'Backend Offline', pulse: false },
+    connected: { variant: 'emerald', label: t('admin.online'), pulse: true },
+    checking: { variant: 'amber', label: t('admin.checking'), pulse: true },
+    degraded: { variant: 'amber', label: t('admin.degraded'), pulse: false },
+    offline: { variant: 'rose', label: t('admin.offline'), pulse: false },
   };
 
   const currentStatus = statusVariants[status];
@@ -73,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onToggleMobileMenu}
               className="md:hidden p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
-              title="Open Navigation"
+              title={t('navigation.openNavigation')}
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -81,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div>
             <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-              <span>Control Plane</span>
+              <span>{t('navigation.controlPlane')}</span>
               <span>/</span>
               <span className="font-semibold text-indigo-600">{tabTitles[activeTab].title}</span>
             </div>
@@ -93,6 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: Telemetry Actions & Status Indicator */}
         <div className="flex items-center gap-3">
+          <LanguageSelector />
           {/* Backend Status Badge */}
           <Badge
             variant={currentStatus.variant}
@@ -111,10 +115,10 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onRefresh}
             isLoading={isRefreshing}
             leftIcon={!isRefreshing && <RefreshCw className="w-3.5 h-3.5 text-indigo-600" />}
-            title={lastChecked ? `Last refreshed: ${lastChecked}` : 'Refresh telemetry'}
+            title={lastChecked ? t('admin.lastRefreshed', { time: lastChecked }) : t('admin.refreshTelemetry')}
             className="font-semibold text-xs"
           >
-            <span className="hidden sm:inline">Refresh</span>
+            <span className="hidden sm:inline">{t('common.refresh')}</span>
           </Button>
 
           {/* API Docs Link */}
@@ -125,7 +129,7 @@ export const Header: React.FC<HeaderProps> = ({
             className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50/60 border border-slate-200/90 transition-all hover:-translate-y-0.5 shadow-2xs"
           >
             <ExternalLink className="w-3.5 h-3.5 text-indigo-500" />
-            <span>FastAPI Docs</span>
+            <span>{t('admin.fastApiDocs')}</span>
           </a>
 
           {/* Sign Out Button */}
@@ -135,9 +139,9 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={logout}
             leftIcon={<LogOut className="w-3.5 h-3.5 text-slate-400" />}
             className="text-xs font-semibold text-slate-600 hover:text-rose-600 hover:bg-rose-50"
-            title="Sign out of Control Plane"
+            title={t('admin.signOutTitle')}
           >
-            <span className="hidden sm:inline">Sign Out</span>
+            <span className="hidden sm:inline">{t('common.signOut')}</span>
           </Button>
         </div>
       </div>

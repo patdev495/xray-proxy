@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Plus, 
   RefreshCw, 
@@ -24,6 +25,7 @@ import { NodeTableRow } from '../nodes/NodeTableRow';
 export const NodesTab: React.FC = () => {
   const { token } = useAuth();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [nodes, setNodes] = useState<NodeItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -49,13 +51,13 @@ export const NodesTab: React.FC = () => {
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Fetch Error',
-        message: err instanceof Error ? err.message : 'Failed to load nodes',
+        title: t('management.fetchError'),
+        message: err instanceof Error ? err.message : t('management.noNodes'),
       });
     } finally {
       setIsLoading(false);
     }
-  }, [token, showToast]);
+  }, [token, showToast, t]);
 
   useEffect(() => {
     loadNodes();
@@ -66,8 +68,8 @@ export const NodesTab: React.FC = () => {
     setCopiedId(id);
     showToast({
       type: 'success',
-      title: 'Copied to Clipboard',
-      message: `${label} copied: ${text.length > 30 ? text.substring(0, 30) + '...' : text}`,
+      title: t('management.copiedToClipboard'),
+      message: t('management.copiedValue', { label, value: text.length > 30 ? `${text.substring(0, 30)}...` : text }),
     });
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -76,14 +78,14 @@ export const NodesTab: React.FC = () => {
   const handlePromptEditCapacity = async (node: NodeItem) => {
     if (!token) return;
     const current = node.max_subscriptions || 100;
-    const input = window.prompt(`Update Max Subscriptions capacity for ${node.name}:`, String(current));
+    const input = window.prompt(t('management.capacityPrompt', { name: node.name }), String(current));
     if (input === null) return;
     const parsed = parseInt(input.trim(), 10);
     if (isNaN(parsed) || parsed < 1) {
       showToast({
         type: 'error',
-        title: 'Invalid Capacity',
-        message: 'Capacity must be a positive number greater than or equal to 1.',
+        title: t('management.invalidCapacity'),
+        message: t('management.invalidCapacityDescription'),
       });
       return;
     }
@@ -91,14 +93,14 @@ export const NodesTab: React.FC = () => {
       await updateNode(token, node.id, { max_subscriptions: parsed });
       showToast({
         type: 'success',
-        title: 'Capacity Updated',
-        message: `Capacity for ${node.name} set to ${parsed} subscriptions.`,
+        title: t('management.capacityUpdated'),
+        message: t('management.capacityUpdatedDescription', { name: node.name, count: parsed }),
       });
       await loadNodes();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Update Error',
+        title: t('management.updateError'),
         message: err instanceof Error ? err.message : 'Failed to update capacity',
       });
     }
@@ -110,14 +112,14 @@ export const NodesTab: React.FC = () => {
       await updateNode(token, node.id, { is_active: !node.is_active });
       showToast({
         type: 'info',
-        title: 'Node Status Updated',
-        message: `${node.name} is now ${!node.is_active ? 'Active' : 'Disabled'}.`,
+        title: t('management.nodeStatusUpdated'),
+        message: t('management.nodeStatusMessage', { name: node.name, status: !node.is_active ? t('management.active') : t('management.disabled') }),
       });
       await loadNodes();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Update Error',
+        title: t('management.updateError'),
         message: err instanceof Error ? err.message : 'Failed to update node status',
       });
     }
@@ -125,21 +127,21 @@ export const NodesTab: React.FC = () => {
 
   const handleDeleteNode = async (node: NodeItem) => {
     if (!token) return;
-    if (!window.confirm(`Are you sure you want to delete node "${node.name}" (${node.host})?`)) {
+    if (!window.confirm(t('management.deleteNodeConfirm', { name: node.name, host: node.host }))) {
       return;
     }
     try {
       await deleteNode(token, node.id);
       showToast({
         type: 'success',
-        title: 'Node Deleted',
-        message: `Node ${node.name} removed.`,
+        title: t('management.nodeDeleted'),
+        message: t('management.nodeDeletedMessage', { name: node.name }),
       });
       await loadNodes();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Delete Failed',
+        title: t('management.deleteFailed'),
         message: err instanceof Error ? err.message : 'Failed to delete node',
       });
     }
@@ -164,8 +166,8 @@ export const NodesTab: React.FC = () => {
   const handleOpenInstallScript = async (node: NodeItem) => {
     if (!token) return;
     setActiveScriptNode(node);
-    setScriptTitle(`VPS Deployment Script - ${node.name}`);
-    setScriptDescription('Run this automated setup script on your fresh Linux VPS to start xray-core');
+    setScriptTitle(t('management.nodeScriptTitle', { name: node.name }));
+    setScriptDescription(t('management.nodeScriptDescription'));
     setScriptContent('');
     try {
       setIsLoadingScript(true);
@@ -174,8 +176,8 @@ export const NodesTab: React.FC = () => {
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Script Load Error',
-        message: err instanceof Error ? err.message : 'Could not fetch setup script',
+        title: t('management.scriptLoadFailed'),
+        message: err instanceof Error ? err.message : t('management.scriptLoadFailed'),
       });
     } finally {
       setIsLoadingScript(false);
@@ -185,8 +187,8 @@ export const NodesTab: React.FC = () => {
   const handleOpenSyncScript = async (node: NodeItem) => {
     if (!token) return;
     setActiveScriptNode(node);
-    setScriptTitle(`Quick VPS Sync Script - ${node.name}`);
-    setScriptDescription('Lightweight sync script: updates /etc/xray/config.json with all active users pre-configured and restarts xray-core in 0.5s.');
+    setScriptTitle(t('management.nodeSyncScriptTitle', { name: node.name }));
+    setScriptDescription(t('management.nodeSyncScriptDescription'));
     setScriptContent('');
     try {
       setIsLoadingScript(true);
@@ -195,8 +197,8 @@ export const NodesTab: React.FC = () => {
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Sync Script Error',
-        message: err instanceof Error ? err.message : 'Could not fetch sync script',
+        title: t('management.syncScriptLoadFailed'),
+        message: err instanceof Error ? err.message : t('management.syncScriptLoadFailed'),
       });
     } finally {
       setIsLoadingScript(false);
@@ -208,9 +210,9 @@ export const NodesTab: React.FC = () => {
       {/* Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Xray Data Plane Fleet</h2>
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">{t('management.nodesTitle')}</h2>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            Remote VPS running <code className="bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-mono font-bold">xray-core</code> monitored &amp; synchronized via gRPC telemetry.
+            {t('management.nodesDescription')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -222,7 +224,7 @@ export const NodesTab: React.FC = () => {
             disabled={isLoading}
             className="font-bold text-xs"
           >
-            Refresh Nodes
+            {t('management.refreshNodes')}
           </Button>
           <Button
             variant="gradient"
@@ -231,7 +233,7 @@ export const NodesTab: React.FC = () => {
             onClick={() => setIsAddSheetOpen(true)}
             className="font-bold text-xs shadow-md shadow-indigo-500/20"
           >
-            Add New Node
+            {t('management.addNode')}
           </Button>
         </div>
       </div>
@@ -242,12 +244,7 @@ export const NodesTab: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-100/90 bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                <th className="py-3.5 px-5">Node &amp; Region</th>
-                <th className="py-3.5 px-5">Host &amp; Inbound</th>
-                <th className="py-3.5 px-5">Capacity / Subs</th>
-                <th className="py-3.5 px-5">State &amp; Reality Keys</th>
-                <th className="py-3.5 px-5">Carrier SNI Profiles</th>
-                <th className="py-3.5 px-5 text-right">Actions</th>
+                <th className="py-3.5 px-5">{t('management.nodeRegion')}</th><th className="py-3.5 px-5">{t('management.hostInbound')}</th><th className="py-3.5 px-5">{t('management.capacity')}</th><th className="py-3.5 px-5">{t('management.realityKeysColumn')}</th><th className="py-3.5 px-5">{t('management.sniProfilesLabel')}</th><th className="py-3.5 px-5 text-right">{t('portal.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white/70">
@@ -255,7 +252,7 @@ export const NodesTab: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="py-16 text-center text-slate-400">
                     <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-indigo-500" />
-                    <span className="font-bold text-xs tracking-wide uppercase text-slate-500">Connecting to node infrastructure...</span>
+                    <span className="font-bold text-xs tracking-wide uppercase text-slate-500">{t('management.connectingInfrastructure')}</span>
                   </td>
                 </tr>
               ) : nodes.length === 0 ? (
@@ -264,8 +261,8 @@ export const NodesTab: React.FC = () => {
                     <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-3 shadow-xs">
                       <Server className="w-7 h-7" />
                     </div>
-                    <p className="text-base font-bold text-slate-800">No nodes registered yet</p>
-                    <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Register a remote VPS instance to begin routing high-speed VLESS-Reality traffic.</p>
+                    <p className="text-base font-bold text-slate-800">{t('management.noNodes')}</p>
+                    <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">{t('management.noNodesDescription')}</p>
                     <Button
                       variant="gradient"
                       size="sm"
@@ -273,7 +270,7 @@ export const NodesTab: React.FC = () => {
                       leftIcon={<Plus className="w-4 h-4" />}
                       onClick={() => setIsAddSheetOpen(true)}
                     >
-                      Register First Node
+                      {t('management.registerNode')}
                     </Button>
                   </td>
                 </tr>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ArrowRightLeft, Check, HardDrive, Loader2, Server } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -23,6 +24,7 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
 }) => {
   const { token } = useAuth();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [nodes, setNodes] = useState<EligibleNode[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null);
@@ -38,13 +40,13 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
         .catch((err) => {
           showToast({
             type: 'error',
-            title: 'Failed to load server list',
-            message: err instanceof Error ? err.message : 'Unable to load server list',
+            title: t('portal.switchLoadFailed'),
+            message: err instanceof Error ? err.message : t('portal.switchLoadFailed'),
           });
         })
         .finally(() => setIsLoading(false));
     }
-  }, [isOpen, sub, token, showToast]);
+  }, [isOpen, sub, token, showToast, t]);
 
   const handleSwitch = async () => {
     if (!token || !sub || !selectedNodeId) return;
@@ -54,16 +56,16 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
       await switchSubscriptionNode(token, sub.id, selectedNodeId);
       showToast({
         type: 'success',
-        title: 'Server switched successfully',
-        message: 'Server updated. Please refresh subscription in Shadowrocket/v2rayNG.',
+        title: t('portal.switchSuccess'),
+        message: t('portal.switchSuccessMessage'),
       });
       onSuccess();
       onClose();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Server switch failed',
-        message: err instanceof Error ? err.message : 'Unknown error',
+        title: t('portal.switchFailed'),
+        message: err instanceof Error ? err.message : t('portal.unknownError'),
       });
     } finally {
       setIsSubmitting(false);
@@ -74,14 +76,14 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
 
   const currentNodesText = sub.node_names?.length
     ? sub.node_names.join(', ')
-    : 'Not assigned';
+    : t('portal.autoAssigned');
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Switch Proxy Server"
-      description={`Switch your subscription to another server in region ${sub.region_flag || '🌐'} ${sub.region_name || sub.region_code || ''}`}
+      title={t('portal.switchModalTitle')}
+      description={t('portal.switchModalDescription', { region: `${sub.region_flag || '🌐'} ${sub.region_name || sub.region_code || ''}` })}
       maxWidth="md"
     >
       <div className="space-y-4">
@@ -89,27 +91,27 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
         <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs">
           <div className="flex items-center gap-2 text-slate-600">
             <Server className="w-4 h-4 text-slate-400 shrink-0" />
-            <span>Current server:</span>
+            <span>{t('portal.currentServer')}</span>
             <span className="font-semibold text-slate-800">{currentNodesText}</span>
           </div>
-          <Badge variant="slate" size="sm">Current</Badge>
+          <Badge variant="slate" size="sm">{t('portal.current')}</Badge>
         </div>
 
         {/* List of Eligible Nodes */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-2">
-            Select an available server:
+            {t('portal.selectAvailableServer')}
           </label>
 
           {isLoading ? (
             <div className="py-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
-              <span>Searching for available servers...</span>
+              <span>{t('portal.searchingServers')}</span>
             </div>
           ) : nodes.length === 0 ? (
             <div className="py-6 px-4 bg-amber-50/70 border border-amber-200/80 rounded-xl text-center text-xs text-amber-900 space-y-1">
-              <p className="font-semibold">No replacement servers found</p>
-              <p className="text-amber-700">All other servers in this region are fully loaded or inactive.</p>
+              <p className="font-semibold">{t('portal.noReplacement')}</p>
+              <p className="text-amber-700">{t('portal.noReplacementDescription')}</p>
             </div>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -136,7 +138,7 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
                         </div>
                         <div className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
                           <HardDrive className="w-3 h-3 text-slate-400" />
-                          <span>Available: <strong className="font-mono text-emerald-600">{node.available_slots}</strong>/{node.max_subscriptions} slots</span>
+                          <span>{t('portal.available')} <strong className="font-mono text-emerald-600">{node.available_slots}</strong>/{node.max_subscriptions} {t('portal.slots')}</span>
                         </div>
                       </div>
                     </div>
@@ -154,13 +156,13 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
         </div>
 
         <p className="text-[11px] text-slate-400 italic">
-          * After switching servers, your UUID and subscription URL remain unchanged. Simply open your app and tap Update Subscription.
+          {t('portal.switchNotice')}
         </p>
 
         {/* Footer Actions */}
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
           <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -175,7 +177,7 @@ export const SwitchNodeModal: React.FC<SwitchNodeModalProps> = ({
               )
             }
           >
-            {isSubmitting ? 'Switching...' : 'Confirm Switch'}
+            {isSubmitting ? t('portal.switching') : t('portal.confirmSwitch')}
           </Button>
         </div>
       </div>

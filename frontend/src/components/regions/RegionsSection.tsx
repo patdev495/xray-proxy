@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Globe, Plus, Edit2, Trash2, Power, RefreshCw } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
@@ -18,6 +19,7 @@ interface RegionsSectionProps {
 
 export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
   const { showToast } = useToast();
+  const { t } = useTranslation();
   const [regions, setRegions] = useState<RegionItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -32,13 +34,13 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Error Loading Regions',
-        message: err instanceof Error ? err.message : 'Could not fetch regions',
+        title: t('management.regionLoadFailed'),
+        message: err instanceof Error ? err.message : t('management.regionLoadFailed'),
       });
     } finally {
       setIsLoading(false);
     }
-  }, [token, showToast]);
+  }, [token, showToast, t]);
 
   useEffect(() => {
     loadRegions();
@@ -53,21 +55,21 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
       setRegions((prev) => prev.map((r) => (r.id === region.id ? updated : r)));
       showToast({
         type: 'success',
-        title: 'Status Updated',
-        message: `${region.name} is now ${updated.is_active ? 'active' : 'inactive'}.`,
+        title: t('management.statusUpdated'),
+        message: t('management.regionStatusMessage', { name: region.name, status: updated.is_active ? t('management.active') : t('management.disabled') }),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Update Failed',
-        message: err instanceof Error ? err.message : 'Could not toggle status',
+        title: t('management.updateError'),
+        message: err instanceof Error ? err.message : t('management.updateRegionFailed'),
       });
     }
   };
 
   const handleDelete = async (region: RegionItem) => {
     if (!token) return;
-    if (!window.confirm(`Delete region "${region.name}" (${region.code})? Associated nodes will be unassigned.`)) {
+    if (!window.confirm(t('management.deleteRegionConfirm', { name: region.name, code: region.code }))) {
       return;
     }
     try {
@@ -75,14 +77,14 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
       setRegions((prev) => prev.filter((r) => r.id !== region.id));
       showToast({
         type: 'success',
-        title: 'Region Deleted',
-        message: `Region ${region.name} deleted.`,
+        title: t('management.regionDeleted'),
+        message: t('management.regionDeletedMessage', { name: region.name }),
       });
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Delete Failed',
-        message: err instanceof Error ? err.message : 'Could not delete region',
+        title: t('management.deleteFailed'),
+        message: err instanceof Error ? err.message : t('management.deleteRegionFailed'),
       });
     }
   };
@@ -93,10 +95,10 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
         <div>
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-base font-bold text-slate-900">Server Regions</h2>
+            <h2 className="text-base font-bold text-slate-900">{t('management.regionsTab')}</h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage geographic clusters for VPS node assignment and user subscription allocation
+            {t('management.regionDescription')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -107,7 +109,7 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
             disabled={isLoading}
             leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />}
           >
-            Refresh
+            {t('common.refresh')}
           </Button>
           <Button
             variant="gradient"
@@ -118,7 +120,7 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
             }}
             leftIcon={<Plus className="w-3.5 h-3.5 text-white" />}
           >
-            Add Region
+            {t('management.addRegion')}
           </Button>
         </div>
       </div>
@@ -127,18 +129,14 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
         <table className="w-full text-left border-collapse text-xs">
           <thead>
             <tr className="border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              <th className="py-2.5 px-3">Region</th>
-              <th className="py-2.5 px-3">Code</th>
-              <th className="py-2.5 px-3">Sort Order</th>
-              <th className="py-2.5 px-3">Status</th>
-              <th className="py-2.5 px-3 text-right">Actions</th>
+              <th className="py-2.5 px-3">{t('portal.region')}</th><th className="py-2.5 px-3">{t('management.regionCode')}</th><th className="py-2.5 px-3">{t('management.sortOrder')}</th><th className="py-2.5 px-3">{t('portal.status')}</th><th className="py-2.5 px-3 text-right">{t('portal.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {regions.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-6 text-center text-slate-400">
-                  {isLoading ? 'Loading regions...' : 'No regions configured yet.'}
+                  {isLoading ? t('common.loading') : t('management.noRegions')}
                 </td>
               </tr>
             ) : (
@@ -156,7 +154,7 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
                   <td className="py-3 px-3 text-slate-600">{region.sort_order}</td>
                   <td className="py-3 px-3">
                     <Badge variant={region.is_active ? 'emerald' : 'slate'} size="sm">
-                      {region.is_active ? 'Active' : 'Disabled'}
+                      {region.is_active ? t('management.active') : t('management.disabled')}
                     </Badge>
                   </td>
                   <td className="py-3 px-3 text-right">
@@ -165,7 +163,7 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleToggleActive(region)}
-                        title={region.is_active ? 'Disable Region' : 'Enable Region'}
+                        title={region.is_active ? t('management.disableRegion') : t('management.enableRegion')}
                         className={region.is_active ? 'text-emerald-600' : 'text-slate-400'}
                       >
                         <Power className="w-3.5 h-3.5" />
@@ -177,7 +175,7 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
                           setEditingRegion(region);
                           setIsModalOpen(true);
                         }}
-                        title="Edit Region"
+                        title={t('management.editRegion')}
                       >
                         <Edit2 className="w-3.5 h-3.5 text-slate-500" />
                       </Button>
@@ -185,7 +183,7 @@ export const RegionsSection: React.FC<RegionsSectionProps> = ({ token }) => {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(region)}
-                        title="Delete Region"
+                        title={t('management.deleteRegion')}
                         className="text-rose-500 hover:text-rose-700"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

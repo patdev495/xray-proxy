@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowRightLeft,
   Check,
@@ -21,7 +22,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { ProgressBar } from '../ui/ProgressBar';
-import { parseUtcDate } from '../../utils/date';
+import { formatDateTime, parseUtcDate } from '../../utils/date';
 import type { Order } from '../../types/order';
 import type { SubscriptionItem } from '../../types/subscription';
 
@@ -41,6 +42,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
   onNavigateStore,
 }) => {
   const { showToast } = useToast();
+  const { i18n, t } = useTranslation();
 
   const [qrSub, setQrSub] = useState<SubscriptionItem | null>(null);
   const [switchSub, setSwitchSub] = useState<SubscriptionItem | null>(null);
@@ -53,8 +55,8 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
     setCopiedToken(sub.token);
     showToast({
       type: 'success',
-      title: 'Subscription link copied',
-      message: 'Paste into Shadowrocket, v2rayNG or Streisand to connect.',
+      title: t('portal.subscriptionCopied'),
+      message: t('portal.subscriptionCopiedDescription'),
     });
     setTimeout(() => setCopiedToken(null), 2500);
   };
@@ -69,8 +71,8 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
       const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
       if (isDaily) {
         return {
-          label: `${diffHours}h remaining`,
-          badge: <Badge variant="amber" size="sm" dot={true}>{diffHours}h left</Badge>,
+          label: t('portal.hoursRemaining', { count: diffHours }),
+          badge: <Badge variant="amber" size="sm" dot={true}>{t('portal.hoursRemaining', { count: diffHours })}</Badge>,
           isExpired: false,
           inGrace: false,
         };
@@ -78,15 +80,15 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       if (diffDays === 1) {
         return {
-          label: `${diffHours}h remaining`,
-          badge: <Badge variant="amber" size="sm" dot={true} pulseDot={true}>Expiring today</Badge>,
+          label: t('portal.hoursRemaining', { count: diffHours }),
+          badge: <Badge variant="amber" size="sm" dot={true} pulseDot={true}>{t('portal.expiringToday')}</Badge>,
           isExpired: false,
           inGrace: false,
         };
       }
       return {
-        label: `${diffDays} days left`,
-        badge: <Badge variant="emerald" size="sm" dot={true}>{diffDays}d active</Badge>,
+        label: t('portal.daysActive', { count: diffDays }),
+        badge: <Badge variant="emerald" size="sm" dot={true}>{t('portal.daysActive', { count: diffDays })}</Badge>,
         isExpired: false,
         inGrace: false,
       };
@@ -99,8 +101,8 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
       if (graceDiffMs > 0) {
         const graceDays = Math.ceil(graceDiffMs / (1000 * 60 * 60 * 24));
         return {
-          label: `Grace Period (${graceDays}d left)`,
-          badge: <Badge variant="rose" size="sm" dot={true} pulseDot={true}>Grace ({graceDays}d)</Badge>,
+          label: t('portal.grace', { count: graceDays }),
+          badge: <Badge variant="rose" size="sm" dot={true} pulseDot={true}>{t('portal.grace', { count: graceDays })}</Badge>,
           isExpired: true,
           inGrace: true,
         };
@@ -108,8 +110,8 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
     }
 
     return {
-      label: 'Expired',
-      badge: <Badge variant="slate" size="sm">Expired</Badge>,
+      label: t('portal.expired'),
+      badge: <Badge variant="slate" size="sm">{t('portal.expired')}</Badge>,
       isExpired: true,
       inGrace: false,
     };
@@ -119,7 +121,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
     return (
       <Card className="p-12 text-center border border-indigo-100/80 shadow-md space-y-3 bg-white/90 backdrop-blur-xl rounded-3xl">
         <div className="w-10 h-10 rounded-full border-3 border-indigo-600 border-t-transparent animate-spin mx-auto" />
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Retrieving active proxy credentials...</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{t('portal.retrievingSubscriptions')}</p>
       </Card>
     );
   }
@@ -131,9 +133,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
           <Zap className="w-7 h-7 fill-current" />
         </div>
         <div className="max-w-md mx-auto space-y-1.5">
-          <h3 className="text-base font-extrabold text-slate-900">No active subscriptions yet</h3>
+          <h3 className="text-base font-extrabold text-slate-900">{t('portal.noSubscriptions')}</h3>
           <p className="text-xs text-slate-500 leading-relaxed">
-            Subscribe to an ultra-fast bypass proxy package in the store to get started with zero throttling.
+            {t('portal.noSubscriptionsDescription')}
           </p>
         </div>
         {onNavigateStore && (
@@ -143,7 +145,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
             onClick={onNavigateStore}
             className="text-xs font-bold shadow-md shadow-indigo-500/20"
           >
-            Explore Plans Store
+            {t('portal.explorePlans')}
           </Button>
         )}
       </Card>
@@ -158,7 +160,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
             <Zap className="w-4 h-4" />
           </div>
           <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
-            Active Subscriptions ({subscriptions.length})
+            {t('portal.activeSubscriptions', { count: subscriptions.length })}
           </h2>
         </div>
         <Button
@@ -168,7 +170,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
           className="text-xs font-semibold"
           leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
         >
-          Sync Data
+          {t('portal.syncData')}
         </Button>
       </div>
 
@@ -202,7 +204,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                     </span>
                     {sub.billing_cycle === 'DAILY' && (
                       <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300/80 px-2 py-0.5 rounded-full">
-                        Daily Pass
+                        {t('portal.dailyPass')}
                       </span>
                     )}
                     <span className="text-[11px] font-mono text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
@@ -212,7 +214,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   <div className="flex items-center gap-1.5 text-xs text-slate-500">
                     <Server className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                     <span className="font-medium text-slate-700">
-                      {sub.node_names?.length ? sub.node_names.join(', ') : 'Auto-assigned cluster'}
+                      {sub.node_names?.length ? sub.node_names.join(', ') : t('portal.autoAssigned')}
                     </span>
                   </div>
                 </div>
@@ -225,7 +227,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                 <div className="p-3 rounded-2xl bg-rose-100/70 border border-rose-300 text-rose-900 text-xs flex items-center gap-2.5">
                   <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
                   <span className="font-medium">
-                    Subscription expired! Server slot is held in grace. Renew now to restore high-speed connection.
+                    {t('portal.graceWarning')}
                   </span>
                 </div>
               )}
@@ -235,7 +237,7 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                 <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-1.5 font-bold text-slate-700">
                     <HardDrive className="w-3.5 h-3.5 text-indigo-500" />
-                    Data Consumption
+                    {t('portal.dataConsumption')}
                   </span>
                   <span className="font-mono font-bold tabular-nums text-slate-900">
                     {usedGb.toFixed(1)} GB / {totalGb.toFixed(0)} GB ({percent.toFixed(0)}%)
@@ -253,10 +255,10 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
               <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100/90 pt-3">
                 <span className="flex items-center gap-1.5 font-medium">
                   <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  Expires:
+                  {t('portal.expires')}
                 </span>
                 <span className="font-bold text-slate-800 font-mono">
-                  {parseUtcDate(sub.expires_at).toLocaleDateString('en-GB')} ({expStatus.label})
+                  {formatDateTime(sub.expires_at, i18n.language)} ({expStatus.label})
                 </span>
               </div>
 
@@ -269,9 +271,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   onClick={() => handleCopyLink(sub)}
                   className="text-xs justify-center font-bold"
                   leftIcon={isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  title="Copy subscription URL for Shadowrocket / v2rayNG"
+                  title={t('portal.copySubscription')}
                 >
-                  {isCopied ? 'Copied' : 'Copy Link'}
+                  {isCopied ? t('portal.copied') : t('portal.copyLink')}
                 </Button>
 
                 {/* QR Code Modal */}
@@ -281,9 +283,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   onClick={() => setQrSub(sub)}
                   className="text-xs justify-center font-bold"
                   leftIcon={<QrCode className="w-3.5 h-3.5 text-indigo-500" />}
-                  title="Open QR code to scan with mobile app"
+                  title={t('portal.openQr')}
                 >
-                  QR Scan
+                  {t('portal.qrScan')}
                 </Button>
 
                 {/* Node Switching */}
@@ -293,9 +295,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                   onClick={() => setSwitchSub(sub)}
                   className="text-xs justify-center font-bold"
                   leftIcon={<ArrowRightLeft className="w-3.5 h-3.5 text-indigo-600" />}
-                  title="Switch to another server in this region"
+                  title={t('portal.switchNodeTitle')}
                 >
-                  Switch Node
+                  {t('portal.switchNode')}
                 </Button>
 
                 {/* In-place Renewal or Upgrade */}
@@ -306,9 +308,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                     onClick={onNavigateStore}
                     className="text-xs justify-center font-bold shadow-xs"
                     leftIcon={<Sparkles className="w-3.5 h-3.5 text-amber-300" />}
-                    title="Upgrade to monthly plan in the store"
+                    title={t('portal.upgradeTitle')}
                   >
-                    Upgrade
+                    {t('portal.upgrade')}
                   </Button>
                 ) : (
                   <Button
@@ -317,9 +319,9 @@ export const MySubscriptions: React.FC<MySubscriptionsProps> = ({
                     onClick={() => setRenewSub(sub)}
                     className="text-xs justify-center font-bold shadow-xs"
                     leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-                    title="Renew subscription in place"
+                    title={t('portal.renewTitle')}
                   >
-                    Renew
+                    {t('portal.renew')}
                   </Button>
                 )}
               </div>

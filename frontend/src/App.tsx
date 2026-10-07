@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { fetchHealth } from './services/apiClient';
 import type { HealthResponse, ConnectionStatus } from './types/api';
+import { formatDateTime } from './utils/date';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { LoginPage } from './components/LoginPage';
@@ -17,6 +19,7 @@ import { CustomerPortal } from './components/portal/CustomerPortal';
 import { LandingStorePage } from './components/store/LandingStorePage';
 
 const AuthenticatedDashboard: React.FC = () => {
+  const { i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<NavTabId>('overview');
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>('checking');
@@ -29,14 +32,14 @@ const AuthenticatedDashboard: React.FC = () => {
       const data = await fetchHealth();
       setHealth(data);
       setStatus(data.status === 'ok' ? 'connected' : 'degraded');
-      setLastChecked(new Date().toLocaleTimeString());
+      setLastChecked(formatDateTime(new Date(), i18n.language));
     } catch {
       setStatus('offline');
-      setLastChecked(new Date().toLocaleTimeString());
+      setLastChecked(formatDateTime(new Date(), i18n.language));
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     checkConnection();
@@ -70,6 +73,7 @@ const AuthenticatedDashboard: React.FC = () => {
 };
 
 const AuthGate: React.FC = () => {
+  const { t } = useTranslation();
   const { token, user, isLoading } = useAuth();
   const [currentPath, setCurrentPath] = useState<string>(() => window.location.pathname);
 
@@ -115,7 +119,7 @@ const AuthGate: React.FC = () => {
         <div className="flex flex-col items-center gap-3 text-slate-500">
           <Loader2 className="w-7 h-7 animate-spin text-slate-800" />
           <span className="text-xs font-medium tracking-wide uppercase text-slate-400">
-            Validating Session...
+            {t('app.validatingSession')}
           </span>
         </div>
       </div>

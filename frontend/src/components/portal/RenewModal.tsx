@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Clock, HardDrive, Loader2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -9,6 +10,7 @@ import type { SubscriptionItem } from '../../types/subscription';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
+import { formatVnd } from '../../utils/date';
 
 interface RenewModalProps {
   sub: SubscriptionItem | null;
@@ -25,6 +27,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
 }) => {
   const { token } = useAuth();
   const { showToast } = useToast();
+  const { i18n, t } = useTranslation();
 
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
@@ -46,13 +49,13 @@ export const RenewModal: React.FC<RenewModalProps> = ({
         .catch((err) => {
           showToast({
             type: 'error',
-            title: 'Failed to load plans',
-            message: err instanceof Error ? err.message : 'Unable to load plans',
+            title: t('portal.renewalLoadFailed'),
+            message: err instanceof Error ? err.message : t('store.plansLoadFailed'),
           });
         })
         .finally(() => setIsLoading(false));
     }
-  }, [isOpen, sub, showToast]);
+  }, [isOpen, sub, showToast, t]);
 
   const handleRenew = async () => {
     if (!token || !sub) return;
@@ -62,24 +65,20 @@ export const RenewModal: React.FC<RenewModalProps> = ({
       const order = await renewSubscription(token, sub.id, selectedPlanId || undefined);
       showToast({
         type: 'success',
-        title: 'Renewal Order Created',
-        message: `Order code: ${order.code}. Please complete payment to finalize.`,
+        title: t('portal.renewalOrderCreated'),
+        message: t('portal.renewalOrderMessage', { code: order.code }),
       });
       onRenewalCreated(order);
       onClose();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Failed to create renewal order',
-        message: err instanceof Error ? err.message : 'Unable to create renewal order',
+        title: t('portal.renewalCreateFailed'),
+        message: err instanceof Error ? err.message : t('portal.renewalCreateFailed'),
       });
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const formatVND = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
   };
 
   if (!sub) return null;
@@ -88,19 +87,19 @@ export const RenewModal: React.FC<RenewModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="In-Place Renewal"
-      description="Keep your existing UUID and subscription URL while adding days and resetting bandwidth quota."
+      title={t('portal.renewalTitle')}
+      description={t('portal.renewalDescription')}
       maxWidth="md"
     >
       <div className="space-y-4">
         {/* Subscription Info Banner */}
         <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl space-y-1 text-xs">
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Renewing for:</span>
+            <span className="text-slate-500">{t('portal.renewingFor')}</span>
             <span className="font-semibold text-slate-900">{sub.customer_name}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-500">Server Region:</span>
+            <span className="text-slate-500">{t('portal.serverRegion')}</span>
             <span className="font-medium text-slate-700">{sub.region_flag || '🌐'} {sub.region_name || sub.region_code}</span>
           </div>
         </div>
@@ -108,13 +107,13 @@ export const RenewModal: React.FC<RenewModalProps> = ({
         {/* Plan Selection */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-2">
-            Select renewal plan:
+            {t('portal.selectRenewalPlan')}
           </label>
 
           {isLoading ? (
             <div className="py-8 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
-              <span>Loading plans...</span>
+              <span>{t('portal.loadingPlans')}</span>
             </div>
           ) : (
             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -135,7 +134,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-900">{p.name}</span>
                         {p.id === sub.plan_id && (
-                          <Badge variant="emerald" size="sm">Current Plan</Badge>
+                          <Badge variant="emerald" size="sm">{t('portal.currentPlan')}</Badge>
                         )}
                       </div>
                       <div className="flex items-center gap-3 text-slate-500 text-[11px]">
@@ -152,7 +151,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
 
                     <div className="text-right">
                       <div className="font-bold font-mono text-indigo-700 text-sm">
-                        {formatVND(p.price_vnd)}
+                        {formatVnd(p.price_vnd, i18n.language)}
                       </div>
                     </div>
                   </div>
@@ -165,7 +164,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
           <Button variant="secondary" size="sm" onClick={onClose} disabled={isSubmitting}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             variant="primary"
@@ -180,7 +179,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
               )
             }
           >
-            {isSubmitting ? 'Creating order...' : 'Proceed to Payment'}
+            {isSubmitting ? t('portal.creatingOrder') : t('portal.proceedPayment')}
           </Button>
         </div>
       </div>

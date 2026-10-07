@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Plus, 
   RefreshCw, 
@@ -26,6 +27,7 @@ import { SubscriptionTableRow } from '../subscriptions/SubscriptionTableRow';
 export const SubscriptionsTab: React.FC = () => {
   const { token } = useAuth();
   const { showToast } = useToast();
+  const { t } = useTranslation();
 
   const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>([]);
   const [nodes, setNodes] = useState<NodeItem[]>([]);
@@ -57,13 +59,13 @@ export const SubscriptionsTab: React.FC = () => {
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Fetch Error',
-        message: err instanceof Error ? err.message : 'Failed to load subscriptions data',
+        title: t('management.fetchError'),
+        message: err instanceof Error ? err.message : t('management.subscriptionsLoadFailed'),
       });
     } finally {
       setIsLoading(false);
     }
-  }, [token, showToast]);
+  }, [token, showToast, t]);
 
   useEffect(() => {
     loadData();
@@ -75,8 +77,8 @@ export const SubscriptionsTab: React.FC = () => {
     setCopiedId(sub.id);
     showToast({
       type: 'success',
-      title: 'Subscription URL Copied',
-      message: `Ready to import into Shadowrocket for ${sub.customer_name}`,
+      title: t('management.subscriptionCopied'),
+      message: t('management.subscriptionCopiedDescription', { name: sub.customer_name }),
     });
     setTimeout(() => setCopiedId(null), 2000);
   };
@@ -88,22 +90,22 @@ export const SubscriptionsTab: React.FC = () => {
       await updateSubscription(token, sub.id, { status: nextStatus });
       showToast({
         type: 'info',
-        title: 'Status Updated',
-        message: `${sub.customer_name} is now ${nextStatus === 'ACTIVE' ? 'Active' : 'Suspended'}.`,
+        title: t('management.statusUpdated'),
+        message: `${sub.customer_name}: ${nextStatus === 'ACTIVE' ? t('management.active') : t('management.suspended')}.`,
       });
       await loadData();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Update Error',
-        message: err instanceof Error ? err.message : 'Could not toggle subscription status',
+        title: t('management.updateError'),
+        message: err instanceof Error ? err.message : t('management.toggleSubscriptionFailed'),
       });
     }
   };
 
   const handleDeleteSubscription = async (sub: SubscriptionItem) => {
     if (!token) return;
-    if (!window.confirm(`Are you sure you want to delete subscription for "${sub.customer_name}"?`)) {
+    if (!window.confirm(t('management.deleteSubscriptionConfirm', { name: sub.customer_name }))) {
       return;
     }
 
@@ -111,15 +113,15 @@ export const SubscriptionsTab: React.FC = () => {
       await deleteSubscription(token, sub.id);
       showToast({
         type: 'success',
-        title: 'Subscription Deleted',
-        message: `Removed ${sub.customer_name}.`,
+        title: t('management.subscriptionDeleted'),
+        message: t('management.removed', { name: sub.customer_name }),
       });
       await loadData();
     } catch (err) {
       showToast({
         type: 'error',
-        title: 'Delete Failed',
-        message: err instanceof Error ? err.message : 'Failed to delete subscription',
+        title: t('management.deleteFailed'),
+        message: err instanceof Error ? err.message : t('management.deleteSubscriptionFailed'),
       });
     }
   };
@@ -131,9 +133,9 @@ export const SubscriptionsTab: React.FC = () => {
       {/* Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Customer Proxy Subscriptions</h2>
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">{t('management.subscriptionsTitle')}</h2>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            Manage customer traffic allowances, tokens, client configurations and remote node bindings.
+            {t('management.subscriptionsDescription')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -145,7 +147,7 @@ export const SubscriptionsTab: React.FC = () => {
             leftIcon={<RefreshCw className={`w-3.5 h-3.5 text-indigo-600 ${isLoading ? 'animate-spin' : ''}`} />}
             className="font-bold text-xs"
           >
-            Refresh Data
+            {t('management.refreshData')}
           </Button>
           <Button
             variant="gradient"
@@ -154,7 +156,7 @@ export const SubscriptionsTab: React.FC = () => {
             leftIcon={<Plus className="w-4 h-4" />}
             className="font-bold text-xs shadow-md shadow-indigo-500/20"
           >
-            Issue Subscription
+            {t('management.issueSubscription')}
           </Button>
         </div>
       </div>
@@ -165,12 +167,7 @@ export const SubscriptionsTab: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-100/90 bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                <th className="py-3.5 px-5">Subscriber</th>
-                <th className="py-3.5 px-5">Traffic Consumption</th>
-                <th className="py-3.5 px-5">Assigned Nodes</th>
-                <th className="py-3.5 px-5">Expiration Date</th>
-                <th className="py-3.5 px-5">Status</th>
-                <th className="py-3.5 px-5 text-right">Actions</th>
+                <th className="py-3.5 px-5">{t('management.subscriber')}</th><th className="py-3.5 px-5">{t('management.trafficConsumption')}</th><th className="py-3.5 px-5">{t('management.assignedNodes')}</th><th className="py-3.5 px-5">{t('management.expirationDate')}</th><th className="py-3.5 px-5">{t('portal.status')}</th><th className="py-3.5 px-5 text-right">{t('portal.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white/70">
@@ -178,15 +175,15 @@ export const SubscriptionsTab: React.FC = () => {
                 <tr>
                   <td colSpan={6} className="py-12 text-center text-slate-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-400" />
-                    Loading subscriptions...
+                    {t('management.loadingSubscriptions')}
                   </td>
                 </tr>
               ) : subscriptions.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center">
                     <Users className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-semibold text-slate-700">No subscriptions issued yet</p>
-                    <p className="text-xs text-slate-400 mt-1">Issue a subscription token to start serving clients.</p>
+                    <p className="text-sm font-semibold text-slate-700">{t('management.noSubscriptions')}</p>
+                    <p className="text-xs text-slate-400 mt-1">{t('management.noSubscriptionsDescription')}</p>
                     <Button
                       variant="primary"
                       size="sm"
@@ -194,7 +191,7 @@ export const SubscriptionsTab: React.FC = () => {
                       leftIcon={<Plus className="w-4 h-4" />}
                       onClick={() => setIsNewSubSheetOpen(true)}
                     >
-                      Issue First Subscription
+                      {t('management.issueFirst')}
                     </Button>
                   </td>
                 </tr>
